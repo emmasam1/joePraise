@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ============================================================
+   CUSTOM TABLE STYLING - THE "FLATTEN EVERYTHING" UPDATE
+   ============================================================ */
+
+/* Targets every internal Ant Design table layer to force 0px radius */
+.custom-table,
+.custom-table .ant-table,
+.custom-table .ant-table-container,
+.custom-table .ant-table-content,
+.custom-table .ant-table-thead,
+.custom-table .ant-table-thead > tr > th,
+.custom-table .ant-table-thead > tr:first-child > th:first-child,
+.custom-table .ant-table-thead > tr:first-child > th:last-child,
+.custom-table .ant-table-tbody > tr:last-child > td:first-child,
+.custom-table .ant-table-tbody > tr:last-child > td:last-child {
+  border-radius: 0 !important;
+}
+
+/* Ensure the wrapper doesn't have an overflow hidden that mimics a radius */
+.custom-table .ant-table-wrapper {
+  border-radius: 0 !important;
+}
+
+/* Header Styling */
+.custom-table .ant-table-thead > tr > th {
+  background-color: #060853 !important;
+  color: white !important;
+  font-size: 13px !important;
+  border-bottom: none !important;
+  padding: 16px !important;
+  text-transform: uppercase;
+}
+
+/* Row Styling */
+.custom-table .ant-table-tbody > tr > td {
+  font-size: 13px !important;
+  color: #64748b !important;
+  padding: 16px !important;
+  border-bottom: 1px solid #f8fafc !important;
+}
+
+/* ============================================================
+   OTHER COMPONENTS
+   ============================================================ */
+
+.custom-dropdown .ant-dropdown-menu {
+  background-color: #060853 !important;
+  padding: 4px !important;
+}
+
+.custom-dropdown .ant-dropdown-menu-item {
+  color: white !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.custom-select .ant-select-selector {
+  border-radius: 8px !important;
+  border-color: rgba(6, 8, 83, 0.3) !important;
+  height: 42px !important;
+}
+
+/* Custom Scrollbar for the Modal Content */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}

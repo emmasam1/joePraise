@@ -2,8 +2,11 @@ import { create } from "zustand";
 import api from "@/api/axios";
 import { message } from "antd";
 
-export const useBusinessStore = create((set) => ({
+export const useBusinessStore = create((set, get) => ({
   onboardingLoading: false,
+   loading: false,
+  businesses: [],
+  selectedBusiness: null,
 
   onboardBusiness: async (formData, router) => {
     set({ onboardingLoading: true });
@@ -96,4 +99,66 @@ export const useBusinessStore = create((set) => ({
       console.log("🔄 LOADING RESET");
     }
   },
+
+
+  fetchBusinesses: async (params = {}) => {
+    set({ loading: true });
+
+    try {
+      const query = new URLSearchParams(params).toString();
+
+      const res = await api.get(`/admin?${query}`);
+
+      if (res.data.success) {
+        set({ businesses: res.data.businesses });
+      }
+
+      return res.data;
+    } catch (error) {
+      message.error("Failed to load businesses");
+      throw error;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+
+  fetchBusiness: async (id) => {
+    set({ loading: true });
+
+    try {
+      const res = await api.get(`/admin/${id}`);
+
+      if (res.data.success) {
+        set({ selectedBusiness: res.data.business });
+      }
+
+      return res.data;
+    } catch (error) {
+      message.error("Failed to load business profile");
+      throw error;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+
+  verifyBusiness: async (id, payload) => {
+    try {
+      const res = await api.patch(`/admin/${id}/verify`, payload);
+
+      if (res.data.success) {
+        message.success(res.data.message);
+
+        // refresh list after update
+        get().fetchBusinesses();
+      }
+
+      return res.data;
+    } catch (error) {
+      message.error("Verification failed");
+      throw error;
+    }
+  },
+
 }));

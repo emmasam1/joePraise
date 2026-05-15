@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { Input, Badge, Avatar } from "antd";
+import { Input, Badge, Avatar, Modal } from "antd";
 import {
   AppstoreOutlined,
   ShoppingCartOutlined,
@@ -166,7 +166,7 @@ export default function DashboardLayout({ children }) {
               General
             </p>
             <nav className="space-y-1">
-              {generalItems.map((item) => {
+              {/* {generalItems.map((item) => {
                 // ADD THIS LOGIC HERE
                 const isActive = pathname === item.href;
 
@@ -181,7 +181,39 @@ export default function DashboardLayout({ children }) {
                     {item.label}
                   </Link>
                 );
-              })}
+              })} */}
+
+               {generalItems.map((item) => {
+                  const isActive = pathname === item.href;
+
+                  // HANDLE BUTTON ACTIONS (LIKE LOGOUT)
+                  if (item.onClick) {
+                    return (
+                      <button
+                        key={item.label}
+                        onClick={item.onClick}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all text-left
+                          ${item.color || "text-gray-500 hover:bg-gray-50"}`}
+                      >
+                        <span className="text-lg">{item.icon}</span>
+                        {item.label}
+                      </button>
+                    );
+                  }
+
+                  // HANDLE NORMAL LINKS
+                  return (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all
+                        ${isActive ? "bg-[#060853] text-white" : "text-gray-500 hover:bg-gray-50"}`}
+                    >
+                      <span className="text-lg">{item.icon}</span>
+                      {item.label}
+                    </Link>
+                  );
+                })}
             </nav>
           </div>
         </div>

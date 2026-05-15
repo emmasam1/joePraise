@@ -16,6 +16,7 @@ import {
 } from "@ant-design/icons";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/authStore";
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();

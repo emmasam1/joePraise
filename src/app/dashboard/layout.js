@@ -193,7 +193,7 @@ export default function DashboardLayout({ children }) {
                       <button
                         key={item.label}
                         onClick={item.onClick}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all text-left
+                        className={`w-full flex cursor-pointer items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all text-left
                           ${item.color || "text-gray-500 hover:bg-gray-50"}`}
                       >
                         <span className="text-lg">{item.icon}</span>

@@ -83,8 +83,6 @@ const VerificationContent = () => {
     setLoading(true);
     try {
       if (type === "reset") {
-        // If it's a password reset flow, pass code to the next screen instead of validating immediately
-        // or validate code and push to password update form.
         router.push(`/new-password?email=${encodeURIComponent(email)}&code=${encodeURIComponent(otpCode)}`);
       } else {
         // Regular registration verification flow

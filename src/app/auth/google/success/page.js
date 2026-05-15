@@ -29,7 +29,7 @@ const GoogleSuccessContent = () => {
       message.success(`Welcome back, ${userData.name}!`);
 
       if (role === "admin") {
-        router.push("/admin");
+        router.push("/admin-dashboard");
       } else if (role === "business") {
         router.push("/dashboard");
       } else {

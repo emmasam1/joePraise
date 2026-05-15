@@ -51,7 +51,8 @@ const VerificationContent = () => {
     try {
       if (type === "reset") {
         // Triggers your forgotPassword backend controller
-        await api.post("/auth/forgot-password", { email });
+        const res = await api.post("/auth/forgot-password", { email });
+        // console.log("Resend OTP response:", res.data);
         message.success("Password reset OTP resent to email!");
       } else {
         // If registering, re-trigger signup or a dedicated resend endpoint if available
@@ -64,6 +65,7 @@ const VerificationContent = () => {
       setTimeLeft(180);
       setCanResend(false);
     } catch (error) {
+      console.log(error)
       message.error(error.response?.data?.message || "Failed to resend code.");
     } finally {
       setResendLoading(false);

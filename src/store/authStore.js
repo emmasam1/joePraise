@@ -14,6 +14,7 @@ export const useAuthStore = create(
         // Sync to Cookies for Middleware (Visible to Server)
         Cookies.set('token', token, { expires: 7 });
         Cookies.set('role', user.role, { expires: 7 });
+        Cookies.set('user', JSON.stringify(user), { expires: 7 });
 
         set({ 
           user, 

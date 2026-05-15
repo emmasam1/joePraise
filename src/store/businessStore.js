@@ -75,7 +75,7 @@ export const useBusinessStore = create((set) => ({
         );
 
         console.log("✅ SUCCESS → Redirecting...");
-        router.push("/business-verification");
+        router.push("/dashboard");
       } else {
         console.warn("⚠️ API returned success=false", response.data);
       }

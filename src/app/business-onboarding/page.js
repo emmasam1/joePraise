@@ -20,6 +20,7 @@ import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import Link from "next/link";
 import { useBusinessStore } from "@/store/businessStore";
 import { useRouter } from "next/navigation";
+import CustomModal from "@/components/CustomModal";
 
 const { Dragger } = Upload;
 
@@ -46,6 +47,12 @@ export default function MultiStepForm() {
   const [bannerPreview, setBannerPreview] = useState(null);
   const router = useRouter();
 
+  const [businessCert, setBusinessCert] = useState(null);
+  const [businessLicense, setBusinessLicense] = useState(null);
+  const [taxCertificate, setTaxCertificate] = useState(null);
+  const [proofOfAddress, setProofOfAddress] = useState(null);
+  // const [isModalOpen, setIsModalOpen] = useState(false);
+
   const { onboardBusiness, onboardingLoading } = useBusinessStore();
 
   const [formData, setFormData] = useState({
@@ -65,6 +72,10 @@ export default function MultiStepForm() {
     logo: null,
     banner: null,
     documents: [],
+    businessCert: null,
+    businessLicense: null,
+    taxCertificate: null,
+    proofOfAddress: null,
   });
 
   const handleChange = (field, value) => {
@@ -88,19 +99,45 @@ export default function MultiStepForm() {
     }));
   };
 
-  const handleSubmit = async () => {
-    // Basic required validation
-    if (
-      !formData.businessName ||
-      !formData.businessEmail ||
-      !formData.businessPhone ||
-      !formData.category ||
-      !formData.address
-    ) {
-      return message.error("Please fill all required fields");
-    }
+  // const handleSubmit = async () => {
+  //   // Basic required validation
+  //   if (
+  //     !formData.businessName ||
+  //     !formData.businessEmail ||
+  //     !formData.businessPhone ||
+  //     !formData.category ||
+  //     !formData.address
+  //   ) {
+  //     return message.error("Please fill all required fields");
+  //   }
 
-    await onboardBusiness(formData, router);
+  //   await onboardBusiness(formData, router);
+  // };
+
+  const handleSubmit = async () => {
+    if (current !== 4) return;
+
+    try {
+      console.log("🚀 Submitting form...");
+
+      if (
+        !formData.businessName ||
+        !formData.businessEmail ||
+        !formData.businessPhone ||
+        !formData.category ||
+        !formData.address
+      ) {
+        return message.error("Please fill all required fields");
+      }
+
+      const response = await onboardBusiness(formData, router);
+
+      console.log("✅ Onboarding Success:", response);
+
+      setCurrent(4);
+    } catch (error) {
+      console.log("❌ Submission Error:", error);
+    }
   };
 
   const [hoursType, setHoursType] = useState("always"); // 'always' or 'selected'
@@ -164,7 +201,7 @@ export default function MultiStepForm() {
   const next = async () => {
     try {
       await form.validateFields();
-      if (current < 3) setCurrent((c) => c + 1);
+      if (current < 4) setCurrent((c) => c + 1);
     } catch (err) {
       console.log("Validation Failed:", err);
     }
@@ -224,87 +261,94 @@ export default function MultiStepForm() {
       <div className="w-full md:w-1/2 px-6 lg:px-20 py-4 flex flex-col justify-center h-full">
         <img src="/images/logo.png" alt="logo" className="w-12 mb-2" />
 
-        <h2 className="text-lg font-bold text-[#1e293b]">
-          Step {current + 1} of 4:{" "}
-          {current === 0
-            ? "Business Information"
-            : current === 1
-              ? "Business Location"
-              : current === 2
-                ? "Business Branding"
-                : "Business Hours"}
-        </h2>
+        {/* HEADER + INDICATOR (HIDDEN ON STEP 4) */}
+        {current !== 4 && (
+          <>
+            <h2 className="text-lg font-bold text-[#1e293b]">
+              Step {current + 1} of 4:{" "}
+              {current === 0
+                ? "Business Information"
+                : current === 1
+                  ? "Business Location"
+                  : current === 2
+                    ? "Business Branding"
+                    : "Business Hours"}
+            </h2>
 
-        {/* STEP INDICATOR */}
-        <div className="flex items-center justify-between mb-8 max-w-md">
-          {[0, 1, 2, 3].map((stepIndex, index) => {
-            const isCompleted = stepIndex < current;
-            const isActive = stepIndex === current;
+            {/* STEP INDICATOR */}
+            <div className="flex items-center justify-between mb-8 max-w-md">
+              {[0, 1, 2, 3].map((stepIndex, index) => {
+                const isCompleted = stepIndex < current;
+                const isActive =
+                  stepIndex === current || (current === 4 && stepIndex === 3);
 
-            return (
-              <div
-                key={stepIndex}
-                className={`flex items-center ${
-                  index < 3 ? "w-full" : "w-auto"
-                }`}
-              >
-                <div
-                  className={`flex items-center justify-center shrink-0 w-8 h-8 rounded-full border-2 transition-all duration-500
-                  ${
-                    isCompleted
-                      ? "bg-green-500 border-green-500"
-                      : isActive
-                        ? "bg-gray-200 border-[#060853]"
-                        : "bg-gray-50 border-gray-200"
-                  }`}
-                >
-                  {isCompleted ? (
-                    <FiCheck className="text-white" size={16} />
-                  ) : (
-                    <span
-                      className={`text-xs font-bold ${
-                        isActive ? "text-[#060853]" : "text-gray-400"
-                      }`}
-                    >
-                      {stepIndex + 1}
-                    </span>
-                  )}
-                </div>
-
-                {index < 3 && (
-                  <div className="flex-1 h-0.5 bg-gray-100 mx-2">
+                return (
+                  <div
+                    key={stepIndex}
+                    className={`flex items-center ${
+                      index < 3 ? "w-full" : "w-auto"
+                    }`}
+                  >
                     <div
-                      className="h-full bg-green-500 transition-all duration-700"
-                      style={{ width: isCompleted ? "100%" : "0%" }}
-                    />
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                      className={`flex items-center justify-center shrink-0 w-8 h-8 rounded-full border-2 transition-all duration-500
+              ${
+                isCompleted
+                  ? "bg-green-500 border-green-500"
+                  : isActive
+                    ? "bg-gray-200 border-[#060853]"
+                    : "bg-gray-50 border-gray-200"
+              }`}
+                    >
+                      {isCompleted ? (
+                        <FiCheck className="text-white" size={16} />
+                      ) : (
+                        <span
+                          className={`text-xs font-bold ${
+                            isActive ? "text-[#060853]" : "text-gray-400"
+                          }`}
+                        >
+                          {stepIndex + 1}
+                        </span>
+                      )}
+                    </div>
 
-        {/* FORM HEADER */}
-        <div className="mb-4 -mt-4">
-          <h3 className="text-md font-semibold text-[#1e293b]">
-            {current === 0
-              ? "Business Information"
-              : current === 1
-                ? "Business Location"
-                : current === 2
-                  ? "Business Branding"
-                  : "Business Hours"}
-          </h3>
-          <p className="text-gray-500 text-xs">
-            {current === 0
-              ? "Tell us about your business to get started"
-              : current === 1
-                ? "Provide the details of your physical or operational base."
-                : current === 2
-                  ? "Enhance your brand access with a logo and banner"
-                  : "Provide the operating times and says for your physical base."}
-          </p>
-        </div>
+                    {index < 3 && (
+                      <div className="flex-1 h-0.5 bg-gray-100 mx-2">
+                        <div
+                          className="h-full bg-green-500 transition-all duration-700"
+                          style={{ width: isCompleted ? "100%" : "0%" }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* FORM HEADER */}
+            <div className="mb-4 -mt-4">
+              <h3 className="text-md font-semibold text-[#1e293b]">
+                {current === 0
+                  ? "Business Information"
+                  : current === 1
+                    ? "Business Location"
+                    : current === 2
+                      ? "Business Branding"
+                      : "Business Hours"}
+              </h3>
+
+              <p className="text-gray-500 text-xs">
+                {current === 0
+                  ? "Tell us about your business to get started"
+                  : current === 1
+                    ? "Provide the details of your physical or operational base."
+                    : current === 2
+                      ? "Enhance your brand access with a logo and banner"
+                      : "Provide the operating times and days for your physical base."}
+              </p>
+            </div>
+          </>
+        )}
 
         <Form form={form} layout="vertical" className="w-full">
           {/* STEP 0 */}
@@ -685,35 +729,180 @@ export default function MultiStepForm() {
             </div>
           )}
 
-          {/* BUTTONS */}
-          <div className="flex justify-between mt-4">
-            <Button
-              onClick={prev}
-              disabled={current === 0}
-              className="h-10 px-15! border"
-            >
-              Back
-            </Button>
+          {/* STEP 4 */}
+          {current === 4 && (
+            <Row gutter={[0, 24]}>
+              <Row gutter={[16, 12]}>
+                {/* 1. Business Registration Certificate */}
+                <Col span={12}>
+                  <Form.Item
+                    label={
+                      <span className="text-[10px] font-bold">
+                        Business Registration Certificate
+                      </span>
+                    }
+                    className="mb-2"
+                  >
+                    <Dragger
+                      showUploadList={false}
+                      beforeUpload={(file) => {
+                        handleFileChange("businessCert", file);
+                        handlePreview(file, setBusinessCert);
+                        return false;
+                      }}
+                      className="bg-[#f0fdfa]! border-[#15BE87]! border-dashed rounded-xl"
+                    >
+                      <DraggerContent
+                        preview={businessCert}
+                        setPreview={setBusinessCert}
+                        label="Certificate"
+                      />
+                    </Dragger>
+                  </Form.Item>
+                </Col>
 
-            {current === 3 ? (
-              <Button
-                type="primary"
-                loading={onboardingLoading}
-                onClick={handleSubmit}
-                className="h-10 px-15! !bg-[#060853] !border-none"
-              >
-                Continue
-              </Button>
-            ) : (
-              <Button
-                type="primary"
-                onClick={next}
-                className="h-10 px-15! !bg-[#060853] !border-none"
-              >
-                Continue
-              </Button>
-            )}
-          </div>
+                {/* 2. Operational Business License */}
+                <Col span={12}>
+                  <Form.Item
+                    label={
+                      <span className="text-[10px] font-bold">
+                        Business Licence (Optional)
+                      </span>
+                    }
+                    className="mb-2"
+                  >
+                    <Dragger
+                      showUploadList={false}
+                      beforeUpload={(file) => {
+                        handleFileChange("businessLicense", file);
+                        handlePreview(file, setBusinessLicense);
+                        return false;
+                      }}
+                      className="bg-[#f0fdfa]! border-[#15BE87]! border-dashed rounded-xl"
+                    >
+                      <DraggerContent
+                        preview={businessLicense}
+                        setPreview={setBusinessLicense}
+                        label="License"
+                      />
+                    </Dragger>
+                  </Form.Item>
+                </Col>
+
+                {/* 3. Tax Identification Certificate */}
+                <Col span={12}>
+                  <Form.Item
+                    label={
+                      <span className="text-[10px] font-bold">
+                        Tax Certificate
+                      </span>
+                    }
+                    className="mb-2"
+                  >
+                    <Dragger
+                      showUploadList={false}
+                      beforeUpload={(file) => {
+                        handleFileChange("taxCertificate", file);
+                        handlePreview(file, setTaxCertificate);
+                        return false;
+                      }}
+                      className="bg-[#f0fdfa]! border-[#15BE87]! border-dashed rounded-xl"
+                    >
+                      <DraggerContent
+                        preview={taxCertificate}
+                        setPreview={setTaxCertificate}
+                        label="TIN"
+                      />
+                    </Dragger>
+                  </Form.Item>
+                </Col>
+
+                {/* 4. Proof of Business Address */}
+                <Col span={12}>
+                  <Form.Item
+                    label={
+                      <span className="text-[10px] font-bold">
+                        Proof of Address (Optional)
+                      </span>
+                    }
+                    className="mb-2"
+                  >
+                    <Dragger
+                      showUploadList={false}
+                      beforeUpload={(file) => {
+                        handleFileChange("proofOfAddress", file);
+                        handlePreview(file, setProofOfAddress);
+                        return false;
+                      }}
+                      className="bg-[#f0fdfa]! border-[#15BE87]! border-dashed rounded-xl"
+                    >
+                      <DraggerContent
+                        preview={proofOfAddress}
+                        setPreview={setProofOfAddress}
+                        label="Address"
+                      />
+                    </Dragger>
+                  </Form.Item>
+                </Col>
+
+                {/* Submit Button */}
+                <div className="mt-4 w-full flex items-center justify-center">
+                  <Button
+                    type="primary"
+                    className="p-5! bg-[#060853]! border-none text-xs font-bold rounded-lg"
+                    onClick={handleSubmit}
+                    loading={onboardingLoading}
+                  >
+                    Submit Verification
+                  </Button>
+                </div>
+              </Row>
+            </Row>
+          )}
+
+          {current !== 4 && (
+            <>
+              {/* BUTTONS */}
+              <div className="flex justify-between mt-4">
+                <Button
+                  onClick={prev}
+                  disabled={current === 0}
+                  className="h-10 px-15! border"
+                >
+                  Back
+                </Button>
+
+                {current === 3 ? (
+                  <Button
+                    type="primary"
+                    onClick={() => setCurrent(4)}
+                    className="h-10 px-15! !bg-[#060853] !border-none"
+                  >
+                    Save & Continue
+                  </Button>
+                ) : current === 4 ? (
+                  <div className="mt-4 w-full flex items-center justify-center">
+                    <Button
+                      type="primary"
+                      onClick={handleSubmit}
+                      loading={onboardingLoading}
+                      className="h-10 px-15! !bg-[#060853] !border-none"
+                    >
+                      Submit Verification
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    type="primary"
+                    onClick={next}
+                    className="h-10 px-15! !bg-[#060853] !border-none"
+                  >
+                    Continue
+                  </Button>
+                )}
+              </div>
+            </>
+          )}
         </Form>
       </div>
 
@@ -727,6 +916,22 @@ export default function MultiStepForm() {
         />
         <div className="absolute inset-0 bg-black/20" />
       </div>
+
+      {/* <CustomModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="max-w-lg" >
+              <div className="flex flex-col justify-center items-center mb-5">
+                  <div className="rounded-full h-25 w-25 bg-[#EDF4FD] mb-5 flex justify-center items-center">
+                      <img src="/images/mail.png" alt="mail" className="h-20" />
+                  </div>
+                <h2 className="font-bold text-2xl">Verification Pending</h2>
+                <p className="text-[#6A7282] text-center mt-4">
+                  Your business verification is under review.
+                  <br />
+                  You will receive an email once approval is completed.
+                </p>
+      
+                <Button onClick={handleSubmit} className="text-white! p-5! text-lg mt-5 bg-[#060853]! rounded-lg border-none">Go To Dashboard</Button>
+              </div>
+            </CustomModal> */}
     </div>
   );
 }

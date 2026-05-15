@@ -37,7 +37,7 @@ const LoginPage = () => {
       message.success("Logged in successfully!");
 
       // Route based on role
-      if (data.user.role === "admin") router.push("/admin");
+      if (data.user.role === "admin") router.push("/admin-dashboard");
       else if (data.user.role === "business") router.push("/dashboard");
       else router.push("/");
     }

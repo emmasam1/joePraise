@@ -12,7 +12,7 @@ const VerificationSuccessPage = () => {
   // Default to home "/" if user is not a business yet
   const getDestination = () => {
     if (!user) return "/login";
-    if (user.role === 'admin') return "/admin";
+    if (user.role === 'admin') return "/admin-dashboard";
     if (user.role === 'business') return "/dashboard";
     return "/"; // Standard 'user' role goes to landing page
   };

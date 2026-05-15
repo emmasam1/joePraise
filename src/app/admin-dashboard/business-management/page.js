@@ -304,7 +304,7 @@ const BusinessManagement = () => {
       // FIX 4: safe trust score (no fake assumption)
       trust_score: b.trustScore ?? 0,
 
-      verification: b.verificationStage || "submitted",
+      verification: b.verificationStatus,
     })) || [];
 
   const getStatusColor = (status) => {

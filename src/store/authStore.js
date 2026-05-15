@@ -1,5 +1,7 @@
+
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import Cookies from 'js-cookie';
 
 export const useAuthStore = create(
   persist(
@@ -8,25 +10,36 @@ export const useAuthStore = create(
       token: null,
       isAuthenticated: false,
 
-      // Actions to update state
-      setLoginSuccess: (user, token) => set({ 
-        user, 
-        token, 
-        isAuthenticated: true 
-      }),
+      setLoginSuccess: (user, token) => {
+        // Sync to Cookies for Middleware (Visible to Server)
+        Cookies.set('token', token, { expires: 7 });
+        Cookies.set('role', user.role, { expires: 7 });
 
-      logout: () => set({ 
-        user: null, 
-        token: null, 
-        isAuthenticated: false 
-      }),
+        set({ 
+          user, 
+          token, 
+          isAuthenticated: true 
+        });
+      },
+
+      logout: () => {
+        // Clear Cookies and State
+        Cookies.remove('token');
+        Cookies.remove('role');
+        
+        set({ 
+          user: null, 
+          token: null, 
+          isAuthenticated: false 
+        });
+      },
       
       updateUser: (updatedUser) => set((state) => ({
         user: { ...state.user, ...updatedUser }
       }))
     }),
     {
-      name: 'joepraise-auth-storage', // Key name in localStorage
+      name: 'joepraise-auth-storage',
       storage: createJSONStorage(() => localStorage),
     }
   )

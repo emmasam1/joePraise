@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { Input, Badge, Avatar } from "antd";
+import { Input, Badge, Avatar, Modal } from "antd";
 import {
   AppstoreOutlined,
   ShoppingCartOutlined,
@@ -15,13 +15,32 @@ import {
   UpOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/authStore";
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const logout = useAuthStore((state) => state.logout);
 
   // State to handle the absolute pop-out menu
   const [isRevenueOpen, setIsRevenueOpen] = useState(false);
+
+
+  const handleLogout = () => {
+    Modal.confirm({
+      title: "Logout",
+      content: "Are you sure you want to log out of JoePraise Smart Hub?",
+      okText: "Yes, Logout",
+      cancelText: "Stay",
+      okButtonProps: { danger: true },
+      onOk: () => {
+        logout();
+        router.push("/login");
+      },
+    });
+  };
 
   const menuItems = [
     { label: "Overview", icon: <AppstoreOutlined />, href: "/dashboard" },
@@ -55,11 +74,17 @@ export default function DashboardLayout({ children }) {
       icon: <QuestionCircleOutlined />,
       href: "/dashboard/support",
     },
-    {
-      label: "Logout",
-      icon: <LogoutOutlined />,
-      href: "/logout",
-      color: "text-red-500",
+    // {
+    //   label: "Logout",
+    //   icon: <LogoutOutlined />,
+    //   href: "/logout",
+    //   color: "text-red-500",
+    // },
+    { 
+      label: "Logout", 
+      icon: <LogoutOutlined />, 
+      onClick: handleLogout,
+      color: "text-red-500" 
     },
   ];
 
@@ -142,7 +167,7 @@ export default function DashboardLayout({ children }) {
               General
             </p>
             <nav className="space-y-1">
-              {generalItems.map((item) => {
+              {/* {generalItems.map((item) => {
                 // ADD THIS LOGIC HERE
                 const isActive = pathname === item.href;
 
@@ -157,7 +182,39 @@ export default function DashboardLayout({ children }) {
                     {item.label}
                   </Link>
                 );
-              })}
+              })} */}
+
+               {generalItems.map((item) => {
+                  const isActive = pathname === item.href;
+
+                  // HANDLE BUTTON ACTIONS (LIKE LOGOUT)
+                  if (item.onClick) {
+                    return (
+                      <button
+                        key={item.label}
+                        onClick={item.onClick}
+                        className={`w-full flex cursor-pointer items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all text-left
+                          ${item.color || "text-gray-500 hover:bg-gray-50"}`}
+                      >
+                        <span className="text-lg">{item.icon}</span>
+                        {item.label}
+                      </button>
+                    );
+                  }
+
+                  // HANDLE NORMAL LINKS
+                  return (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all
+                        ${isActive ? "bg-[#060853] text-white" : "text-gray-500 hover:bg-gray-50"}`}
+                    >
+                      <span className="text-lg">{item.icon}</span>
+                      {item.label}
+                    </Link>
+                  );
+                })}
             </nav>
           </div>
         </div>

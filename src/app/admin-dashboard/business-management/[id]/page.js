@@ -736,7 +736,7 @@ const BusinessProfilePage = () => {
 
         <div className="w-full md:w-64 h-48">
           <img
-            src={business.logo || "https://images.unsplash.com/photo-1552566626-52f8b828add9"}
+            src={business.logo?.url || "https://images.unsplash.com/photo-1552566626-52f8b828add9"}
             className="w-full h-full object-cover rounded-lg"
           />
         </div>

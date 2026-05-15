@@ -1,24 +1,3 @@
-// import axios from 'axios';
-// import { useAuthStore } from '@/store/authStore'; // Clean absolute import
-
-// const api = axios.create({
-//   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
-//   headers: {
-//     'Content-Type': 'application/json',
-//   },
-// });
-
-//   (config) => {
-//       config.headers.Authorization = `Bearer ${token}`;
-//     }
-//     return config;
-//   },
-//   (error) => {
-//     return Promise.reject(error);
-//   }
-// );
-
-// export default api;
 
 import axios from "axios";
 import { useAuthStore } from "@/store/authStore";

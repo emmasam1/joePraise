@@ -3,6 +3,7 @@ import React from "react";
 import Image from "next/image";
 import { Button, Input } from "antd";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 const page = () => {
   const images = [
@@ -123,12 +124,14 @@ const page = () => {
               Join thousands of I business already
               <br /> connecting with customers on our platform
             </p>
-            <Button
-              type="primary"
-              className="h-12! mt-5 bg-[#060853]! hover:bg-[#060853]! border-none text-white text-base font-bold rounded-lg px-10! transition-colors"
-            >
-              List Your Business
-            </Button>
+            <Link href="/business-onboarding" >
+              <Button
+                type="primary"
+                className="h-12! mt-5 bg-[#060853]! hover:bg-[#060853]! border-none text-white text-base font-bold rounded-lg px-10! transition-colors"
+              >
+                List Your Business
+              </Button>
+            </Link>
           </div>
 
           {/* Right Side: Staggered Masonry-Style Grid */}

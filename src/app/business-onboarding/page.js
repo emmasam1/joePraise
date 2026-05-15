@@ -18,6 +18,8 @@ import dynamic from "next/dynamic";
 import { FiX } from "react-icons/fi";
 import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import Link from "next/link";
+import { useBusinessStore } from "@/store/businessStore";
+import { useRouter } from "next/navigation";
 
 const { Dragger } = Upload;
 
@@ -42,6 +44,61 @@ export default function MultiStepForm() {
   const [form] = Form.useForm();
   const [logoPreview, setLogoPreview] = useState(null);
   const [bannerPreview, setBannerPreview] = useState(null);
+  const router = useRouter();
+
+  const { onboardBusiness, onboardingLoading } = useBusinessStore();
+
+  const [formData, setFormData] = useState({
+    businessName: "",
+    businessEmail: "",
+    businessPhone: "",
+    category: "",
+    address: "",
+    description: "",
+    website: "",
+    instagram: "",
+    twitter: "",
+    facebook: "",
+    logo: null,
+    banner: null,
+    documents: [],
+  });
+
+  const handleChange = (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleFileChange = (field, file) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: file,
+    }));
+  };
+
+  const handleDocumentsChange = (files) => {
+    setFormData((prev) => ({
+      ...prev,
+      documents: Array.from(files),
+    }));
+  };
+
+  const handleSubmit = async () => {
+    // Basic required validation
+    if (
+      !formData.businessName ||
+      !formData.businessEmail ||
+      !formData.businessPhone ||
+      !formData.category ||
+      !formData.address
+    ) {
+      return message.error("Please fill all required fields");
+    }
+
+    await onboardBusiness(formData, router);
+  };
 
   const [hoursType, setHoursType] = useState("always"); // 'always' or 'selected'
   const allDays = [
@@ -253,7 +310,11 @@ export default function MultiStepForm() {
               <Col span={12}>
                 <Form.Item name="name" label="Business Name">
                   <Input
-                    placeholder="Enter Name"
+                    value={formData.businessName}
+                    onChange={(e) =>
+                      handleChange("businessName", e.target.value)
+                    }
+                    placeholder="Enter Business Name"
                     className="bg-gray-50! h-8! text-xs! rounded-md!"
                   />
                 </Form.Item>
@@ -262,7 +323,11 @@ export default function MultiStepForm() {
               <Col span={12}>
                 <Form.Item name="email" label="Business Email">
                   <Input
-                    placeholder="Enter Email"
+                    value={formData.businessEmail}
+                    onChange={(e) =>
+                      handleChange("businessEmail", e.target.value)
+                    }
+                    placeholder="Enter Business Email"
                     className="bg-gray-50! h-8! text-xs! rounded-md!"
                   />
                 </Form.Item>
@@ -271,8 +336,12 @@ export default function MultiStepForm() {
               <Col span={12}>
                 <Form.Item name="phone" label="Phone Number">
                   <Input
+                    value={formData.businessPhone}
+                    onChange={(e) =>
+                      handleChange("businessPhone", e.target.value)
+                    }
                     addonBefore="🇳🇬"
-                    placeholder="Phone"
+                    placeholder="Enter Business Phone"
                     className="bg-gray-50! h-8! text-xs! rounded-md!"
                   />
                 </Form.Item>
@@ -281,6 +350,8 @@ export default function MultiStepForm() {
               <Col span={12}>
                 <Form.Item name="website" label="Website (Optional)">
                   <Input
+                    value={formData.website}
+                    onChange={(e) => handleChange("website", e.target.value)}
                     placeholder="www.example.com"
                     className="bg-gray-50! h-8! text-xs! rounded-md!"
                   />
@@ -291,9 +362,21 @@ export default function MultiStepForm() {
                 <Form.Item name="category" label="Business Category">
                   <Select
                     size="small"
+                    value={formData.category}
+                    onChange={(value) => handleChange("category", value)}
                     placeholder="Select category"
                     className="bg-gray-50! h-8! text-xs! rounded-md!"
-                    options={[{ value: "tech", label: "Tech" }]}
+                    options={[
+                      { value: "real estate", label: "Real Estate" },
+                      { value: "retail", label: "Retail" },
+                      { value: "fashion", label: "Fashion" },
+                      { value: "logistics", label: "Logistics" },
+                      { value: "consultancy", label: "Consultancy" },
+                      { value: "entertainment", label: "Entertainment" },
+                      { value: "restaurant", label: "Restaurant" },
+                      { value: "engineering", label: "Engineering" },
+                      { value: "others", label: "Others" },
+                    ]}
                   />
                 </Form.Item>
               </Col>
@@ -301,6 +384,10 @@ export default function MultiStepForm() {
               <Col span={24}>
                 <Form.Item name="description" label="Business Description">
                   <TextArea
+                    value={formData.description}
+                    onChange={(e) =>
+                      handleChange("description", e.target.value)
+                    }
                     rows={4}
                     placeholder="Detailed description"
                     className="bg-gray-50! text-xs! rounded-md! resize-none!"
@@ -317,6 +404,8 @@ export default function MultiStepForm() {
                 <Form.Item name="country" label="Country">
                   <Select
                     size="small"
+                    value={formData.country}
+                    onChange={(value) => handleChange("country", value)}
                     placeholder="Select Country"
                     className="bg-gray-50! h-8! text-xs! rounded-md!"
                     options={[{ value: "nigeria", label: "Nigeria" }]}
@@ -328,6 +417,8 @@ export default function MultiStepForm() {
                 <Form.Item name="city" label="City">
                   <Select
                     size="small"
+                    value={formData.city}
+                    onChange={(value) => handleChange("city", value)}
                     placeholder="Select City"
                     className="bg-gray-50! h-8! text-xs! rounded-md!"
                     options={[{ value: "abuja", label: "Abuja" }]}
@@ -338,6 +429,8 @@ export default function MultiStepForm() {
               <Col span={12}>
                 <Form.Item name="address" label="Address">
                   <Input
+                    value={formData.address}
+                    onChange={(e) => handleChange("address", e.target.value)}
                     placeholder="Enter address"
                     className="bg-gray-50! h-8! text-xs!"
                   />
@@ -347,6 +440,8 @@ export default function MultiStepForm() {
               <Col span={12}>
                 <Form.Item name="postalCode" label="Postal Code">
                   <Input
+                    value={formData.postalCode}
+                    onChange={(e) => handleChange("postalCode", e.target.value)}
                     placeholder="Postal code"
                     className="bg-gray-50! h-8! text-xs!"
                   />
@@ -395,7 +490,11 @@ export default function MultiStepForm() {
                     accept="image/*"
                     maxCount={1}
                     showUploadList={false}
-                    beforeUpload={(file) => handlePreview(file, setLogoPreview)}
+                    beforeUpload={(file) => {
+                      handleFileChange("logo", file);
+                      handlePreview(file, setLogoPreview);
+                      return false;
+                    }}
                     className="bg-[#f0fdfa]! border-[#5eead4]! rounded-xl overflow-hidden border-dashed"
                     customRequest={({ onSuccess }) => onSuccess("ok")} // Dummy success
                   >
@@ -427,9 +526,11 @@ export default function MultiStepForm() {
                     accept="image/*"
                     maxCount={1}
                     showUploadList={false}
-                    beforeUpload={(file) =>
-                      handlePreview(file, setBannerPreview)
-                    }
+                    beforeUpload={(file) => {
+                      handleFileChange("banner", file);
+                      handlePreview(file, setBannerPreview);
+                      return false;
+                    }}
                     className="bg-[#f0fdfa]! border-[#5eead4]! rounded-xl overflow-hidden border-dashed"
                     customRequest={({ onSuccess }) => onSuccess("ok")}
                   >
@@ -594,10 +695,11 @@ export default function MultiStepForm() {
             {current === 3 ? (
               <Button
                 type="primary"
-                onClick={next}
+                loading={onboardingLoading}
+                onClick={handleSubmit}
                 className="h-10 px-15! !bg-[#060853] !border-none"
               >
-                <Link href="/business-verification">Continue</Link>
+                Continue
               </Button>
             ) : (
               <Button

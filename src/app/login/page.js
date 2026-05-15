@@ -22,45 +22,6 @@ const LoginPage = () => {
     window.location.href = `${baseUrl}/auth/google`;
   };
 
-  // const handleLogin = async (e) => {
-  //   e.preventDefault();
-  //   if (!email || !password) {
-  //     return message.error("Please provide both email and password");
-  //   }
-
-  //   setLoading(true);
-  //   try {
-  //     const response = await api.post("/auth/login", { email, password });
-      
-  //     const { data } = response;
-
-  //     // Handle 2FA Required Redirect if your route demands it
-  //     if (data.twoFactorRequired) {
-  //       message.info(data.message);
-  //       router.push(`/verify-2fa?email=${encodeURIComponent(email)}`);
-  //       return;
-  //     }
-
-  //     if (data.success) {
-  //       // Save user state into Zustand store (persists to localStorage)
-  //       setLoginSuccess(data.user, data.accessToken);
-  //       message.success("Logged in successfully!");
-  //       router.push("/dashboard");
-  //     }
-  //   } catch (error) {
-  //     const errMsg = error.response?.data?.message || "Login failed";
-  //     message.error(errMsg);
-
-  //     // If backend explicitly warns that verification is lacking
-  //     if (errMsg.toLowerCase().includes("verify your email")) {
-  //       router.push(`/verification-code?email=${encodeURIComponent(email)}`);
-  //     }
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-
  const handleLogin = async (e) => {
   e.preventDefault();
   if (!email || !password) return message.error("Provide credentials");

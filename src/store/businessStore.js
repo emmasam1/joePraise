@@ -20,6 +20,9 @@ export const useBusinessStore = create((set) => ({
       payload.append("businessPhone", formData.businessPhone);
       payload.append("category", formData.category);
       payload.append("address", formData.address);
+      payload.append("postalCode", formData.postalCode);
+      payload.append("businessCountry", formData.businessCountry);
+      payload.append("businessCity", formData.businessCity);
 
       // OPTIONAL TEXT FIELDS
       if (formData.description)

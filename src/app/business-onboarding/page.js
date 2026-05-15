@@ -54,6 +54,9 @@ export default function MultiStepForm() {
     businessPhone: "",
     category: "",
     address: "",
+    postalCode: "",
+    businessCountry: "",
+    businessCity: "",
     description: "",
     website: "",
     instagram: "",
@@ -404,8 +407,8 @@ export default function MultiStepForm() {
                 <Form.Item name="country" label="Country">
                   <Select
                     size="small"
-                    value={formData.country}
-                    onChange={(value) => handleChange("country", value)}
+                    value={formData.businessCountry}
+                    onChange={(value) => handleChange("businessCountry", value)}
                     placeholder="Select Country"
                     className="bg-gray-50! h-8! text-xs! rounded-md!"
                     options={[{ value: "nigeria", label: "Nigeria" }]}
@@ -417,8 +420,8 @@ export default function MultiStepForm() {
                 <Form.Item name="city" label="City">
                   <Select
                     size="small"
-                    value={formData.city}
-                    onChange={(value) => handleChange("city", value)}
+                    value={formData.businessCity}
+                    onChange={(value) => handleChange("businessCity", value)}
                     placeholder="Select City"
                     className="bg-gray-50! h-8! text-xs! rounded-md!"
                     options={[{ value: "abuja", label: "Abuja" }]}

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useAuthStore } from '@/store/authStore'; // Clean absolute import
+import { useAuthStore } from '@/store/authStore';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -8,7 +8,6 @@ const api = axios.create({
   },
 });
 
-// Automatically inject JWT token into requests if it exists
 api.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().token;

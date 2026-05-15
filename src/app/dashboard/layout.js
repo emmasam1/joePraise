@@ -15,13 +15,31 @@ import {
   UpOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const logout = useAuthStore((state) => state.logout);
 
   // State to handle the absolute pop-out menu
   const [isRevenueOpen, setIsRevenueOpen] = useState(false);
+
+
+  const handleLogout = () => {
+    Modal.confirm({
+      title: "Logout",
+      content: "Are you sure you want to log out of JoePraise Smart Hub?",
+      okText: "Yes, Logout",
+      cancelText: "Stay",
+      okButtonProps: { danger: true },
+      onOk: () => {
+        logout();
+        router.push("/login");
+      },
+    });
+  };
 
   const menuItems = [
     { label: "Overview", icon: <AppstoreOutlined />, href: "/dashboard" },
@@ -55,11 +73,17 @@ export default function DashboardLayout({ children }) {
       icon: <QuestionCircleOutlined />,
       href: "/dashboard/support",
     },
-    {
-      label: "Logout",
-      icon: <LogoutOutlined />,
-      href: "/logout",
-      color: "text-red-500",
+    // {
+    //   label: "Logout",
+    //   icon: <LogoutOutlined />,
+    //   href: "/logout",
+    //   color: "text-red-500",
+    // },
+    { 
+      label: "Logout", 
+      icon: <LogoutOutlined />, 
+      onClick: handleLogout,
+      color: "text-red-500" 
     },
   ];
 

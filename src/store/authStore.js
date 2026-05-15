@@ -26,7 +26,7 @@ export const useAuthStore = create(
       }))
     }),
     {
-      name: 'joepraise-auth-storage', // Key name in localStorage
+      name: 'joepraise-auth-storage',
       storage: createJSONStorage(() => localStorage),
     }
   )

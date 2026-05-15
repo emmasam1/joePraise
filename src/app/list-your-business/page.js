@@ -124,7 +124,7 @@ const page = () => {
               Join thousands of I business already
               <br /> connecting with customers on our platform
             </p>
-            <Link href="/business-onboarding" >
+            <Link href="/business-onboarding">
               <Button
                 type="primary"
                 className="h-12! mt-5 bg-[#060853]! hover:bg-[#060853]! border-none text-white text-base font-bold rounded-lg px-10! transition-colors"
@@ -235,9 +235,11 @@ const page = () => {
         </motion.div>
 
         <div className="flex justify-center items-center mt-10">
-          <Button className="bg-[#060853]! h-12! text-white! text-lg! px-5! ">
-            List Your Business
-          </Button>
+          <Link href="/business-onboarding">
+            <Button className="bg-[#060853]! h-12! text-white! text-lg! px-5! ">
+              List Your Business
+            </Button>
+          </Link>
         </div>
       </section>
       <section className="py-24 px-6 md:px-12 bg-white max-w-7xl mx-auto overflow-hidden">
@@ -313,30 +315,29 @@ const page = () => {
         </motion.div>
       </section>
 
-    
-        {/* Subscription Form Container */}
-        <section className="bg-[#15BE87] flex flex-col justify-center items-center py-24 md:py-32 px-6 mb-24">
-          {/* Heading */}
-          <h2 className="text-white text-3xl md:text-5xl font-extrabold text-center leading-[1.1] mb-12 tracking-tighter">
-            Want to list your business for
-            <br className="hidden md:block" /> massive growth
-          </h2>
+      {/* Subscription Form Container */}
+      <section className="bg-[#15BE87] flex flex-col justify-center items-center py-24 md:py-32 px-6 mb-24">
+        {/* Heading */}
+        <h2 className="text-white text-3xl md:text-5xl font-extrabold text-center leading-[1.1] mb-12 tracking-tighter">
+          Want to list your business for
+          <br className="hidden md:block" /> massive growth
+        </h2>
 
-          {/* Grid Container: Ensures equal width columns on desktop */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
-            <Input
-              placeholder="Enter your email"
-              className="h-16 px-6 rounded-xl bg-[#F2F2F2] border-none text-gray-700 text-lg shadow-sm focus:bg-white transition-all w-full"
-            />
+        {/* Grid Container: Ensures equal width columns on desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
+          <Input
+            placeholder="Enter your email"
+            className="h-16 px-6 rounded-xl bg-[#F2F2F2] border-none text-gray-700 text-lg shadow-sm focus:bg-white transition-all w-full"
+          />
 
-            <Button
-              type="primary"
-              className="h-16! bg-[#060853]! hover:bg-[#0a0d6b]! border-none text-white! text-lg font-bold rounded-xl w-full transition-all shadow-lg active:scale-95"
-            >
-              Subscribe
-            </Button>
-          </div>
-        </section>
+          <Button
+            type="primary"
+            className="h-16! bg-[#060853]! hover:bg-[#0a0d6b]! border-none text-white! text-lg font-bold rounded-xl w-full transition-all shadow-lg active:scale-95"
+          >
+            Subscribe
+          </Button>
+        </div>
+      </section>
     </div>
   );
 };

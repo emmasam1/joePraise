@@ -268,33 +268,56 @@
 // export default BusinessManagement;
 
 "use client";
-
-import React, { useEffect } from "react";
-import { Button, Input, Table, Dropdown, Spin } from "antd";
+import React, { useEffect, useState } from "react";
+import { Button, Input, Table, Dropdown } from "antd";
 import Link from "next/link";
 import { useBusinessStore } from "@/store/businessStore";
 
 const BusinessManagement = () => {
   const { businesses, fetchBusinesses, loading } = useBusinessStore();
 
-  useEffect(() => {
-    fetchBusinesses();
-  }, []);
+  const [search, setSearch] = useState("");
 
-  const statsCard = [
-    { id: 1, title: "Total Businesses", value: "—" },
-    { id: 2, title: "Total Active", value: "—" },
-    { id: 3, title: "Total Inactive", value: "—" },
-    { id: 4, title: "Suspended Businesses", value: "—" },
-  ];
+  // FIX 1: proper effect dependency + future-ready (search aware)
+  useEffect(() => {
+    fetchBusinesses({ search });
+  }, [fetchBusinesses, search]);
+
+  // FIX 2: safe + correct backend mapping
+  const data =
+    businesses?.map((b) => ({
+      key: b._id?.toString(),
+
+      business_name: b.businessName,
+      owner_name: b.owner?.name || "N/A",
+
+      location: b.address || "N/A",
+      date: b.createdAt
+        ? new Date(b.createdAt).toLocaleDateString()
+        : "N/A",
+
+      amount: "$0",
+
+      // FIX 3: correct backend field (NOT status)
+      sub_status: b.verificationStage || "submitted",
+
+      // FIX 4: safe trust score (no fake assumption)
+      trust_score: b.trustScore ?? 0,
+
+      verification: b.verificationStage || "submitted",
+    })) || [];
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
-      case "approved":
-        return "#007A55";
-      case "pending":
+      case "submitted":
+        return "#64748b";
+      case "under_review":
         return "#E27C3E";
-      case "rejected":
+      case "decision":
+        return "#007A55";
+      case "active":
+        return "#007A55";
+      case "inactive":
         return "#C70036";
       default:
         return "#64748b";
@@ -306,82 +329,149 @@ const BusinessManagement = () => {
       title: "",
       width: 50,
       render: () => (
-        <img src="/images/pen.png" className="w-4 opacity-50" />
+        <img
+          src="/images/pen.png"
+          alt="edit"
+          className="w-4 opacity-50 hover:opacity-100 cursor-pointer"
+        />
       ),
     },
     {
       title: "BUSINESS NAME",
-      dataIndex: "businessName",
+      dataIndex: "business_name",
+      key: "business_name",
       render: (text) => (
         <span className="font-bold text-[#1e293b]">{text}</span>
       ),
     },
     {
-      title: "OWNER",
-      dataIndex: "owner",
-      render: (owner) => owner?.fullName || "—",
+      title: "OWNER NAME",
+      dataIndex: "owner_name",
+      key: "owner_name",
     },
     {
       title: "LOCATION",
-      render: (_, record) =>
-        `${record.businessCity || ""}, ${record.businessCountry || ""}`,
+      dataIndex: "location",
+      key: "location",
     },
     {
-      title: "STATUS",
-      dataIndex: "verificationStatus",
-      render: (status) => (
-        <span style={{ color: getStatusColor(status) }} className="font-bold">
-          {status}
+      title: "DATE",
+      dataIndex: "date",
+      key: "date",
+    },
+    {
+      title: "TRUST SCORE",
+      dataIndex: "trust_score",
+      key: "trust_score",
+      render: (score) => (
+        <span className="flex items-center gap-1">
+          {score}
+          <img src="/images/trust_star.png" alt="star" className="h-4 w-4" />
         </span>
       ),
     },
     {
-      title: "SUBSCRIPTION",
-      render: (_, record) =>
-        record.subscription?.status || "inactive",
+      title: "SUBSCRIPTION STATUS",
+      dataIndex: "sub_status",
+      key: "sub_status",
+      render: (status) => (
+        <span
+          style={{ color: getStatusColor(status) }}
+          className="font-bold capitalize text-[11px]"
+        >
+          {status?.replace("_", " ")}
+        </span>
+      ),
+    },
+    {
+      title: "VERIFICATION",
+      dataIndex: "verification",
+      key: "verification",
+      render: (v) => (
+        <span className="text-[#15BE87] text-[10px] capitalize">
+          {v?.replace("_", " ") || "pending"}
+        </span>
+      ),
     },
     {
       title: "",
-      render: (_, record) => {
-        const items = [
-          {
-            key: "1",
-            label: (
-              <Link
-                href={`/admin-dashboard/business-management/${record._id}`}
-              >
-                View Profile
-              </Link>
-            ),
-          },
-        ];
-
-        return (
-          <Dropdown menu={{ items }}>
-            <Button>•••</Button>
-          </Dropdown>
-        );
-      },
+      key: "action",
+      render: (_, record) => (
+        <Dropdown
+          menu={{
+            items: [
+              {
+                key: "1",
+                label: (
+                  <Link
+                    href={`/admin-dashboard/business-management/${record.key}`}
+                    className="text-[10px] font-bold py-1 block"
+                  >
+                    View Profile
+                  </Link>
+                ),
+              },
+              {
+                key: "2",
+                label: (
+                  <span className="text-[10px] font-bold py-1 block">
+                    Approve Verification
+                  </span>
+                ),
+              },
+              {
+                key: "3",
+                label: (
+                  <span className="text-[10px] font-bold py-1 block">
+                    Suspend Business
+                  </span>
+                ),
+              },
+            ],
+          }}
+          trigger={["click"]}
+        >
+          <Button className="border-none! bg-transparent! p-0!">
+            <img src="/images/dots.png" className="w-5" alt="dots" />
+          </Button>
+        </Dropdown>
+      ),
     },
   ];
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Spin size="large" />
-      </div>
-    );
-  }
-
   return (
-    <div className="mt-3 space-y-6">
-      <h1 className="text-2xl font-bold">Business Management</h1>
+    <div className="mt-3 space-y-6 min-h-screen">
+      {/* YOUR SEARCH UI (UNCHANGED) BUT NOW FUNCTIONAL */}
+      <div className="flex items-center gap-2 pr-2">
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          prefix={
+            <img src="/images/search.png" alt="search" className="h-7" />
+          }
+          placeholder="Search"
+          className="w-72 rounded-lg bg-gray-50 border border-gray-200 h-10 text-xs"
+        />
 
+        <Button className="flex items-center justify-center border-gray-200 rounded-lg h-10! overflow-hidden">
+          <img src="/images/funnel.png" alt="filter" className="h-8 w-8" />
+        </Button>
+
+        <Button className="flex items-center justify-center border-gray-200 rounded-lg h-10! overflow-hidden">
+          <img src="/images/grid.png" alt="grid" className="h-8 w-8" />
+        </Button>
+
+        <Button className="flex items-center justify-center border-gray-200 rounded-lg h-10! overflow-hidden">
+          <img src="/images/list.png" alt="list" className="h-8 w-8" />
+        </Button>
+      </div>
+
+      {/* TABLE (UNCHANGED DESIGN) */}
       <Table
-        dataSource={businesses}
         columns={columns}
-        rowKey="_id"
-        pagination={{ pageSize: 10 }}
+        dataSource={data}
+        loading={loading}
+        pagination={false}
       />
     </div>
   );

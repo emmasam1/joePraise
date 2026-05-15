@@ -674,62 +674,290 @@
 // export default BusinessProfilePage;
 
 "use client";
-
 import React, { useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { Button, Spin, Avatar } from "antd";
+import { Button, Avatar, Input, Badge, Rate } from "antd";
+import { useRouter, useParams } from "next/navigation";
 import { useBusinessStore } from "@/store/businessStore";
+import {
+  MailOutlined,
+  PhoneOutlined,
+  IdcardOutlined,
+  ScanOutlined,
+  FileTextOutlined,
+  CheckCircleFilled,
+  CloseCircleFilled,
+  ClockCircleFilled,
+  StarFilled,
+  StarOutlined,
+} from "@ant-design/icons";
 
 const BusinessProfilePage = () => {
-  const { id } = useParams();
   const router = useRouter();
+  const params = useParams();
 
   const { selectedBusiness, fetchBusiness, loading } = useBusinessStore();
 
+  const id = params?.id;
+
   useEffect(() => {
-    fetchBusiness(id);
+    if (id) fetchBusiness(id);
   }, [id]);
 
-  if (loading || !selectedBusiness) {
+  const business = selectedBusiness;
+
+  if (loading || !business) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Spin size="large" />
+      <div className="flex items-center justify-center min-h-screen text-gray-500">
+        Loading business profile...
       </div>
     );
   }
 
-  const b = selectedBusiness;
-
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen p-6">
 
-      <div className="flex items-center gap-4 mb-6">
+      {/* HEADER */}
+      <div className="flex items-center justify-between mb-6">
         <Button onClick={() => router.back()}>Back</Button>
 
-        <div>
-          <h1 className="text-xl font-bold">{b.businessName}</h1>
-          <p className="text-gray-500">Business Profile</p>
+        <header className="h-20 bg-white border border-gray-100 flex items-center justify-between px-8 flex-1 max-w-4xl rounded-lg shadow-sm">
+          <Input placeholder="Search" className="max-w-md" />
+
+          <Badge count={5}>
+            <img src="/images/bell.png" className="h-6" />
+          </Badge>
+
+          <Avatar src={business.owner?.avatar || "https://i.pravatar.cc/150"} />
+        </header>
+      </div>
+
+      {/* BUSINESS HEADER CARD */}
+      <div className="w-full bg-white border rounded-sm p-6 flex flex-col md:flex-row gap-6 mb-5">
+
+        <div className="w-full md:w-64 h-48">
+          <img
+            src={business.banner || "https://images.unsplash.com/photo-1552566626-52f8b828add9"}
+            className="w-full h-full object-cover rounded-lg"
+          />
+        </div>
+
+        <div className="flex-1 space-y-4">
+          <h2 className="text-xl font-bold">
+            {business.businessName}
+          </h2>
+
+          <div className="text-sm text-gray-500 flex gap-2 flex-wrap">
+            <span>{business.category}</span>
+            <span>•</span>
+            <span>{business.businessCity}</span>
+            <span>•</span>
+            <span>
+              Established {business.establishedYear || "N/A"}
+            </span>
+          </div>
+
+          <p className="text-gray-600 text-sm">
+            {business.description || "No description provided"}
+          </p>
+
+          <div className="flex gap-3 flex-wrap">
+            <div className="bg-[#E6FFFA] px-4 py-2 rounded-md text-[12px]">
+              Business ID: {business.businessId || business._id}
+            </div>
+
+            <div className="bg-[#E6FFFA] px-4 py-2 rounded-md text-[12px]">
+              Added:{" "}
+              {new Date(business.createdAt).toDateString()}
+            </div>
+
+            <div className="bg-[#E6FFFA] px-4 py-2 rounded-md text-[12px]">
+              Status: {business.verificationStage}
+            </div>
+          </div>
+        </div>
+
+        {/* VERIFICATION CARD */}
+        <div className="w-full md:w-72 bg-[#F8FAFC] rounded-xl p-5 border">
+
+          <div className="flex justify-between mb-5">
+            <h3 className="font-bold text-sm">
+              Verification Status
+            </h3>
+
+            <span className="text-xs font-bold uppercase text-orange-500 flex items-center gap-1">
+              <ClockCircleFilled />
+              {business.verificationStage}
+            </span>
+          </div>
+
+          <div className="space-y-4">
+
+            <div className="flex justify-between">
+              <span className="flex items-center gap-2">
+                <CheckCircleFilled className="text-green-500" />
+                Submitted
+              </span>
+              <span className="text-xs text-gray-400">
+                {business.createdAt
+                  ? new Date(business.createdAt).toDateString()
+                  : "—"}
+              </span>
+            </div>
+
+            <div className="flex justify-between">
+              <span className="flex items-center gap-2 font-bold">
+                <ClockCircleFilled className="text-orange-400" />
+                Under Review
+              </span>
+              <span className="text-xs text-gray-500">
+                In progress
+              </span>
+            </div>
+
+            <div className="flex justify-between">
+              <span className="flex items-center gap-2 text-gray-400">
+                <CloseCircleFilled />
+                Decision
+              </span>
+              <span className="text-xs text-gray-400">
+                Pending
+              </span>
+            </div>
+
+          </div>
         </div>
       </div>
 
-      {/* BASIC INFO */}
-      <div className="bg-white p-6 rounded-lg">
-        <p>Email: {b.businessEmail}</p>
-        <p>Phone: {b.businessPhone}</p>
-        <p>Status: {b.verificationStatus}</p>
-        <p>Stage: {b.verificationStage}</p>
+      {/* OWNER + CONTACT GRID */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
+
+        {/* OWNER */}
+        <div className="lg:col-span-5 bg-white border rounded-sm p-6">
+          <h2 className="font-bold mb-6">Owner Details</h2>
+
+          <div className="flex items-center gap-4 mb-6">
+            <Avatar size={56} src={business.owner?.avatar} />
+
+            <div>
+              <h3 className="font-bold">
+                {business.owner?.fullName || "N/A"}
+              </h3>
+              <p className="text-xs text-gray-400">
+                Owner & Founder
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+
+            <div className="flex gap-3">
+              <MailOutlined />
+              <div>
+                <p className="font-bold">
+                  {business.owner?.email || "N/A"}
+                </p>
+                <p className="text-xs text-gray-400">Email</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <PhoneOutlined />
+              <div>
+                <p className="font-bold">
+                  {business.owner?.phone || "N/A"}
+                </p>
+                <p className="text-xs text-gray-400">Phone</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <IdcardOutlined />
+              <div>
+                <p className="font-bold">
+                  {business.owner?.idType || "N/A"}
+                </p>
+                <p className="text-xs text-gray-400">ID Type</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* CONTACT */}
+        <div className="lg:col-span-7 bg-white border rounded-sm p-6">
+          <h2 className="font-bold mb-6">
+            Contact Information
+          </h2>
+
+          <div className="grid grid-cols-2 gap-6">
+
+            <div>
+              <p className="text-xs text-gray-400">
+                Business Email
+              </p>
+              <p className="font-bold">
+                {business.businessEmail}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-400">
+                Phone
+              </p>
+              <p className="font-bold">
+                {business.businessPhone}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-400">
+                Address
+              </p>
+              <p className="font-bold">
+                {business.address}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-400">
+                Website
+              </p>
+              <p className="font-bold underline">
+                {business.website || "N/A"}
+              </p>
+            </div>
+
+          </div>
+        </div>
       </div>
 
-      {/* DOCUMENTS */}
-      <div className="bg-white mt-4 p-6 rounded-lg">
-        <h2 className="font-bold mb-4">Documents</h2>
+      {/* PRODUCTS */}
+      <div className="bg-white border mt-6 p-6">
+        <h2 className="font-bold mb-4">
+          Products & Services
+        </h2>
 
-        {b.verificationDocuments?.map((doc) => (
-          <div key={doc._id} className="flex justify-between border-b py-2">
-            <span>{doc.docType}</span>
-            <span>{doc.status}</span>
-          </div>
-        ))}
+        <div className="flex flex-wrap gap-2">
+          {(business.products || []).map((p, i) => (
+            <span
+              key={i}
+              className="bg-gray-100 px-3 py-1 text-xs rounded"
+            >
+              {p}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* REVIEWS (STATIC UNTIL YOU CONNECT API) */}
+      <div className="bg-white border mt-6 p-6">
+        <h2 className="font-bold mb-4">
+          Customer Reviews
+        </h2>
+
+        <p className="text-gray-400 text-sm">
+          Reviews will load from backend endpoint later.
+        </p>
       </div>
 
     </div>

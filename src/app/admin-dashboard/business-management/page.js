@@ -267,214 +267,494 @@
 
 // export default BusinessManagement;
 
+
 "use client";
-import React, { useEffect, useState } from "react";
-import { Button, Input, Table, Dropdown } from "antd";
+import React, { useState, useEffect } from "react";
+import { Button, Input, Table, Dropdown, message, Spin } from "antd";
 import Link from "next/link";
-import { useBusinessStore } from "@/store/businessStore";
+import api from "@/api/axios";
 
 const BusinessManagement = () => {
-  const { businesses, fetchBusinesses, loading } = useBusinessStore();
+  const [loading, setLoading] = useState(false);
+  const [businesses, setBusinesses] = useState([]);
+  const [stats, setStats] = useState({
+    totalBusinesses: 0,
+    totalActive: 0,
+    totalInactive: 0,
+    suspendedBusinesses: 0,
+  });
+  
+  // Search & Filter State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
 
-  const [search, setSearch] = useState("");
+  // Fetch Businesses Data from Backend
+  const fetchBusinesses = async (page = 1, search = "", status = "") => {
+    setLoading(true);
+    try {
+      const response = await api.get("/admin", {
+        params: {
+          page,
+          limit: pagination.pageSize,
+          search,
+          status,
+        },
+      });
+      
+      if (response.data.success) {
+        setBusinesses(response.data.businesses);
+        setStats(response.data.stats);
+        setPagination((prev) => ({
+          ...prev,
+          current: Number(response.data.pagination.page),
+          total: response.data.pagination.total,
+        }));
+      }
+    } catch (error) {
+      message.error(error.response?.data?.message || "Failed to load businesses");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // FIX 1: proper effect dependency + future-ready (search aware)
+  // Trigger data fetch on mount or search/status updates
   useEffect(() => {
-    fetchBusinesses({ search });
-  }, [fetchBusinesses, search]);
+    const delayDebounce = setTimeout(() => {
+      fetchBusinesses(1, searchQuery, statusFilter);
+    }, 400); // 400ms debounce to limit rapid API hits
 
-  // FIX 2: safe + correct backend mapping
-  const data =
-    businesses?.map((b) => ({
-      key: b._id?.toString(),
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery, statusFilter]);
 
-      business_name: b.businessName,
-      owner_name: b.owner?.name || "N/A",
-
-      location: b.address || "N/A",
-      date: b.createdAt
-        ? new Date(b.createdAt).toLocaleDateString()
-        : "N/A",
-
-      amount: "$0",
-
-      // FIX 3: correct backend field (NOT status)
-      sub_status: b.verificationStage || "submitted",
-
-      // FIX 4: safe trust score (no fake assumption)
-      trust_score: b.trustScore ?? 0,
-
-      verification: b.verificationStatus,
-    })) || [];
+  const handleTableChange = (pageObj) => {
+    fetchBusinesses(pageObj.current, searchQuery, statusFilter);
+  };
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
-      case "submitted":
-        return "#64748b";
-      case "under_review":
-        return "#E27C3E";
-      case "decision":
-        return "#007A55";
       case "active":
         return "#007A55";
       case "inactive":
+      case "expired":
+      case "canceled":
         return "#C70036";
       default:
         return "#64748b";
     }
   };
 
+  const statsCard = [
+    { id: 1, title: "Total Businesses", value: stats.totalBusinesses.toLocaleString() },
+    { id: 2, title: "Total Active", value: stats.totalActive.toLocaleString() },
+    { id: 3, title: "Total Inactive", value: stats.totalInactive.toLocaleString() },
+    { id: 4, title: "Suspended Businesses", value: stats.suspendedBusinesses.toLocaleString() },
+  ];
+
   const columns = [
     {
-      title: "",
-      width: 50,
-      render: () => (
-        <img
-          src="/images/pen.png"
-          alt="edit"
-          className="w-4 opacity-50 hover:opacity-100 cursor-pointer"
-        />
-      ),
-    },
-    {
       title: "BUSINESS NAME",
-      dataIndex: "business_name",
-      key: "business_name",
-      render: (text) => (
-        <span className="font-bold text-[#1e293b]">{text}</span>
+      dataIndex: "businessName",
+      key: "businessName",
+      render: (text, record) => (
+        <div className="flex items-center gap-3">
+          {record.logo && (
+            <img src={record.logo} alt="logo" className="w-7 h-7 object-cover rounded-md border border-gray-100" />
+          )}
+          <span className="font-bold text-[#1e293b]">{text}</span>
+        </div>
       ),
     },
-    {
-      title: "OWNER NAME",
-      dataIndex: "owner_name",
+    { 
+      title: "OWNER NAME", 
+      dataIndex: ["owner", "name"], 
       key: "owner_name",
+      render: (text) => text || <span className="text-gray-400 italic">No Owner Assigned</span>
     },
-    {
-      title: "LOCATION",
-      dataIndex: "location",
-      key: "location",
-    },
-    {
-      title: "DATE",
-      dataIndex: "date",
-      key: "date",
+    { title: "LOCATION", dataIndex: "location", key: "location" },
+    { 
+      title: "CREATED AT", 
+      dataIndex: "createdAt", 
+      key: "createdAt",
+      render: (date) => new Date(date).toLocaleDateString("en-GB")
     },
     {
       title: "TRUST SCORE",
-      dataIndex: "trust_score",
-      key: "trust_score",
+      dataIndex: "trustScore",
+      key: "trustScore",
       render: (score) => (
         <span className="flex items-center gap-1">
-          {score}
+          {score || "0.0"}{" "}
           <img src="/images/trust_star.png" alt="star" className="h-4 w-4" />
         </span>
       ),
     },
     {
-      title: "SUBSCRIPTION STATUS",
-      dataIndex: "sub_status",
-      key: "sub_status",
+      title: "SUBSCRIPTION",
+      dataIndex: "subscriptionStatus",
+      key: "subscriptionStatus",
       render: (status) => (
         <span
           style={{ color: getStatusColor(status) }}
           className="font-bold capitalize text-[11px]"
         >
-          {status?.replace("_", " ")}
+          {status}
         </span>
       ),
     },
     {
       title: "VERIFICATION",
-      dataIndex: "verification",
+      dataIndex: "verificationStatus",
       key: "verification",
-      render: (v) => (
-        <span className="text-[#15BE87] text-[10px] capitalize">
-          {v?.replace("_", " ") || "pending"}
-        </span>
-      ),
+      render: (status) => {
+        let color = "text-amber-500";
+        let display = "Pending";
+        if (status === "approved") { color = "text-[#15BE87]"; display = "Verified"; }
+        if (status === "rejected") { color = "text-red-500"; display = "Rejected"; }
+        if (status === "not_started") { color = "text-gray-400"; display = "Not Started"; }
+        return <span className={`${color} text-[11px] font-bold capitalize`}>{display}</span>;
+      },
     },
     {
       title: "",
       key: "action",
-      render: (_, record) => (
-        <Dropdown
-          menu={{
-            items: [
-              {
-                key: "1",
-                label: (
-                  <Link
-                    href={`/admin-dashboard/business-management/${record.key}`}
-                    className="text-[10px] font-bold py-1 block"
-                  >
-                    View Profile
-                  </Link>
-                ),
-              },
-              {
-                key: "2",
-                label: (
-                  <span className="text-[10px] font-bold py-1 block">
-                    Approve Verification
-                  </span>
-                ),
-              },
-              {
-                key: "3",
-                label: (
-                  <span className="text-[10px] font-bold py-1 block">
-                    Suspend Business
-                  </span>
-                ),
-              },
-            ],
-          }}
-          trigger={["click"]}
-        >
-          <Button className="border-none! bg-transparent! p-0!">
-            <img src="/images/dots.png" className="w-5" alt="dots" />
-          </Button>
-        </Dropdown>
-      ),
+      render: (_, record) => {
+        const dropdownItems = [
+          {
+            key: "1",
+            label: (
+              <Link 
+                href={`/admin-dashboard/business-management/${record._id}`}
+                className="text-[11px] font-bold py-1 block"
+              >
+                View Profile
+              </Link>
+            ),
+          },
+          {
+            key: "2",
+            label: (
+              <span className="text-[11px] font-bold py-1 block text-green-600">
+                Manage Documents
+              </span>
+            ),
+          },
+        ];
+
+        return (
+          <Dropdown
+            menu={{ items: dropdownItems }}
+            trigger={["click"]}
+            placement="bottomRight"
+          >
+            <Button className="border-none! bg-transparent! outline-0! p-0! flex items-center justify-center h-8 w-8">
+              <img src="/images/dots.png" className="w-5" alt="dots" />
+            </Button>
+          </Dropdown>
+        );
+      },
     },
   ];
 
   return (
-    <div className="mt-3 space-y-6 min-h-screen">
-      {/* YOUR SEARCH UI (UNCHANGED) BUT NOW FUNCTIONAL */}
-      <div className="flex items-center gap-2 pr-2">
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          prefix={
-            <img src="/images/search.png" alt="search" className="h-7" />
-          }
-          placeholder="Search"
-          className="w-72 rounded-lg bg-gray-50 border border-gray-200 h-10 text-xs"
-        />
-
-        <Button className="flex items-center justify-center border-gray-200 rounded-lg h-10! overflow-hidden">
-          <img src="/images/funnel.png" alt="filter" className="h-8 w-8" />
-        </Button>
-
-        <Button className="flex items-center justify-center border-gray-200 rounded-lg h-10! overflow-hidden">
-          <img src="/images/grid.png" alt="grid" className="h-8 w-8" />
-        </Button>
-
-        <Button className="flex items-center justify-center border-gray-200 rounded-lg h-10! overflow-hidden">
-          <img src="/images/list.png" alt="list" className="h-8 w-8" />
+    <div className="mt-3 space-y-6 min-h-screen pr-4">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900">
+          Business Management
+        </h1>
+        <Button className="p-4.5! bg-[#060853]! rounded-lg border-none! text-white!">
+          <img src="/images/upload.png" alt="export" className="h-7" />
+          Export Report
         </Button>
       </div>
 
-      {/* TABLE (UNCHANGED DESIGN) */}
-      <Table
-        columns={columns}
-        dataSource={data}
-        loading={loading}
-        pagination={false}
-      />
+      {/* Dynamic Counter Layout Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-[#E2EDFC] p-6 rounded-xl">
+        {statsCard.map((card) => (
+          <div
+            key={card.id}
+            className="bg-white p-5 rounded-xl shadow-sm border border-blue-50"
+          >
+            <div className="flex items-center gap-3 mb-2 border-b border-gray-50 pb-3">
+              <div className="p-2 bg-blue-50 rounded-lg">
+                <img src="/images/cube.png" alt="" className="h-5 w-5" />
+              </div>
+              <h3 className="text-sm font-semibold text-gray-600">
+                {card.title}
+              </h3>
+            </div>
+            <p className="text-2xl font-bold text-[#060853]">{card.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Toolbar Options Filter System */}
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl border border-gray-100">
+        <div className="flex items-center gap-2">
+          <select 
+            value={statusFilter} 
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-10 border border-gray-200 rounded-lg px-3 text-xs bg-gray-50 text-gray-600 outline-none"
+          >
+            <option value="">All Verification States</option>
+            <option value="not_started">Not Started</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Input
+            prefix={<img src="/images/search.png" alt="search" className="h-6" />}
+            placeholder="Search matching identity attributes..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-72 rounded-lg bg-gray-50 border border-gray-200 h-10 text-xs"
+            allowClear
+          />
+        </div>
+      </div>
+
+      <div className="bg-[#f0f5ff] p-6 rounded-xl min-h-[500px]">
+        <h2 className="text-sm font-bold mb-4 text-[#1e293b]">Registered Platforms</h2>
+        <div className="bg-white rounded-xl overflow-hidden shadow-sm">
+          <Table
+            columns={columns}
+            dataSource={businesses}
+            rowKey="_id"
+            loading={loading}
+            pagination={{
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
+              showSizeChanger: false,
+              position: ["bottomRight"],
+            }}
+            onChange={handleTableChange}
+            size="small"
+            rowClassName="hover:bg-gray-50 transition-colors"
+          />
+        </div>
+      </div>
     </div>
   );
 };
 
 export default BusinessManagement;
+
+// "use client";
+// import React, { useEffect, useState } from "react";
+// import { Button, Input, Table, Dropdown } from "antd";
+// import Link from "next/link";
+// import { useBusinessStore } from "@/store/businessStore";
+
+// const BusinessManagement = () => {
+//   const { businesses, fetchBusinesses, loading } = useBusinessStore();
+
+//   const [search, setSearch] = useState("");
+
+//   // FIX 1: proper effect dependency + future-ready (search aware)
+//   useEffect(() => {
+//     fetchBusinesses({ search });
+//   }, [fetchBusinesses, search]);
+
+//   // FIX 2: safe + correct backend mapping
+//   const data =
+//     businesses?.map((b) => ({
+//       key: b._id?.toString(),
+
+//       business_name: b.businessName,
+//       owner_name: b.owner?.name || "N/A",
+
+//       location: b.address || "N/A",
+//       date: b.createdAt
+//         ? new Date(b.createdAt).toLocaleDateString()
+//         : "N/A",
+
+//       amount: "$0",
+
+//       // FIX 3: correct backend field (NOT status)
+//       sub_status: b.verificationStage || "submitted",
+
+//       // FIX 4: safe trust score (no fake assumption)
+//       trust_score: b.trustScore ?? 0,
+
+//       verification: b.verificationStatus,
+//     })) || [];
+
+//   const getStatusColor = (status) => {
+//     switch (status?.toLowerCase()) {
+//       case "submitted":
+//         return "#64748b";
+//       case "under_review":
+//         return "#E27C3E";
+//       case "decision":
+//         return "#007A55";
+//       case "active":
+//         return "#007A55";
+//       case "inactive":
+//         return "#C70036";
+//       default:
+//         return "#64748b";
+//     }
+//   };
+
+//   const columns = [
+//     {
+//       title: "",
+//       width: 50,
+//       render: () => (
+//         <img
+//           src="/images/pen.png"
+//           alt="edit"
+//           className="w-4 opacity-50 hover:opacity-100 cursor-pointer"
+//         />
+//       ),
+//     },
+//     {
+//       title: "BUSINESS NAME",
+//       dataIndex: "business_name",
+//       key: "business_name",
+//       render: (text) => (
+//         <span className="font-bold text-[#1e293b]">{text}</span>
+//       ),
+//     },
+//     {
+//       title: "OWNER NAME",
+//       dataIndex: "owner_name",
+//       key: "owner_name",
+//     },
+//     {
+//       title: "LOCATION",
+//       dataIndex: "location",
+//       key: "location",
+//     },
+//     {
+//       title: "DATE",
+//       dataIndex: "date",
+//       key: "date",
+//     },
+//     {
+//       title: "TRUST SCORE",
+//       dataIndex: "trust_score",
+//       key: "trust_score",
+//       render: (score) => (
+//         <span className="flex items-center gap-1">
+//           {score}
+//           <img src="/images/trust_star.png" alt="star" className="h-4 w-4" />
+//         </span>
+//       ),
+//     },
+//     {
+//       title: "SUBSCRIPTION STATUS",
+//       dataIndex: "sub_status",
+//       key: "sub_status",
+//       render: (status) => (
+//         <span
+//           style={{ color: getStatusColor(status) }}
+//           className="font-bold capitalize text-[11px]"
+//         >
+//           {status?.replace("_", " ")}
+//         </span>
+//       ),
+//     },
+//     {
+//       title: "VERIFICATION",
+//       dataIndex: "verification",
+//       key: "verification",
+//       render: (v) => (
+//         <span className="text-[#15BE87] text-[10px] capitalize">
+//           {v?.replace("_", " ") || "pending"}
+//         </span>
+//       ),
+//     },
+//     {
+//       title: "",
+//       key: "action",
+//       render: (_, record) => (
+//         <Dropdown
+//           menu={{
+//             items: [
+//               {
+//                 key: "1",
+//                 label: (
+//                   <Link
+//                     href={`/admin-dashboard/business-management/${record.key}`}
+//                     className="text-[10px] font-bold py-1 block"
+//                   >
+//                     View Profile
+//                   </Link>
+//                 ),
+//               },
+//               {
+//                 key: "2",
+//                 label: (
+//                   <span className="text-[10px] font-bold py-1 block">
+//                     Approve Verification
+//                   </span>
+//                 ),
+//               },
+//               {
+//                 key: "3",
+//                 label: (
+//                   <span className="text-[10px] font-bold py-1 block">
+//                     Suspend Business
+//                   </span>
+//                 ),
+//               },
+//             ],
+//           }}
+//           trigger={["click"]}
+//         >
+//           <Button className="border-none! bg-transparent! p-0!">
+//             <img src="/images/dots.png" className="w-5" alt="dots" />
+//           </Button>
+//         </Dropdown>
+//       ),
+//     },
+//   ];
+
+//   return (
+//     <div className="mt-3 space-y-6 min-h-screen">
+//       {/* YOUR SEARCH UI (UNCHANGED) BUT NOW FUNCTIONAL */}
+//       <div className="flex items-center gap-2 pr-2">
+//         <Input
+//           value={search}
+//           onChange={(e) => setSearch(e.target.value)}
+//           prefix={
+//             <img src="/images/search.png" alt="search" className="h-7" />
+//           }
+//           placeholder="Search"
+//           className="w-72 rounded-lg bg-gray-50 border border-gray-200 h-10 text-xs"
+//         />
+
+//         <Button className="flex items-center justify-center border-gray-200 rounded-lg h-10! overflow-hidden">
+//           <img src="/images/funnel.png" alt="filter" className="h-8 w-8" />
+//         </Button>
+
+//         <Button className="flex items-center justify-center border-gray-200 rounded-lg h-10! overflow-hidden">
+//           <img src="/images/grid.png" alt="grid" className="h-8 w-8" />
+//         </Button>
+
+//         <Button className="flex items-center justify-center border-gray-200 rounded-lg h-10! overflow-hidden">
+//           <img src="/images/list.png" alt="list" className="h-8 w-8" />
+//         </Button>
+//       </div>
+
+//       {/* TABLE (UNCHANGED DESIGN) */}
+//       <Table
+//         columns={columns}
+//         dataSource={data}
+//         loading={loading}
+//         pagination={false}
+//       />
+//     </div>
+//   );
+// };
+
+// export default BusinessManagement;

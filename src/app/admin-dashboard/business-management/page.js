@@ -535,6 +535,7 @@ const BusinessManagement = () => {
             onChange={handleTableChange}
             size="small"
             rowClassName="hover:bg-gray-50 transition-colors"
+            className="custom-table"
           />
         </div>
       </div>

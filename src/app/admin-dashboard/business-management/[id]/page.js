@@ -675,9 +675,11 @@
 
 
 "use client";
-import React, { useState, useEffect } from "react";
-import { Button, Tag, Rate, Input, Badge, Avatar, Spin } from "antd";
+import React, { useEffect, useState } from "react";
+import { Button, Input, Badge, Avatar, Spin, message } from "antd";
 import { useRouter, useParams } from "next/navigation";
+import { useBusinessStore } from "@/store/businessStore"; // Adjust this import path to match your file structure
+
 import {
   ClockCircleOutlined,
   CheckSquareFilled,
@@ -698,66 +700,35 @@ import { RiArrowLeftLine } from "react-icons/ri";
 
 export default function BusinessProfilePage() {
   const router = useRouter();
-  const { id } = useParams(); // Next.js App Router way to get the ID safely
-  
-  // States for API data, loading, and action processing
-  const [business, setBusiness] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { id } = useParams();
+
+  // Connect directly to your Zustand global state store
+  const { fetchBusiness, verifyBusiness, selectedBusiness, loading } = useBusinessStore();
   const [submitting, setSubmitting] = useState(false);
 
-  // Fetch data from your backend API
- useEffect(() => {
-  async function fetchBusinessData() {
-    try {
-      const response = await fetch(`/api/businesses/${id}`);
-      
-      if (!response.ok) {
-        throw new Error(`Server responded with status: ${response.status}`);
-      }
-
-      const resData = await response.json();
-      console.log("API Raw Response Data:", resData); // Open browser console to look at this structure!
-
-      // If your backend wraps the payload inside a key like 'data' or 'business'
-      const actualBusinessData = resData.data || resData.business || resData;
-      
-      if (actualBusinessData && (actualBusinessData.business_name || actualBusinessData._id)) {
-        setBusiness(actualBusinessData);
-      } else {
-        setBusiness(null);
-      }
-    } catch (error) {
-      console.error("Error fetching business profile:", error);
-      setBusiness(null);
-    } finally {
-      setLoading(false);
+  // Trigger global fetch via your Axios client with auth interceptors intact
+  useEffect(() => {
+    if (id) {
+      fetchBusiness(id).catch((err) => {
+        console.error("Zustand fetch failed:", err);
+      });
     }
-  }
-  
-  if (id) fetchBusinessData();
-}, [id]);
+  }, [id, fetchBusiness]);
 
-  // Handler for Admin Actions (Approve, Reject, Suspend)
+  // Wire buttons to your store's patch verify action
   const handleStatusUpdate = async (status) => {
     setSubmitting(true);
     try {
-      const response = await fetch(`/api/businesses/${id}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
-      if (response.ok) {
-        // Refresh data or update local state
-        setBusiness(prev => ({ ...prev, verificationStatus: status }));
-      }
+      await verifyBusiness(id, { status });
+      // Re-fetch automatically inside Zustand to keep data perfectly synchronized
     } catch (error) {
-      console.error(`Failed to update status to ${status}:`, error);
+      console.error(`Failed to verify business with status ${status}:`, error);
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Center a loader while waiting for API data so layout doesn't break jumpily
+  // Keep layout loading states perfectly centered
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -766,8 +737,8 @@ export default function BusinessProfilePage() {
     );
   }
 
-  // Fallback if API returns no data
-  if (!business) {
+  // Fallback if data isn't in state
+  if (!selectedBusiness) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
         <h2 className="text-xl font-bold text-gray-800">Business Not Found</h2>
@@ -775,6 +746,9 @@ export default function BusinessProfilePage() {
       </div>
     );
   }
+
+  // Convenience wrapper alias for easier reading matching your layout mappings
+  const business = selectedBusiness;
 
   return (
     <div className="bg-gray-50 min-h-screen p-6">
@@ -789,7 +763,7 @@ export default function BusinessProfilePage() {
           />
           <div>
             <h1 className="text-xl font-bold text-gray-900 leading-tight">
-              {business.business_name}
+              {business.businessName || business.business_name}
             </h1>
             <p className="text-xs text-gray-500">Business Management / Profile</p>
           </div>
@@ -824,43 +798,49 @@ export default function BusinessProfilePage() {
       <div className="w-full bg-white border border-gray-100 rounded-sm p-6 flex flex-col md:flex-row gap-6 mb-5">
         <div className="w-full md:w-64 h-48 shrink-0">
           <img
-            src={business.image || "https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=1000&auto=format&fit=crop"}
-            alt={business.business_name}
+            src={business.banner || business.logo || "https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=1000&auto=format&fit=crop"}
+            alt={business.businessName}
             className="w-full h-full object-cover rounded-lg"
           />
         </div>
 
         <div className="flex-1 space-y-4">
           <div>
-            <h2 className="text-xl font-bold text-[#2A2A2A]">{business.business_name}</h2>
+            <h2 className="text-xl font-bold text-[#2A2A2A]">{business.businessName || business.business_name}</h2>
             <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
               <span>{business.category || "Food & Beverage"}</span>
               <span className="text-gray-300">•</span>
-              <span>Established {business.established || "2018"}</span>
+              <span>{business.businessCity}, {business.businessCountry}</span>
             </div>
           </div>
 
           <p className="text-gray-600 text-sm leading-relaxed max-w-2xl">
-            {business.description}
+            {business.description || "No business description provided."}
           </p>
 
           <div className="flex flex-wrap gap-3 pt-2">
             <div className="bg-[#E6FFFA] text-[#2D3748] px-4 py-2 rounded-md text-[13px] font-medium">
-              Business ID: {business.business_id || `BE-${business.established}-002`}
+              Postal Code: {business.postalCode || "N/A"}
             </div>
             <div className="bg-[#E6FFFA] text-[#2D3748] px-4 py-2 rounded-md text-[13px] font-medium">
-              Added: {new Date(business.createdAt).toLocaleDateString()}
+              Added: {business.createdAt ? new Date(business.createdAt).toLocaleDateString() : "Recently"}
             </div>
           </div>
         </div>
 
-        {/* Verification Status Card */}
+        {/* Verification Status Card using Icons */}
         <div className="w-full md:w-72 bg-[#F8FAFC] rounded-xl p-5 border border-gray-50">
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-bold text-gray-800 text-sm">Verification Status</h3>
             <div className="flex items-center gap-1 text-[#E27C3E] text-[11px] font-bold uppercase">
-              <ClockCircleOutlined />
-              <span>{business.verificationStatus || "Pending Review"}</span>
+              {business.status === "Approved" ? (
+                <CheckCircleFilled className="text-[#10B981]" />
+              ) : business.status === "Rejected" ? (
+                <CloseCircleFilled className="text-[#7F1D1D]" />
+              ) : (
+                <ClockCircleOutlined />
+              )}
+              <span>{business.status || "Pending Review"}</span>
             </div>
           </div>
 
@@ -870,17 +850,21 @@ export default function BusinessProfilePage() {
                 <CheckSquareFilled className="text-[#10B981] text-lg" />
                 <span className="text-sm text-gray-600 font-medium">Submitted</span>
               </div>
-              <span className="text-xs text-gray-400">2 days ago</span>
+              <span className="text-xs text-gray-400">Verified Step</span>
             </div>
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-[18px] h-[18px] rounded-full border-2 border-[#E27C3E] flex items-center justify-center">
-                  <div className="w-2 h-2 bg-[#E27C3E] rounded-full"></div>
-                </div>
-                <span className="text-sm text-gray-800 font-bold">Under Review</span>
+                {business.status === "Approved" ? (
+                  <CheckCircleFilled className="text-[#10B981] text-lg" />
+                ) : business.status === "Rejected" ? (
+                  <CloseCircleFilled className="text-[#7F1D1D] text-lg" />
+                ) : (
+                  <ClockCircleFilled className="text-[#E27C3E] text-lg" />
+                )}
+                <span className="text-sm text-gray-800 font-bold">Current State</span>
               </div>
-              <span className="text-xs text-gray-500 font-medium italic">In Progress</span>
+              <span className="text-xs text-gray-500 font-medium italic">{business.status || "Under Review"}</span>
             </div>
           </div>
         </div>
@@ -892,25 +876,25 @@ export default function BusinessProfilePage() {
         <div className="lg:col-span-5 bg-white border border-gray-100 rounded-sm p-6">
           <h2 className="text-lg font-bold text-gray-900 mb-6">Owner Details</h2>
           <div className="flex items-center gap-4 mb-8">
-            <Avatar size={56} src={business.owner_avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} />
+            <Avatar size={56} src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${business.businessName}`} />
             <div className="flex-1">
-              <h3 className="font-bold text-gray-900 text-base leading-tight">{business.owner_name}</h3>
-              <p className="text-gray-400 text-xs mt-0.5">Owner & Founder</p>
+              <h3 className="font-bold text-gray-900 text-base leading-tight">Business Representative</h3>
+              <p className="text-gray-400 text-xs mt-0.5">Manager Account</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+          <div className="grid grid-cols-1 gap-y-4">
             <div className="flex items-start gap-3">
               <div className="bg-[#E6FFFA] p-2.5 rounded-lg"><CheckCircleFilled className="text-[#0D9488]" /></div>
               <div className="min-w-0">
-                <p className="text-sm font-bold text-gray-800 truncate">{business.email}</p>
+                <p className="text-sm font-bold text-gray-800 truncate">{business.businessEmail}</p>
                 <p className="text-[11px] text-gray-400 mt-1">Mail Address</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <div className="bg-[#E6FFFA] p-2.5 rounded-lg"><CheckCircleFilled className="text-[#0D9488]" /></div>
               <div>
-                <p className="text-sm font-bold text-gray-800">{business.phone}</p>
+                <p className="text-sm font-bold text-gray-800">{business.businessPhone}</p>
                 <p className="text-[11px] text-gray-400 mt-1">Phone Number</p>
               </div>
             </div>
@@ -923,73 +907,100 @@ export default function BusinessProfilePage() {
           <div className="grid grid-cols-2 gap-y-8 gap-x-8">
             <div>
               <p className="text-xs text-gray-400 mb-1.5 font-medium">Business Address</p>
-              <p className="text-base font-bold text-gray-800">{business.location}</p>
+              <p className="text-base font-bold text-gray-800">{business.address || "No custom street address details"}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-400 mb-1.5 font-medium">Business Hours</p>
-              <p className="text-base font-bold text-gray-800">{business.hours}</p>
+              <p className="text-xs text-gray-400 mb-1.5 font-medium">City / Country</p>
+              <p className="text-base font-bold text-gray-800">{business.businessCity} / {business.businessCountry}</p>
             </div>
             <div className="col-span-2">
-              <p className="text-xs text-gray-400 mb-1.5 font-medium">Website</p>
-              <p className="text-base font-bold text-gray-800 underline decoration-gray-200">{business.website}</p>
+              <p className="text-xs text-gray-400 mb-1.5 font-medium">Website URL</p>
+              <p className="text-base font-bold text-gray-800 underline decoration-gray-200">
+                {business.website ? (
+                  <a href={business.website} target="_blank" rel="noreferrer">{business.website}</a>
+                ) : (
+                  "None Provided"
+                )}
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Products & Documents & Reviews Grid Section */}
+      {/* Products, Documents & Reviews Grid Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6 pb-10">
         <div className="lg:col-span-5 flex flex-col gap-6">
           {/* Products & Services */}
           <div className="bg-white border border-gray-100 rounded-sm p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-6">Products & Services</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-6">Social Handle Connections</h2>
             <div className="grid grid-cols-3 gap-3">
-              {business.products?.map((item, index) => (
-                <div key={index} className="bg-[#F1F5F9] text-gray-500 text-[11px] font-medium py-2.5 px-2 rounded-md text-center truncate">
-                  {item}
-                </div>
-              ))}
+              <div className="bg-[#F1F5F9] text-gray-700 text-[11px] font-medium py-2.5 px-2 rounded-md text-center truncate">
+                IG: {business.instagram || "None"}
+              </div>
+              <div className="bg-[#F1F5F9] text-gray-700 text-[11px] font-medium py-2.5 px-2 rounded-md text-center truncate">
+                X: {business.twitter || "None"}
+              </div>
+              <div className="bg-[#F1F5F9] text-gray-700 text-[11px] font-medium py-2.5 px-2 rounded-md text-center truncate">
+                FB: {business.facebook || "None"}
+              </div>
             </div>
           </div>
 
-          {/* Verification Documents */}
+          {/* Verification Documents with custom Ant icons mappings */}
           <div className="bg-white border border-gray-100 rounded-sm p-6 flex-1">
             <h2 className="text-lg font-bold text-gray-900 mb-6">Verification Documents</h2>
             <div className="space-y-5">
-              {business.documents?.map((doc, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-gray-50 p-2 rounded-lg"><FileTextOutlined className="text-gray-400 text-lg" /></div>
-                    <div>
-                      <p className="text-sm font-bold text-gray-800 leading-tight">{doc.title}</p>
-                      <p className="text-[11px] text-gray-400 mt-0.5">{doc.file}</p>
+              {business.documents && business.documents.length > 0 ? (
+                business.documents.map((docUrl, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-gray-50 p-2 rounded-lg">
+                        <FileTextOutlined className="text-gray-400 text-lg" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-gray-800 leading-tight">Document Attachment {index + 1}</p>
+                        <a href={docUrl} target="_blank" rel="noreferrer" className="text-[11px] text-blue-500 underline truncate block max-w-xs">
+                          View Uploaded File
+                        </a>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-[10px] font-bold px-2.5 py-1 rounded bg-[#E6FFFA] text-[#0D9488]">
+                        Uploaded
+                      </span>
+                      <UploadOutlined className="text-gray-400 cursor-pointer" />
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded ${
-                      doc.status === "Verified" ? "bg-[#E6FFFA] text-[#0D9488]" : "bg-[#FFF5F5] text-[#E53E3E]"
-                    }`}>{doc.status}</span>
-                    <UploadOutlined className="text-gray-400 cursor-pointer" />
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-gray-400 text-sm">No files uploaded for verification.</p>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Customer Reviews UI Element */}
+        {/* Customer Reviews Element */}
         <div className="lg:col-span-7 bg-white border border-gray-100 rounded-sm p-6 flex flex-col">
           <h2 className="text-lg font-bold text-gray-900 mb-6">Customer Reviews</h2>
           <div className="flex flex-col md:flex-row items-center gap-10 mb-5 pb-8 border-b border-gray-50">
             <div className="bg-white border border-gray-50 shadow-sm rounded-xl p-6 text-center w-40 shrink-0">
-              <p className="text-3xl font-bold text-gray-900">{business.rating || "0.0"}</p>
-              <div className="flex justify-center gap-0.5 mt-2 text-[#F6AD55] text-xs"><StarFilled /><StarFilled /></div>
+              <p className="text-3xl font-bold text-gray-900">5.0</p>
+              <div className="flex justify-center gap-0.5 mt-2 text-[#F6AD55] text-xs">
+                <StarFilled />
+                <StarFilled />
+                <StarFilled />
+                <StarFilled />
+                <StarFilled />
+              </div>
+            </div>
+            <div className="text-gray-400 text-sm">
+              <MessageOutlined className="mr-2" /> Initial system reviews ready for verification steps.
             </div>
           </div>
         </div>
       </div>
 
-      {/* Admin Action Action Buttons section */}
+      {/* Admin Action Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         <div className="lg:col-span-4 bg-white border border-gray-100 rounded-sm p-6 flex flex-col">
           <h2 className="text-lg font-bold text-gray-900 mb-6">Admin Actions</h2>

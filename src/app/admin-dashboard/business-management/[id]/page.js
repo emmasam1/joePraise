@@ -675,499 +675,343 @@
 
 
 "use client";
-import React, { useState, useEffect, use } from "react";
-import { Button, Input, Avatar, Spin, message, Modal } from "antd";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import api from "@/api/axios";
+import React, { useState, useEffect } from "react";
+import { Button, Tag, Rate, Input, Badge, Avatar, Spin } from "antd";
+import { useRouter, useParams } from "next/navigation";
+import {
+  ClockCircleOutlined,
+  CheckSquareFilled,
+  FileTextOutlined,
+  UploadOutlined,
+  CheckCircleFilled,
+  CloseCircleFilled,
+  ClockCircleFilled,
+  StarFilled,
+  StarOutlined,
+  CheckCircleOutlined, 
+  CloseCircleOutlined, 
+  StopOutlined, 
+  MessageOutlined
+} from "@ant-design/icons";
 
-const BusinessProfilePage = ({ params }) => {
+import { RiArrowLeftLine } from "react-icons/ri";
+
+export default function BusinessProfilePage() {
   const router = useRouter();
-  const resolvedParams = params ? use(params) : { id: "default" };
-  const id = resolvedParams.id;
-
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [rejectReason, setRejectReason] = useState("");
-  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const { id } = useParams(); // Next.js App Router way to get the ID safely
   
-  // Real dynamic state initialized cleanly with safe fallback paths
+  // States for API data, loading, and action processing
   const [business, setBusiness] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
-  const fetchBusinessProfile = async () => {
-    if (id === "default") return;
-    setLoading(true);
-    try {
-      const response = await api.get(`/admin/${id}`);
-      if (response.data.success) {
-        setBusiness(response.data.business);
-      }
-    } catch (error) {
-      message.error(error.response?.data?.message || "Failed to fetch profile");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Fetch data from your backend API
   useEffect(() => {
-    fetchBusinessProfile();
+    async function fetchBusinessData() {
+      try {
+        const response = await fetch(`/api/businesses/${id}`);
+        const data = await response.json();
+        setBusiness(data);
+      } catch (error) {
+        console.error("Error fetching business profile:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (id) fetchBusinessData();
   }, [id]);
 
-  const handleVerify = async (status, reason = "") => {
+  // Handler for Admin Actions (Approve, Reject, Suspend)
+  const handleStatusUpdate = async (status) => {
     setSubmitting(true);
     try {
-      const response = await api.patch(`/admin/${id}/verify`, {
-        status,
-        rejectionReason: reason,
+      const response = await fetch(`/api/businesses/${id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
       });
-      if (response.data.success) {
-        message.success(`Business verification status updated to ${status}!`);
-        setIsRejectModalOpen(false);
-        fetchBusinessProfile();
+      if (response.ok) {
+        // Refresh data or update local state
+        setBusiness(prev => ({ ...prev, verificationStatus: status }));
       }
     } catch (error) {
-      message.error(error.response?.data?.message || "Verification status update failed");
+      console.error(`Failed to update status to ${status}:`, error);
     } finally {
       setSubmitting(false);
     }
   };
 
+  // Center a loader while waiting for API data so layout doesn't break jumpily
   if (loading) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-white">
-        <Spin size="large" />
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <Spin size="large" tip="Loading Business Profile..." />
       </div>
     );
   }
 
-  // Safe fallback structural object structure if API has not completed loading yet
-  const data = business || {
-    businessName: "Loading...",
-    category: "N/A",
-    subCategory: "N/A",
-    establishedYear: "",
-    description: "",
-    businessID: "N/A",
-    createdAt: null,
-    updatedAt: null,
-    verificationStatus: "pending",
-    owner: { name: "N/A", role: "business", email: "N/A", phone: "N/A", idType: "N/A", idNumber: "N/A" },
-    contact: { email: "N/A", phone: "N/A", website: "N/A", address: "N/A", hours: "N/A" },
-    productsAndServices: [],
-    verificationDocuments: [],
-    reviews: [],
-    timeline: []
-  };
-
-  // Safe Status mapping configurations
-  const getStatusLabel = (status) => {
-    switch (status?.toLowerCase()) {
-      case "approved": return "Verified";
-      case "rejected": case "cancelled": return "Rejected";
-      default: return "Pending Review";
-    }
-  };
-
-  const getStatusColorClass = (status) => {
-    switch (status?.toLowerCase()) {
-      case "approved": return "text-[#15BE87] bg-[#EBF7F5]";
-      case "rejected": case "cancelled": return "text-[#EB5757] bg-[#FCE8E6]";
-      default: return "text-[#F2994A] bg-[#FFF8E6]";
-    }
-  };
+  // Fallback if API returns no data
+  if (!business) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+        <h2 className="text-xl font-bold text-gray-800">Business Not Found</h2>
+        <Button onClick={() => router.back()} className="mt-4">Go Back</Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-white min-h-screen px-8 py-6 space-y-6 text-[#2A2A2A]">
-      
-      {/* Top Breadcrumb Navigation Row */}
-      <div className="flex items-center justify-between pb-2">
-        <div className="flex items-center gap-2 cursor-pointer text-xs" onClick={() => router.back()}>
-          <img src="/images/arrow_left.png" alt="back" className="w-4 h-4 object-contain" />
-          <span className="font-bold text-gray-900 hover:underline">Business Management</span>
-          <span className="text-gray-400">/</span>
-          <span className="text-gray-400 font-medium">{data.businessName}</span>
+    <div className="bg-gray-50 min-h-screen p-6">
+      {/* Top Header Navigation */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <Button
+            icon={<RiArrowLeftLine />}
+            type="text"
+            onClick={() => router.back()}
+            className="hover:bg-gray-200 flex items-center justify-center"
+          />
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 leading-tight">
+              {business.business_name}
+            </h1>
+            <p className="text-xs text-gray-500">Business Management / Profile</p>
+          </div>
         </div>
+
+        {/* Search & User Profile Bar */}
+        <header className="h-20 bg-white border border-gray-100 flex items-center justify-between px-8 flex-1 max-w-4xl rounded-lg shadow-sm">
+          <div className="w-full max-w-md">
+            <Input
+              prefix={<img src="/images/search.png" alt="search" className="h-6 opacity-40" />}
+              placeholder="Search"
+              className="rounded-full bg-gray-50 border-none h-10 w-full"
+            />
+          </div>
+
+          <div className="flex items-center gap-6">
+            <Badge count={5} size="small" color="#060853">
+              <img src="/images/bell.png" alt="msg" className="h-6 cursor-pointer" />
+            </Badge>
+            <div className="flex items-center gap-3 p-1.5 pr-4 rounded-full border border-gray-50 bg-white shadow-sm">
+              <Avatar src="https://i.pravatar.cc/150?u=admin" size={36} />
+              <div className="flex flex-col text-right">
+                <span className="text-[11px] font-bold text-gray-900">Admin User</span>
+                <span className="text-[9px] text-gray-400">Super Admin</span>
+              </div>
+            </div>
+          </div>
+        </header>
       </div>
 
-      {/* Corporate Profile Top Identity Box Panel */}
-      <div className="w-full bg-white border border-gray-100 rounded-xl p-6 flex flex-col lg:flex-row gap-6 shadow-sm">
-        <div className="w-full lg:w-56 h-40 shrink-0">
+      {/* Main Banner Info Card */}
+      <div className="w-full bg-white border border-gray-100 rounded-sm p-6 flex flex-col md:flex-row gap-6 mb-5">
+        <div className="w-full md:w-64 h-48 shrink-0">
           <img
-            src="/images/kitchen_banner.png"
-            alt="Business Banner"
+            src={business.image || "https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=1000&auto=format&fit=crop"}
+            alt={business.business_name}
             className="w-full h-full object-cover rounded-lg"
           />
         </div>
 
-        <div className="flex-1 min-w-0">
-          <h2 className="text-xl font-bold text-black tracking-tight">{data.businessName}</h2>
-          <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mt-1">
-            <span>{data.category}</span>
-            {data.subCategory && (
-              <>
-                <span>•</span>
-                <span>{data.subCategory}</span>
-              </>
-            )}
-            {data.establishedYear && (
-              <>
-                <span>•</span>
-                <span>Established {data.establishedYear}</span>
-              </>
-            )}
+        <div className="flex-1 space-y-4">
+          <div>
+            <h2 className="text-xl font-bold text-[#2A2A2A]">{business.business_name}</h2>
+            <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
+              <span>{business.category || "Food & Beverage"}</span>
+              <span className="text-gray-300">•</span>
+              <span>Established {business.established || "2018"}</span>
+            </div>
           </div>
-          <p className="text-gray-500 text-xs leading-relaxed mt-2.5 max-w-3xl">
-            {data.description || "No business description provided."}
+
+          <p className="text-gray-600 text-sm leading-relaxed max-w-2xl">
+            {business.description}
           </p>
 
-          {/* Badge Metadata Row */}
-          <div className="flex flex-wrap gap-2 mt-4">
-            <span className="bg-[#EBF7F5] text-[#00A389] px-2.5 py-1 rounded text-[11px] font-medium">
-              Business ID: {data.businessID || data._id || "N/A"}
-            </span>
-            <span className="bg-[#EBF7F5] text-[#00A389] px-2.5 py-1 rounded text-[11px] font-medium">
-              Added: {data.createdAt ? new Date(data.createdAt).toLocaleDateString("en-GB") : "N/A"}
-            </span>
-            <span className="bg-[#EBF7F5] text-[#00A389] px-2.5 py-1 rounded text-[11px] font-medium">
-              Last Updated: {data.updatedAt ? new Date(data.updatedAt).toLocaleDateString("en-GB") : "Just now"}
-            </span>
+          <div className="flex flex-wrap gap-3 pt-2">
+            <div className="bg-[#E6FFFA] text-[#2D3748] px-4 py-2 rounded-md text-[13px] font-medium">
+              Business ID: {business.business_id || `BE-${business.established}-002`}
+            </div>
+            <div className="bg-[#E6FFFA] text-[#2D3748] px-4 py-2 rounded-md text-[13px] font-medium">
+              Added: {new Date(business.createdAt).toLocaleDateString()}
+            </div>
           </div>
         </div>
 
-        {/* Verification Tracking Right Panel */}
-        <div className="w-full lg:w-64 border-t lg:border-t-0 lg:border-l pt-4 lg:pt-0 lg:pl-6 border-gray-100 flex flex-col justify-between">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="font-bold text-xs text-black">Verification Status</h3>
-            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded flex items-center gap-1 ${getStatusColorClass(data.verificationStatus)}`}>
-              {getStatusLabel(data.verificationStatus)}
-            </span>
+        {/* Verification Status Card */}
+        <div className="w-full md:w-72 bg-[#F8FAFC] rounded-xl p-5 border border-gray-50">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="font-bold text-gray-800 text-sm">Verification Status</h3>
+            <div className="flex items-center gap-1 text-[#E27C3E] text-[11px] font-bold uppercase">
+              <ClockCircleOutlined />
+              <span>{business.verificationStatus || "Pending Review"}</span>
+            </div>
           </div>
-          <div className="space-y-2 text-xs">
-            <div className="flex items-center justify-between text-gray-500">
-              <span className="flex items-center gap-1.5 font-medium">
-                <input type="checkbox" checked={!!data.createdAt} readOnly className="accent-[#15BE87] h-3 w-3 rounded" /> Submitted
-              </span>
-              <span className="text-[11px]">Completed</span>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <CheckSquareFilled className="text-[#10B981] text-lg" />
+                <span className="text-sm text-gray-600 font-medium">Submitted</span>
+              </div>
+              <span className="text-xs text-gray-400">2 days ago</span>
             </div>
-            <div className="flex items-center justify-between text-gray-500">
-              <span className="flex items-center gap-1.5 font-medium">
-                <span className={`h-3 w-3 rounded-full border-2 bg-transparent inline-block ${data.verificationStatus === "pending" ? "border-[#F2994A]" : "border-gray-300"}`}></span> Under Review
-              </span>
-              <span className={`text-[11px] font-medium ${data.verificationStatus === "pending" ? "text-[#F2994A]" : "text-gray-400"}`}>
-                {data.verificationStatus === "pending" ? "In Progress" : "Done"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-gray-500">
-              <span className="flex items-center gap-1.5 font-medium">
-                <span className={`h-3 w-3 rounded-full border bg-transparent inline-block ${data.verificationStatus !== "pending" ? "border-blue-500" : "border-gray-300"}`}></span> Decision
-              </span>
-              <span className="text-[11px] font-medium capitalize">{data.verificationStatus}</span>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-[18px] h-[18px] rounded-full border-2 border-[#E27C3E] flex items-center justify-center">
+                  <div className="w-2 h-2 bg-[#E27C3E] rounded-full"></div>
+                </div>
+                <span className="text-sm text-gray-800 font-bold">Under Review</span>
+              </div>
+              <span className="text-xs text-gray-500 font-medium italic">In Progress</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Structural Twin Grid Columns Box Section Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* Left Hand Side Column */}
-        <div className="space-y-6">
-          
-          {/* Owner Details Profile Card */}
-          <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
-            <h3 className="text-sm font-bold text-black mb-4">Owner Details</h3>
-            <div className="flex items-center gap-3 mb-5">
-              <Avatar size={44} src="/images/avatar_owner.png" className="border border-gray-200" />
+      {/* Grid Content Columns */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
+        {/* Owner Details */}
+        <div className="lg:col-span-5 bg-white border border-gray-100 rounded-sm p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-6">Owner Details</h2>
+          <div className="flex items-center gap-4 mb-8">
+            <Avatar size={56} src={business.owner_avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} />
+            <div className="flex-1">
+              <h3 className="font-bold text-gray-900 text-base leading-tight">{business.owner_name}</h3>
+              <p className="text-gray-400 text-xs mt-0.5">Owner & Founder</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+            <div className="flex items-start gap-3">
+              <div className="bg-[#E6FFFA] p-2.5 rounded-lg"><CheckCircleFilled className="text-[#0D9488]" /></div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-gray-800 truncate">{business.email}</p>
+                <p className="text-[11px] text-gray-400 mt-1">Mail Address</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="bg-[#E6FFFA] p-2.5 rounded-lg"><CheckCircleFilled className="text-[#0D9488]" /></div>
               <div>
-                <div className="flex items-center gap-2">
-                  <h4 className="font-bold text-xs text-black">{(data.owner?.fullName) || data.owner?.name || "N/A"}</h4>
-                  <span className="text-[10px] text-gray-400 font-medium bg-gray-50 px-1 rounded">Primary Contact</span>
-                </div>
-                <p className="text-[11px] text-gray-400 font-medium mt-0.5">{data.owner?.role || "Owner & Founder"}</p>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-4 pt-4 border-t border-gray-50">
-              <div className="flex items-start gap-2.5">
-                <div className="p-2 bg-[#EBF7F5] rounded shrink-0">
-                  <img src="/images/search.png" className="w-3.5 h-3.5 object-contain opacity-60" alt="" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Mail Address</p>
-                  <p className="text-xs font-bold text-black mt-0.5 truncate">{data.owner?.email || "N/A"}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2.5">
-                <div className="p-2 bg-[#EBF7F5] rounded shrink-0">
-                  <img src="/images/cube.png" className="w-3.5 h-3.5 object-contain opacity-60" alt="" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">ID Type</p>
-                  <p className="text-xs font-bold text-black mt-0.5">{data.owner?.idType || "N/A"}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2.5">
-                <div className="p-2 bg-[#EBF7F5] rounded shrink-0">
-                  <img src="/images/dots.png" className="w-3.5 h-3.5 object-contain opacity-60" alt="" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Phone Number</p>
-                  <p className="text-xs font-bold text-black mt-0.5">{data.owner?.phone || "N/A"}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-2.5">
-                <div className="p-2 bg-[#EBF7F5] rounded shrink-0">
-                  <img src="/images/cube.png" className="w-3.5 h-3.5 object-contain opacity-60" alt="" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">ID Number</p>
-                  <p className="text-xs font-bold text-black mt-0.5">{data.owner?.idNumber || "N/A"}</p>
-                </div>
+                <p className="text-sm font-bold text-gray-800">{business.phone}</p>
+                <p className="text-[11px] text-gray-400 mt-1">Phone Number</p>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Products & Services Dynamic Component */}
-          <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
-            <h3 className="text-sm font-bold text-black mb-4">Products & Services</h3>
-            <div className="flex flex-wrap gap-2">
-              {data.productsAndServices?.length ? (
-                data.productsAndServices.map((item, idx) => (
-                  <span key={idx} className="bg-[#F1F3F6] text-gray-600 px-3 py-1.5 rounded text-xs font-medium">
-                    {item}
-                  </span>
-                ))
-              ) : (
-                ["Food Ordering", "Seasonal Gifts", "Wedding Cakes", "Home Delivery", "Catering"].map((item, idx) => (
-                  <span key={idx} className="bg-[#F1F3F6] text-gray-600 px-3 py-1.5 rounded text-xs font-medium">
-                    {item}
-                  </span>
-                ))
-              )}
+        {/* Contact Information */}
+        <div className="lg:col-span-7 bg-white border border-gray-100 rounded-sm p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-8">Contact Information</h2>
+          <div className="grid grid-cols-2 gap-y-8 gap-x-8">
+            <div>
+              <p className="text-xs text-gray-400 mb-1.5 font-medium">Business Address</p>
+              <p className="text-base font-bold text-gray-800">{business.location}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 mb-1.5 font-medium">Business Hours</p>
+              <p className="text-base font-bold text-gray-800">{business.hours}</p>
+            </div>
+            <div className="col-span-2">
+              <p className="text-xs text-gray-400 mb-1.5 font-medium">Website</p>
+              <p className="text-base font-bold text-gray-800 underline decoration-gray-200">{business.website}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Products & Documents & Reviews Grid Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6 pb-10">
+        <div className="lg:col-span-5 flex flex-col gap-6">
+          {/* Products & Services */}
+          <div className="bg-white border border-gray-100 rounded-sm p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-6">Products & Services</h2>
+            <div className="grid grid-cols-3 gap-3">
+              {business.products?.map((item, index) => (
+                <div key={index} className="bg-[#F1F5F9] text-gray-500 text-[11px] font-medium py-2.5 px-2 rounded-md text-center truncate">
+                  {item}
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Verification Legal Compliance Document Attachments */}
-          <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
-            <h3 className="text-sm font-bold text-black mb-4">Verification Documents</h3>
-            <div className="space-y-3">
-              {(data.verificationDocuments?.length ? data.verificationDocuments : [
-                { label: "Business License", name: "License_biekitchen.pdf", status: "Verified", color: "bg-[#EBF7F5] text-[#15BE87]" },
-                { label: "Tax Certificate", name: "Tax_biekitchen.pdf", status: "Verified", color: "bg-[#EBF7F5] text-[#15BE87]" }
-              ]).map((doc, idx) => (
-                <div key={idx} className="flex items-center justify-between p-2.5 bg-white border border-gray-100 rounded-lg">
+          {/* Verification Documents */}
+          <div className="bg-white border border-gray-100 rounded-sm p-6 flex-1">
+            <h2 className="text-lg font-bold text-gray-900 mb-6">Verification Documents</h2>
+            <div className="space-y-5">
+              {business.documents?.map((doc, index) => (
+                <div key={index} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <img src="/images/list_view.png" alt="pdf" className="w-5 h-5 object-contain opacity-70" />
+                    <div className="bg-gray-50 p-2 rounded-lg"><FileTextOutlined className="text-gray-400 text-lg" /></div>
                     <div>
-                      <h4 className="font-bold text-xs text-black">{doc.label}</h4>
-                      <p className="text-[11px] text-gray-400 mt-0.5">{doc.name}</p>
+                      <p className="text-sm font-bold text-gray-800 leading-tight">{doc.title}</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">{doc.file}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${doc.color || "bg-gray-100 text-gray-600"}`}>
-                      {doc.status}
-                    </span>
-                    <Button className="border-none bg-transparent p-0 flex items-center justify-center shadow-none h-6 w-6 hover:bg-gray-100 rounded-full">
-                      <img src="/images/upload.png" className="w-3.5 h-3.5 object-contain rotate-180" alt="download" />
-                    </Button>
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded ${
+                      doc.status === "Verified" ? "bg-[#E6FFFA] text-[#0D9488]" : "bg-[#FFF5F5] text-[#E53E3E]"
+                    }`}>{doc.status}</span>
+                    <UploadOutlined className="text-gray-400 cursor-pointer" />
                   </div>
                 </div>
               ))}
             </div>
           </div>
-
-          {/* Interactive Core Control Action Triggers Block Panel */}
-          <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm space-y-3">
-            <h3 className="text-sm font-bold text-black mb-2">Admin Actions</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Button 
-                onClick={() => handleVerify("approved")}
-                loading={submitting}
-                disabled={data.verificationStatus === "approved"}
-                className="w-full h-10 bg-[#15BE87] hover:bg-[#12a173]! text-white text-xs font-bold rounded-lg border-none shadow-none flex items-center justify-center gap-2"
-              >
-                Approve Business
-              </Button>
-              <Button 
-                onClick={() => setIsRejectModalOpen(true)}
-                disabled={data.verificationStatus === "rejected"}
-                className="w-full h-10 bg-[#7B0000] hover:bg-[#5e0000]! text-white text-xs font-bold rounded-lg border-none shadow-none flex items-center justify-center gap-2"
-              >
-                Reject Verification
-              </Button>
-            </div>
-            <Button className="w-full h-10 bg-[#F2C94C] hover:bg-[#dbb53d]! text-white text-xs font-bold rounded-lg border-none shadow-none flex items-center justify-center gap-2">
-              Suspend Account
-            </Button>
-            <Button className="w-full h-10 bg-white hover:bg-gray-50! text-[#060853] text-xs font-bold rounded-lg border border-[#060853] shadow-none flex items-center justify-center gap-2">
-              Send Message to Owner
-            </Button>
-          </div>
-
         </div>
 
-        {/* Right Hand Side Column */}
-        <div className="space-y-6">
-          
-          {/* Detailed Contact Grid Box */}
-          <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
-            <h3 className="text-sm font-bold text-black mb-4">Contact Information</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-xs">
-              <div>
-                <p className="text-gray-400 font-medium">Business Email</p>
-                <p className="font-bold text-gray-900 mt-1 break-all">{data.contact?.email || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-gray-400 font-medium">Business Address</p>
-                <p className="font-bold text-gray-900 mt-1">{data.contact?.address || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-gray-400 font-medium">Phone Number</p>
-                <p className="font-bold text-gray-900 mt-1">{data.contact?.phone || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-gray-400 font-medium">Business Hours</p>
-                <p className="font-bold text-gray-900 mt-1">{data.contact?.hours || "N/A"}</p>
-              </div>
-              <div className="sm:col-span-2">
-                <p className="text-gray-400 font-medium">Website</p>
-                {data.contact?.website ? (
-                  <a href={`https://${data.contact.website}`} target="_blank" rel="noreferrer" className="font-bold text-blue-600 hover:underline block mt-1">
-                    {data.contact.website}
-                  </a>
-                ) : (
-                  <p className="font-bold text-gray-900 mt-1">N/A</p>
-                )}
-              </div>
+        {/* Customer Reviews UI Element */}
+        <div className="lg:col-span-7 bg-white border border-gray-100 rounded-sm p-6 flex flex-col">
+          <h2 className="text-lg font-bold text-gray-900 mb-6">Customer Reviews</h2>
+          <div className="flex flex-col md:flex-row items-center gap-10 mb-5 pb-8 border-b border-gray-50">
+            <div className="bg-white border border-gray-50 shadow-sm rounded-xl p-6 text-center w-40 shrink-0">
+              <p className="text-3xl font-bold text-gray-900">{business.rating || "0.0"}</p>
+              <div className="flex justify-center gap-0.5 mt-2 text-[#F6AD55] text-xs"><StarFilled /><StarFilled /></div>
             </div>
           </div>
-
-          {/* Customer Reviews Analytic Performance Summary Grid Dashboard */}
-          <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
-            <h3 className="text-sm font-bold text-black mb-4">Customer Reviews</h3>
-            
-            <div className="flex items-center gap-6 mb-4">
-              <div className="bg-[#FAFAFA] border border-gray-100 rounded-xl p-4 text-center w-28 shrink-0">
-                <p className="text-3xl font-bold text-black">4.9</p>
-                <p className="text-[9px] text-gray-400 font-semibold mt-0.5">(128 reviews)</p>
-                <div className="flex justify-center gap-0.5 mt-1">
-                  {Array(5).fill(0).map((_, i) => (
-                    <img key={i} src="/images/trust_star.png" className="w-2.5 h-2.5 object-contain" alt="star" />
-                  ))}
-                </div>
-              </div>
-              
-              {/* Star breakdown rows configuration */}
-              <div className="flex-1 space-y-1.5">
-                {[
-                  { star: "5☆", count: 102, percent: "w-[80%] bg-[#F2C94C]" },
-                  { star: "4☆", count: 18, percent: "w-[20%] bg-[#F2C94C]" },
-                  { star: "3☆", count: 6, percent: "w-[8%] bg-[#F2C94C]" },
-                  { star: "2☆", count: 2, percent: "w-[4%] bg-gray-300" },
-                  { star: "1☆", count: 0, percent: "w-0 bg-transparent" }
-                ].map((row, i) => (
-                  <div key={i} className="flex items-center text-[11px] font-medium text-gray-500 gap-2">
-                    <span className="w-4 shrink-0">{row.star}</span>
-                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${row.percent}`}></div>
-                    </div>
-                    <span className="w-5 text-right shrink-0">{row.count}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <p className="text-right text-xs font-bold text-[#2F80ED] cursor-pointer mb-4 hover:underline">See All</p>
-
-            {/* Individual Reviews Feed Layout */}
-            <div className="space-y-3">
-              {(data.reviews?.length ? data.reviews : [
-                { name: "Emily Davis", days: "2 days ago", comment: "Great Product. Loved the quality and fast shipping. Will buy again" }
-              ]).map((rev, idx) => (
-                <div key={idx} className="p-3 bg-white border border-gray-100 rounded-lg">
-                  <div className="flex justify-between items-center text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-black">{rev.name}</span>
-                      <div className="flex gap-0.5">
-                        {Array(5).fill(0).map((_, i) => (
-                          <img key={i} src="/images/trust_star.png" className="w-2 h-2 object-contain" alt="" />
-                        ))}
-                      </div>
-                    </div>
-                    <span className="text-gray-400 text-[10px]">{rev.days}</span>
-                  </div>
-                  <p className="text-gray-500 text-[11px] mt-2 leading-relaxed">{rev.comment}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* System Audit Activity Timeline Logs Section */}
-          <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
-            <h3 className="text-sm font-bold text-black mb-6">Activity Timeline</h3>
-            <div className="relative pl-6 border-l-2 border-gray-100 space-y-6">
-              {[
-                { title: "Verification Process Started", detail: "System updated", time: "2 days ago", color: "bg-[#060853]" },
-                { title: "Documents Uploaded for Review", detail: "By Business Owner", time: "2 days ago", color: "bg-[#F2994A]" }
-              ].map((act, i) => (
-                <div key={i} className="relative text-xs">
-                  <span className={`absolute -left-[31px] top-0.5 h-2.5 w-2.5 rounded-full ${act.color} ring-4 ring-white`}></span>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-bold text-black">{act.title}</h4>
-                      <p className="text-[11px] text-gray-400 mt-0.5">{act.detail}</p>
-                    </div>
-                    <span className="text-gray-400 text-[11px] whitespace-nowrap">{act.time}</span>
-                  </div>
-                </div>
-              ))}
-              <div className="relative text-xs">
-                <span className="absolute -left-[37px] top-0.5 ring-4 ring-white rounded-full">
-                  <Avatar size={22} src="/images/avatar_owner.png" />
-                </span>
-                <div className="flex justify-between items-start pl-1">
-                  <div>
-                    <h4 className="font-bold text-black">Review Assigned to Current Admin Session</h4>
-                  </div>
-                  <span className="text-gray-400 text-[11px] whitespace-nowrap">Just now</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
         </div>
       </div>
 
-      {/* Decline Rejection Modal context Input Form */}
-      <Modal
-        title="Input Audit Rejection Reason"
-        open={isRejectModalOpen}
-        onOk={() => handleVerify("rejected", rejectReason)}
-        onCancel={() => setIsRejectModalOpen(false)}
-        confirmLoading={submitting}
-        okButtonProps={{ danger: true }}
-        okText="Decline Application"
-      >
-        <p className="text-xs text-gray-400 mb-2">Provide explicit notes detailing the missing items or verification issues for the owner.</p>
-        <Input.TextArea
-          rows={4}
-          value={rejectReason}
-          onChange={(e) => setRejectReason(e.target.value)}
-          placeholder="e.g., Documents provided are blurry or business name mismatch..."
-        />
-      </Modal>
+      {/* Admin Action Action Buttons section */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <div className="lg:col-span-4 bg-white border border-gray-100 rounded-sm p-6 flex flex-col">
+          <h2 className="text-lg font-bold text-gray-900 mb-6">Admin Actions</h2>
+          <div className="space-y-4">
+            <button 
+              disabled={submitting}
+              onClick={() => handleStatusUpdate("Approved")}
+              className="w-full py-3 bg-[#10B981] hover:bg-[#059669] text-white rounded-sm flex items-center justify-center gap-2 text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              <CheckCircleOutlined /> Approve Business
+            </button>
+            <button 
+              disabled={submitting}
+              onClick={() => handleStatusUpdate("Rejected")}
+              className="w-full py-3 bg-[#7F1D1D] hover:bg-[#450a0a] text-white rounded-sm flex items-center justify-center gap-2 text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              <CloseCircleOutlined /> Reject Verification
+            </button>
+            <button 
+              disabled={submitting}
+              onClick={() => handleStatusUpdate("Suspended")}
+              className="w-full py-3 bg-[#FBBF24] hover:bg-[#f59e0b] text-white rounded-sm flex items-center justify-center gap-2 text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              <StopOutlined /> Suspend Account
+            </button>
+          </div>
+        </div>
+      </div>
 
     </div>
   );
-};
-
-export default BusinessProfilePage;
+}
 
 // "use client";
 // import React, { useState, useEffect, use } from "react";
 // import { Button, Input, Avatar, Spin, message, Modal } from "antd";
 // import { useRouter } from "next/navigation";
-// import { MailOutlined, PhoneOutlined } from "@ant-design/icons";
+// import Link from "next/link";
 // import api from "@/api/axios";
 
 // const BusinessProfilePage = ({ params }) => {
@@ -1180,33 +1024,8 @@ export default BusinessProfilePage;
 //   const [rejectReason, setRejectReason] = useState("");
 //   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   
-//   // Structured default data state strictly replicating the layout matching elements in Figma 
-//   const [business, setBusiness] = useState({
-//     businessName: "Bie's Kitchen",
-//     category: "Food & Beverage",
-//     subCategory: "Restaurant & Cafe",
-//     establishedYear: "Established 2018",
-//     description: "Bie's Kitchen is an authentic local dishes and homemade food products crafted by Chef Bie, specializing in traditional flavors, culinary artistry, and, in some contexts, homemade goods like Leche Flan and Biko",
-//     businessID: "BE-2018-002",
-//     addedDate: "March 29, 2026",
-//     lastUpdated: "2 hours ago",
-//     verificationStatus: "pending",
-//     owner: {
-//       name: "BieBele Edward",
-//       role: "Owner & Founder",
-//       email: "oramafelix@gmail.com",
-//       phone: "+1 3469997830",
-//       idType: "Driver's License",
-//       idNumber: "DL #6884403843"
-//     },
-//     contact: {
-//       email: "biekitchen@gmail.com",
-//       phone: "+1 8990337293",
-//       website: "biekitchen.com",
-//       address: "No. 34 wakali Street Ikeja, Lagos.",
-//       hours: "Mon - Sun: 7:00 AM - 9:00 PM"
-//     }
-//   });
+//   // Real dynamic state initialized cleanly with safe fallback paths
+//   const [business, setBusiness] = useState(null);
 
 //   const fetchBusinessProfile = async () => {
 //     if (id === "default") return;
@@ -1235,12 +1054,12 @@ export default BusinessProfilePage;
 //         rejectionReason: reason,
 //       });
 //       if (response.data.success) {
-//         message.success(`Business ${status} successfully!`);
+//         message.success(`Business verification status updated to ${status}!`);
 //         setIsRejectModalOpen(false);
 //         fetchBusinessProfile();
 //       }
 //     } catch (error) {
-//       message.error(error.response?.data?.message || "Update execution error");
+//       message.error(error.response?.data?.message || "Verification status update failed");
 //     } finally {
 //       setSubmitting(false);
 //     }
@@ -1248,186 +1067,241 @@ export default BusinessProfilePage;
 
 //   if (loading) {
 //     return (
-//       <div className="h-screen w-full flex items-center justify-center bg-[#F8FAFC]">
+//       <div className="h-screen w-full flex items-center justify-center bg-white">
 //         <Spin size="large" />
 //       </div>
 //     );
 //   }
 
+//   // Safe fallback structural object structure if API has not completed loading yet
+//   const data = business || {
+//     businessName: "Loading...",
+//     category: "N/A",
+//     subCategory: "N/A",
+//     establishedYear: "",
+//     description: "",
+//     businessID: "N/A",
+//     createdAt: null,
+//     updatedAt: null,
+//     verificationStatus: "pending",
+//     owner: { name: "N/A", role: "business", email: "N/A", phone: "N/A", idType: "N/A", idNumber: "N/A" },
+//     contact: { email: "N/A", phone: "N/A", website: "N/A", address: "N/A", hours: "N/A" },
+//     productsAndServices: [],
+//     verificationDocuments: [],
+//     reviews: [],
+//     timeline: []
+//   };
+
+//   // Safe Status mapping configurations
+//   const getStatusLabel = (status) => {
+//     switch (status?.toLowerCase()) {
+//       case "approved": return "Verified";
+//       case "rejected": case "cancelled": return "Rejected";
+//       default: return "Pending Review";
+//     }
+//   };
+
+//   const getStatusColorClass = (status) => {
+//     switch (status?.toLowerCase()) {
+//       case "approved": return "text-[#15BE87] bg-[#EBF7F5]";
+//       case "rejected": case "cancelled": return "text-[#EB5757] bg-[#FCE8E6]";
+//       default: return "text-[#F2994A] bg-[#FFF8E6]";
+//     }
+//   };
+
 //   return (
-//     <div className="bg-[#FAFAFA] min-h-screen px-8 py-6 space-y-6 text-[#2A2A2A]">
+//     <div className="bg-white min-h-screen px-8 py-6 space-y-6 text-[#2A2A2A]">
       
-//       {/* Top Navigation Row */}
+//       {/* Top Breadcrumb Navigation Row */}
 //       <div className="flex items-center justify-between pb-2">
-//         <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.back()}>
+//         <div className="flex items-center gap-2 cursor-pointer text-xs" onClick={() => router.back()}>
 //           <img src="/images/arrow_left.png" alt="back" className="w-4 h-4 object-contain" />
-//           <span className="text-xs font-bold text-black">Business Management</span>
-//           <span className="text-xs text-gray-400">/ {business.businessName}</span>
+//           <span className="font-bold text-gray-900 hover:underline">Business Management</span>
+//           <span className="text-gray-400">/</span>
+//           <span className="text-gray-400 font-medium">{data.businessName}</span>
 //         </div>
 //       </div>
 
-//       {/* Main Corporate Profile Top Panel Grid Box */}
+//       {/* Corporate Profile Top Identity Box Panel */}
 //       <div className="w-full bg-white border border-gray-100 rounded-xl p-6 flex flex-col lg:flex-row gap-6 shadow-sm">
 //         <div className="w-full lg:w-56 h-40 shrink-0">
 //           <img
 //             src="/images/kitchen_banner.png"
 //             alt="Business Banner"
 //             className="w-full h-full object-cover rounded-lg"
-//             fallback="https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=1000"
 //           />
 //         </div>
 
 //         <div className="flex-1 min-w-0">
-//           <h2 className="text-xl font-bold text-black tracking-tight">{business.businessName}</h2>
+//           <h2 className="text-xl font-bold text-black tracking-tight">{data.businessName}</h2>
 //           <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mt-1">
-//             <span>{business.category}</span>
-//             <span>•</span>
-//             <span>{business.subCategory}</span>
-//             <span>•</span>
-//             <span>{business.establishedYear}</span>
+//             <span>{data.category}</span>
+//             {data.subCategory && (
+//               <>
+//                 <span>•</span>
+//                 <span>{data.subCategory}</span>
+//               </>
+//             )}
+//             {data.establishedYear && (
+//               <>
+//                 <span>•</span>
+//                 <span>Established {data.establishedYear}</span>
+//               </>
+//             )}
 //           </div>
 //           <p className="text-gray-500 text-xs leading-relaxed mt-2.5 max-w-3xl">
-//             {business.description}
+//             {data.description || "No business description provided."}
 //           </p>
 
-//           {/* Badge Chips Meta Information Array Row */}
+//           {/* Badge Metadata Row */}
 //           <div className="flex flex-wrap gap-2 mt-4">
 //             <span className="bg-[#EBF7F5] text-[#00A389] px-2.5 py-1 rounded text-[11px] font-medium">
-//               Business ID: {business.businessID}
+//               Business ID: {data.businessID || data._id || "N/A"}
 //             </span>
 //             <span className="bg-[#EBF7F5] text-[#00A389] px-2.5 py-1 rounded text-[11px] font-medium">
-//               Added: {business.addedDate}
+//               Added: {data.createdAt ? new Date(data.createdAt).toLocaleDateString("en-GB") : "N/A"}
 //             </span>
 //             <span className="bg-[#EBF7F5] text-[#00A389] px-2.5 py-1 rounded text-[11px] font-medium">
-//               Last Updated: {business.lastUpdated}
+//               Last Updated: {data.updatedAt ? new Date(data.updatedAt).toLocaleDateString("en-GB") : "Just now"}
 //             </span>
 //           </div>
 //         </div>
 
-//         {/* Verification Status Summary Pipeline Section */}
-//         <div className="w-full lg:w-64 border-l lg:pl-6 border-gray-100 flex flex-col justify-between">
+//         {/* Verification Tracking Right Panel */}
+//         <div className="w-full lg:w-64 border-t lg:border-t-0 lg:border-l pt-4 lg:pt-0 lg:pl-6 border-gray-100 flex flex-col justify-between">
 //           <div className="flex justify-between items-center mb-3">
 //             <h3 className="font-bold text-xs text-black">Verification Status</h3>
-//             <span className="text-[11px] font-semibold text-[#F2994A] flex items-center gap-1">
-//               <span className="h-1.5 w-1.5 bg-[#F2994A] rounded-full"></span> Pending Review
+//             <span className={`text-[11px] font-semibold px-2 py-0.5 rounded flex items-center gap-1 ${getStatusColorClass(data.verificationStatus)}`}>
+//               {getStatusLabel(data.verificationStatus)}
 //             </span>
 //           </div>
 //           <div className="space-y-2 text-xs">
 //             <div className="flex items-center justify-between text-gray-500">
 //               <span className="flex items-center gap-1.5 font-medium">
-//                 <input type="checkbox" checked readOnly className="accent-[#15BE87] h-3 w-3 rounded" /> Submitted
+//                 <input type="checkbox" checked={!!data.createdAt} readOnly className="accent-[#15BE87] h-3 w-3 rounded" /> Submitted
 //               </span>
-//               <span className="text-[11px]">2 days ago</span>
+//               <span className="text-[11px]">Completed</span>
 //             </div>
 //             <div className="flex items-center justify-between text-gray-500">
 //               <span className="flex items-center gap-1.5 font-medium">
-//                 <span className="h-3 w-3 rounded-full border-2 border-[#F2994A] bg-transparent inline-block"></span> Under Review
+//                 <span className={`h-3 w-3 rounded-full border-2 bg-transparent inline-block ${data.verificationStatus === "pending" ? "border-[#F2994A]" : "border-gray-300"}`}></span> Under Review
 //               </span>
-//               <span className="text-[11px] text-[#F2994A] font-medium">In Progress</span>
+//               <span className={`text-[11px] font-medium ${data.verificationStatus === "pending" ? "text-[#F2994A]" : "text-gray-400"}`}>
+//                 {data.verificationStatus === "pending" ? "In Progress" : "Done"}
+//               </span>
 //             </div>
 //             <div className="flex items-center justify-between text-gray-500">
 //               <span className="flex items-center gap-1.5 font-medium">
-//                 <span className="h-3 w-3 rounded-full border border-gray-300 bg-transparent inline-block"></span> Decision
+//                 <span className={`h-3 w-3 rounded-full border bg-transparent inline-block ${data.verificationStatus !== "pending" ? "border-blue-500" : "border-gray-300"}`}></span> Decision
 //               </span>
-//               <span className="text-[11px]">Pending</span>
+//               <span className="text-[11px] font-medium capitalize">{data.verificationStatus}</span>
 //             </div>
 //           </div>
 //         </div>
 //       </div>
 
-//       {/* Grid Layout Container Segment split */}
+//       {/* Main Structural Twin Grid Columns Box Section Layout */}
 //       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-//         {/* Left Side Column Elements Block */}
+//         {/* Left Hand Side Column */}
 //         <div className="space-y-6">
           
-//           {/* Owner Details Card Wrapper Section */}
+//           {/* Owner Details Profile Card */}
 //           <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
 //             <h3 className="text-sm font-bold text-black mb-4">Owner Details</h3>
 //             <div className="flex items-center gap-3 mb-5">
 //               <Avatar size={44} src="/images/avatar_owner.png" className="border border-gray-200" />
 //               <div>
 //                 <div className="flex items-center gap-2">
-//                   <h4 className="font-bold text-xs text-black">{business.owner.fullName}</h4>
-//                   <span className="text-[10px] text-gray-300 font-medium tracking-wide bg-gray-50 px-1 rounded">Primary Contact</span>
+//                   <h4 className="font-bold text-xs text-black">{(data.owner?.fullName) || data.owner?.name || "N/A"}</h4>
+//                   <span className="text-[10px] text-gray-400 font-medium bg-gray-50 px-1 rounded">Primary Contact</span>
 //                 </div>
-//                 <p className="text-[11px] text-gray-400 font-medium mt-0.5">{business.owner.role}</p>
+//                 <p className="text-[11px] text-gray-400 font-medium mt-0.5">{data.owner?.role || "Owner & Founder"}</p>
 //               </div>
 //             </div>
             
-//             <div className="grid grid-cols-2 gap-x-4 gap-y-4 pt-2 border-t border-gray-50">
+//             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-4 pt-4 border-t border-gray-50">
 //               <div className="flex items-start gap-2.5">
-//                 <div className="p-2 bg-[#EBF7F5] rounded"><MailOutlined className="text-[#00A389] text-xs" /></div>
-//                 <div>
-//                   <p className="text-[10px] text-gray-400 font-semibold uppercase">Mail Address</p>
-//                   <p className="text-xs font-bold text-black mt-0.5">{business.owner.email}</p>
+//                 <div className="p-2 bg-[#EBF7F5] rounded shrink-0">
+//                   <img src="/images/search.png" className="w-3.5 h-3.5 object-contain opacity-60" alt="" />
+//                 </div>
+//                 <div className="min-w-0">
+//                   <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Mail Address</p>
+//                   <p className="text-xs font-bold text-black mt-0.5 truncate">{data.owner?.email || "N/A"}</p>
 //                 </div>
 //               </div>
 //               <div className="flex items-start gap-2.5">
-//                 <div className="p-2 bg-[#EBF7F5] rounded"><img src="/images/id_badge.png" className="w-3.5 h-3.5 object-contain" alt="" /></div>
+//                 <div className="p-2 bg-[#EBF7F5] rounded shrink-0">
+//                   <img src="/images/cube.png" className="w-3.5 h-3.5 object-contain opacity-60" alt="" />
+//                 </div>
 //                 <div>
-//                   <p className="text-[10px] text-gray-400 font-semibold uppercase">ID Type</p>
-//                   <p className="text-xs font-bold text-black mt-0.5">{business.owner.idType}</p>
+//                   <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">ID Type</p>
+//                   <p className="text-xs font-bold text-black mt-0.5">{data.owner?.idType || "N/A"}</p>
 //                 </div>
 //               </div>
 //               <div className="flex items-start gap-2.5">
-//                 <div className="p-2 bg-[#EBF7F5] rounded"><PhoneOutlined className="text-[#00A389] text-xs" /></div>
+//                 <div className="p-2 bg-[#EBF7F5] rounded shrink-0">
+//                   <img src="/images/dots.png" className="w-3.5 h-3.5 object-contain opacity-60" alt="" />
+//                 </div>
 //                 <div>
-//                   <p className="text-[10px] text-gray-400 font-semibold uppercase">Phone Number</p>
-//                   <p className="text-xs font-bold text-black mt-0.5">{business.owner.phone}</p>
+//                   <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Phone Number</p>
+//                   <p className="text-xs font-bold text-black mt-0.5">{data.owner?.phone || "N/A"}</p>
 //                 </div>
 //               </div>
 //               <div className="flex items-start gap-2.5">
-//                 <div className="p-2 bg-[#EBF7F5] rounded"><img src="/images/id_badge.png" className="w-3.5 h-3.5 object-contain" alt="" /></div>
+//                 <div className="p-2 bg-[#EBF7F5] rounded shrink-0">
+//                   <img src="/images/cube.png" className="w-3.5 h-3.5 object-contain opacity-60" alt="" />
+//                 </div>
 //                 <div>
-//                   <p className="text-[10px] text-gray-400 font-semibold uppercase">ID Number</p>
-//                   <p className="text-xs font-bold text-black mt-0.5">{business.owner.idNumber}</p>
+//                   <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">ID Number</p>
+//                   <p className="text-xs font-bold text-black mt-0.5">{data.owner?.idNumber || "N/A"}</p>
 //                 </div>
 //               </div>
 //             </div>
 //           </div>
 
-//           {/* Products & Services Selection Area Panel Section */}
+//           {/* Products & Services Dynamic Component */}
 //           <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
 //             <h3 className="text-sm font-bold text-black mb-4">Products & Services</h3>
 //             <div className="flex flex-wrap gap-2">
-//               {[
-//                 "Food Ordering", "Seasonal Gifts", "Wedding Cakes",
-//                 "Home Delivering", "Event Planing", "Custom Cakes",
-//                 "Kits for baking", "Catering", "Small chops",
-//                 "Food Ordering", "Donuts & Bread", "Baking Ingredients"
-//               ].map((item, idx) => (
-//                 <span key={idx} className="bg-[#F1F3F6] text-gray-600 px-3 py-1.5 rounded text-xs font-medium">
-//                   {item}
-//                 </span>
-//               ))}
+//               {data.productsAndServices?.length ? (
+//                 data.productsAndServices.map((item, idx) => (
+//                   <span key={idx} className="bg-[#F1F3F6] text-gray-600 px-3 py-1.5 rounded text-xs font-medium">
+//                     {item}
+//                   </span>
+//                 ))
+//               ) : (
+//                 ["Food Ordering", "Seasonal Gifts", "Wedding Cakes", "Home Delivery", "Catering"].map((item, idx) => (
+//                   <span key={idx} className="bg-[#F1F3F6] text-gray-600 px-3 py-1.5 rounded text-xs font-medium">
+//                     {item}
+//                   </span>
+//                 ))
+//               )}
 //             </div>
 //           </div>
 
-//           {/* Verification Legal Compliance Attachment Box Documents */}
+//           {/* Verification Legal Compliance Document Attachments */}
 //           <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
 //             <h3 className="text-sm font-bold text-black mb-4">Verification Documents</h3>
 //             <div className="space-y-3">
-//               {[
+//               {(data.verificationDocuments?.length ? data.verificationDocuments : [
 //                 { label: "Business License", name: "License_biekitchen.pdf", status: "Verified", color: "bg-[#EBF7F5] text-[#15BE87]" },
-//                 { label: "Tax Certificate", name: "Tax_biekitchen.pdf", status: "Verified", color: "bg-[#EBF7F5] text-[#15BE87]" },
-//                 { label: "ID Proof (Owner)", name: "biebele_id.pdf", status: "Declined", color: "bg-[#FCE8E6] text-[#EB5757]" },
-//                 { label: "Business Registration", name: "business_reg.pdf", status: "Under Review", color: "bg-[#E2EDFC] text-[#2F80ED]" }
-//               ].map((doc, idx) => (
+//                 { label: "Tax Certificate", name: "Tax_biekitchen.pdf", status: "Verified", color: "bg-[#EBF7F5] text-[#15BE87]" }
+//               ]).map((doc, idx) => (
 //                 <div key={idx} className="flex items-center justify-between p-2.5 bg-white border border-gray-100 rounded-lg">
 //                   <div className="flex items-center gap-3">
-//                     <img src="/images/pdf_icon.png" alt="pdf" className="w-5 h-5 object-contain" fallback="/images/pdf_icon.png" />
+//                     <img src="/images/list_view.png" alt="pdf" className="w-5 h-5 object-contain opacity-70" />
 //                     <div>
 //                       <h4 className="font-bold text-xs text-black">{doc.label}</h4>
 //                       <p className="text-[11px] text-gray-400 mt-0.5">{doc.name}</p>
 //                     </div>
 //                   </div>
 //                   <div className="flex items-center gap-4">
-//                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${doc.color}`}>
+//                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${doc.color || "bg-gray-100 text-gray-600"}`}>
 //                       {doc.status}
 //                     </span>
-//                     <Button className="border-none bg-transparent p-0 flex items-center justify-center shadow-none h-6 w-6">
-//                       <img src="/images/download_tray.png" className="w-4 h-4 object-contain" alt="download" />
+//                     <Button className="border-none bg-transparent p-0 flex items-center justify-center shadow-none h-6 w-6 hover:bg-gray-100 rounded-full">
+//                       <img src="/images/upload.png" className="w-3.5 h-3.5 object-contain rotate-180" alt="download" />
 //                     </Button>
 //                   </div>
 //                 </div>
@@ -1435,63 +1309,73 @@ export default BusinessProfilePage;
 //             </div>
 //           </div>
 
-//           {/* Admin Flow Command Actions Section */}
+//           {/* Interactive Core Control Action Triggers Block Panel */}
 //           <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm space-y-3">
 //             <h3 className="text-sm font-bold text-black mb-2">Admin Actions</h3>
-//             <Button 
-//               onClick={() => handleVerify("approved")}
-//               loading={submitting}
-//               className="w-full h-10 bg-[#15BE87] hover:bg-[#12a173]! text-white text-xs font-bold rounded-lg border-none shadow-none flex items-center justify-center gap-2"
-//             >
-//               <img src="/images/circle_check_white.png" className="w-4 h-4 object-contain" alt="" /> Approve Business
-//             </Button>
-//             <Button 
-//               onClick={() => setIsRejectModalOpen(true)}
-//               className="w-full h-10 bg-[#7B0000] hover:bg-[#5e0000]! text-white text-xs font-bold rounded-lg border-none shadow-none flex items-center justify-center gap-2"
-//             >
-//               <img src="/images/circle_close_white.png" className="w-4 h-4 object-contain" alt="" /> Reject Verification
-//             </Button>
+//             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+//               <Button 
+//                 onClick={() => handleVerify("approved")}
+//                 loading={submitting}
+//                 disabled={data.verificationStatus === "approved"}
+//                 className="w-full h-10 bg-[#15BE87] hover:bg-[#12a173]! text-white text-xs font-bold rounded-lg border-none shadow-none flex items-center justify-center gap-2"
+//               >
+//                 Approve Business
+//               </Button>
+//               <Button 
+//                 onClick={() => setIsRejectModalOpen(true)}
+//                 disabled={data.verificationStatus === "rejected"}
+//                 className="w-full h-10 bg-[#7B0000] hover:bg-[#5e0000]! text-white text-xs font-bold rounded-lg border-none shadow-none flex items-center justify-center gap-2"
+//               >
+//                 Reject Verification
+//               </Button>
+//             </div>
 //             <Button className="w-full h-10 bg-[#F2C94C] hover:bg-[#dbb53d]! text-white text-xs font-bold rounded-lg border-none shadow-none flex items-center justify-center gap-2">
-//               <img src="/images/pause_white.png" className="w-4 h-4 object-contain" alt="" /> Suspend Account
+//               Suspend Account
 //             </Button>
 //             <Button className="w-full h-10 bg-white hover:bg-gray-50! text-[#060853] text-xs font-bold rounded-lg border border-[#060853] shadow-none flex items-center justify-center gap-2">
-//               <img src="/images/message_bubble.png" className="w-4 h-4 object-contain" alt="" /> Send Message to Owner
+//               Send Message to Owner
 //             </Button>
 //           </div>
 
 //         </div>
 
-//         {/* Right Side Column Elements Block */}
+//         {/* Right Hand Side Column */}
 //         <div className="space-y-6">
           
-//           {/* Contact Details Information Cards Grid View Box */}
+//           {/* Detailed Contact Grid Box */}
 //           <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
 //             <h3 className="text-sm font-bold text-black mb-4">Contact Information</h3>
-//             <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-xs">
+//             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 text-xs">
 //               <div>
 //                 <p className="text-gray-400 font-medium">Business Email</p>
-//                 <p className="font-bold text-black mt-1 break-all">{business.contact.email}</p>
+//                 <p className="font-bold text-gray-900 mt-1 break-all">{data.contact?.email || "N/A"}</p>
 //               </div>
 //               <div>
 //                 <p className="text-gray-400 font-medium">Business Address</p>
-//                 <p className="font-bold text-black mt-1">{business.contact.address}</p>
+//                 <p className="font-bold text-gray-900 mt-1">{data.contact?.address || "N/A"}</p>
 //               </div>
 //               <div>
 //                 <p className="text-gray-400 font-medium">Phone Number</p>
-//                 <p className="font-bold text-black mt-1">{business.contact.phone}</p>
+//                 <p className="font-bold text-gray-900 mt-1">{data.contact?.phone || "N/A"}</p>
 //               </div>
 //               <div>
 //                 <p className="text-gray-400 font-medium">Business Hours</p>
-//                 <p className="font-bold text-black mt-1">{business.contact.hours}</p>
+//                 <p className="font-bold text-gray-900 mt-1">{data.contact?.hours || "N/A"}</p>
 //               </div>
-//               <div className="col-span-2">
+//               <div className="sm:col-span-2">
 //                 <p className="text-gray-400 font-medium">Website</p>
-//                 <p className="font-bold text-black mt-1">{business.contact.website}</p>
+//                 {data.contact?.website ? (
+//                   <a href={`https://${data.contact.website}`} target="_blank" rel="noreferrer" className="font-bold text-blue-600 hover:underline block mt-1">
+//                     {data.contact.website}
+//                   </a>
+//                 ) : (
+//                   <p className="font-bold text-gray-900 mt-1">N/A</p>
+//                 )}
 //               </div>
 //             </div>
 //           </div>
 
-//           {/* Customer Reviews Rating Analytics Bar Charts Segment */}
+//           {/* Customer Reviews Analytic Performance Summary Grid Dashboard */}
 //           <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
 //             <h3 className="text-sm font-bold text-black mb-4">Customer Reviews</h3>
             
@@ -1501,18 +1385,18 @@ export default BusinessProfilePage;
 //                 <p className="text-[9px] text-gray-400 font-semibold mt-0.5">(128 reviews)</p>
 //                 <div className="flex justify-center gap-0.5 mt-1">
 //                   {Array(5).fill(0).map((_, i) => (
-//                     <img key={i} src="/images/trust_star.png" className="w-2.5 h-2.5 object-contain" alt="" />
+//                     <img key={i} src="/images/trust_star.png" className="w-2.5 h-2.5 object-contain" alt="star" />
 //                   ))}
 //                 </div>
 //               </div>
               
-//               {/* Stacked Rating Bar Charts Row Mapping */}
+//               {/* Star breakdown rows configuration */}
 //               <div className="flex-1 space-y-1.5">
 //                 {[
 //                   { star: "5☆", count: 102, percent: "w-[80%] bg-[#F2C94C]" },
 //                   { star: "4☆", count: 18, percent: "w-[20%] bg-[#F2C94C]" },
 //                   { star: "3☆", count: 6, percent: "w-[8%] bg-[#F2C94C]" },
-//                   { star: "2☆", count: 2, percent: "w-[4%] bg-gray-400" },
+//                   { star: "2☆", count: 2, percent: "w-[4%] bg-gray-300" },
 //                   { star: "1☆", count: 0, percent: "w-0 bg-transparent" }
 //                 ].map((row, i) => (
 //                   <div key={i} className="flex items-center text-[11px] font-medium text-gray-500 gap-2">
@@ -1526,15 +1410,13 @@ export default BusinessProfilePage;
 //               </div>
 //             </div>
 
-//             <p className="text-right text-xs font-bold text-[#2F80ED] cursor-pointer mb-4">See All</p>
+//             <p className="text-right text-xs font-bold text-[#2F80ED] cursor-pointer mb-4 hover:underline">See All</p>
 
-//             {/* Individual Feed Reviews Comments Feed Element Row Map */}
+//             {/* Individual Reviews Feed Layout */}
 //             <div className="space-y-3">
-//               {Array(4).fill({
-//                 name: "Emily Davis",
-//                 days: "2 days ago",
-//                 comment: "Great Product. Loved the quality and fast shipping. Will buy again"
-//               }).map((rev, idx) => (
+//               {(data.reviews?.length ? data.reviews : [
+//                 { name: "Emily Davis", days: "2 days ago", comment: "Great Product. Loved the quality and fast shipping. Will buy again" }
+//               ]).map((rev, idx) => (
 //                 <div key={idx} className="p-3 bg-white border border-gray-100 rounded-lg">
 //                   <div className="flex justify-between items-center text-xs">
 //                     <div className="flex items-center gap-2">
@@ -1553,15 +1435,13 @@ export default BusinessProfilePage;
 //             </div>
 //           </div>
 
-//           {/* Activity Logs Timeline Event Component Block Segment */}
+//           {/* System Audit Activity Timeline Logs Section */}
 //           <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
 //             <h3 className="text-sm font-bold text-black mb-6">Activity Timeline</h3>
 //             <div className="relative pl-6 border-l-2 border-gray-100 space-y-6">
-              
 //               {[
-//                 { title: "Verification Submitted", detail: "2 days ago", time: "4:00pm", color: "bg-[#060853]" },
-//                 { title: "Documents Uploaded", detail: "Just now", time: "Just now", color: "bg-[#F2994A]" },
-//                 { title: "Under review", detail: "1 day ago", time: "1 day ago", color: "bg-gray-300" }
+//                 { title: "Verification Process Started", detail: "System updated", time: "2 days ago", color: "bg-[#060853]" },
+//                 { title: "Documents Uploaded for Review", detail: "By Business Owner", time: "2 days ago", color: "bg-[#F2994A]" }
 //               ].map((act, i) => (
 //                 <div key={i} className="relative text-xs">
 //                   <span className={`absolute -left-[31px] top-0.5 h-2.5 w-2.5 rounded-full ${act.color} ring-4 ring-white`}></span>
@@ -1570,34 +1450,30 @@ export default BusinessProfilePage;
 //                       <h4 className="font-bold text-black">{act.title}</h4>
 //                       <p className="text-[11px] text-gray-400 mt-0.5">{act.detail}</p>
 //                     </div>
-//                     <span className="text-gray-400 text-[11px]">{act.time}</span>
+//                     <span className="text-gray-400 text-[11px] whitespace-nowrap">{act.time}</span>
 //                   </div>
 //                 </div>
 //               ))}
-
-//               {/* Assignment log containing structural user avatar indicator */}
 //               <div className="relative text-xs">
 //                 <span className="absolute -left-[37px] top-0.5 ring-4 ring-white rounded-full">
 //                   <Avatar size={22} src="/images/avatar_owner.png" />
 //                 </span>
 //                 <div className="flex justify-between items-start pl-1">
 //                   <div>
-//                     <h4 className="font-bold text-black">Review assigned to: Admin User</h4>
+//                     <h4 className="font-bold text-black">Review Assigned to Current Admin Session</h4>
 //                   </div>
-//                   <span className="text-gray-400 text-[11px]">1 day ago</span>
+//                   <span className="text-gray-400 text-[11px] whitespace-nowrap">Just now</span>
 //                 </div>
 //               </div>
-
 //             </div>
 //           </div>
 
 //         </div>
-
 //       </div>
 
-//       {/* Decline Rejection Modal context */}
+//       {/* Decline Rejection Modal context Input Form */}
 //       <Modal
-//         title="Input Audit Rejection Context"
+//         title="Input Audit Rejection Reason"
 //         open={isRejectModalOpen}
 //         onOk={() => handleVerify("rejected", rejectReason)}
 //         onCancel={() => setIsRejectModalOpen(false)}
@@ -1605,12 +1481,12 @@ export default BusinessProfilePage;
 //         okButtonProps={{ danger: true }}
 //         okText="Decline Application"
 //       >
-//         <p className="text-xs text-gray-400 mb-2">Provide information specifying missing components for systemic adjustments.</p>
+//         <p className="text-xs text-gray-400 mb-2">Provide explicit notes detailing the missing items or verification issues for the owner.</p>
 //         <Input.TextArea
 //           rows={4}
 //           value={rejectReason}
 //           onChange={(e) => setRejectReason(e.target.value)}
-//           placeholder="e.g., Document clarity issues or mismatching corporate name validation..."
+//           placeholder="e.g., Documents provided are blurry or business name mismatch..."
 //         />
 //       </Modal>
 

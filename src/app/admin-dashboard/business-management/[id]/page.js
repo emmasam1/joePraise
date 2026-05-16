@@ -702,7 +702,7 @@ const BusinessProfilePage = ({ params }) => {
     lastUpdated: "2 hours ago",
     verificationStatus: "pending",
     owner: {
-      fullName: "BieBele Edward",
+      name: "BieBele Edward",
       role: "Owner & Founder",
       email: "oramafelix@gmail.com",
       phone: "+1 3469997830",

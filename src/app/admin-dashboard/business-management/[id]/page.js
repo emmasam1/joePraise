@@ -706,20 +706,36 @@ export default function BusinessProfilePage() {
   const [submitting, setSubmitting] = useState(false);
 
   // Fetch data from your backend API
-  useEffect(() => {
-    async function fetchBusinessData() {
-      try {
-        const response = await fetch(`/api/businesses/${id}`);
-        const data = await response.json();
-        setBusiness(data);
-      } catch (error) {
-        console.error("Error fetching business profile:", error);
-      } finally {
-        setLoading(false);
+ useEffect(() => {
+  async function fetchBusinessData() {
+    try {
+      const response = await fetch(`/api/businesses/${id}`);
+      
+      if (!response.ok) {
+        throw new Error(`Server responded with status: ${response.status}`);
       }
+
+      const resData = await response.json();
+      console.log("API Raw Response Data:", resData); // Open browser console to look at this structure!
+
+      // If your backend wraps the payload inside a key like 'data' or 'business'
+      const actualBusinessData = resData.data || resData.business || resData;
+      
+      if (actualBusinessData && (actualBusinessData.business_name || actualBusinessData._id)) {
+        setBusiness(actualBusinessData);
+      } else {
+        setBusiness(null);
+      }
+    } catch (error) {
+      console.error("Error fetching business profile:", error);
+      setBusiness(null);
+    } finally {
+      setLoading(false);
     }
-    if (id) fetchBusinessData();
-  }, [id]);
+  }
+  
+  if (id) fetchBusinessData();
+}, [id]);
 
   // Handler for Admin Actions (Approve, Reject, Suspend)
   const handleStatusUpdate = async (status) => {

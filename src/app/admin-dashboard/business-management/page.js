@@ -355,7 +355,7 @@ const BusinessManagement = () => {
     },
     { 
       title: "OWNER NAME", 
-      dataIndex: ["owner", "fullName"], 
+      dataIndex: ["owner", "name"], 
       key: "owner_name",
       render: (text) => <span>{text || "N/A"}</span>
     },

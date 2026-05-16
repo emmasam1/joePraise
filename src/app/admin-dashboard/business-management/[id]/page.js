@@ -675,31 +675,52 @@
 
 "use client";
 import React, { useState, useEffect, use } from "react";
-import { Button, Tag, Input, Badge, Avatar, Spin, message, Modal } from "antd";
+import { Button, Input, Avatar, Spin, message, Modal } from "antd";
 import { useRouter } from "next/navigation";
-import {
-  ClockCircleOutlined,
-  CheckSquareFilled,
-  MailOutlined,
-  PhoneOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  FilePdfOutlined
-} from "@ant-design/icons";
-import { RiArrowLeftLine } from "react-icons/ri";
+import { MailOutlined, PhoneOutlined } from "@ant-design/icons";
 import api from "@/api/axios";
 
 const BusinessProfilePage = ({ params }) => {
   const router = useRouter();
-  const { id } = use(params);
+  const resolvedParams = params ? use(params) : { id: "default" };
+  const id = resolvedParams.id;
 
-  const [loading, setLoading] = useState(true);
-  const [business, setBusiness] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  
+  // Structured default data state strictly replicating the layout matching elements in Figma 
+  const [business, setBusiness] = useState({
+    businessName: "Bie's Kitchen",
+    category: "Food & Beverage",
+    subCategory: "Restaurant & Cafe",
+    establishedYear: "Established 2018",
+    description: "Bie's Kitchen is an authentic local dishes and homemade food products crafted by Chef Bie, specializing in traditional flavors, culinary artistry, and, in some contexts, homemade goods like Leche Flan and Biko",
+    businessID: "BE-2018-002",
+    addedDate: "March 29, 2026",
+    lastUpdated: "2 hours ago",
+    verificationStatus: "pending",
+    owner: {
+      fullName: "BieBele Edward",
+      role: "Owner & Founder",
+      email: "oramafelix@gmail.com",
+      phone: "+1 3469997830",
+      idType: "Driver's License",
+      idNumber: "DL #6884403843"
+    },
+    contact: {
+      email: "biekitchen@gmail.com",
+      phone: "+1 8990337293",
+      website: "biekitchen.com",
+      address: "No. 34 wakali Street Ikeja, Lagos.",
+      hours: "Mon - Sun: 7:00 AM - 9:00 PM"
+    }
+  });
 
   const fetchBusinessProfile = async () => {
+    if (id === "default") return;
+    setLoading(true);
     try {
       const response = await api.get(`/admin/${id}`);
       if (response.data.success) {
@@ -713,7 +734,7 @@ const BusinessProfilePage = ({ params }) => {
   };
 
   useEffect(() => {
-    if (id) fetchBusinessProfile();
+    fetchBusinessProfile();
   }, [id]);
 
   const handleVerify = async (status, reason = "") => {
@@ -722,12 +743,11 @@ const BusinessProfilePage = ({ params }) => {
       const response = await api.patch(`/admin/${id}/verify`, {
         status,
         rejectionReason: reason,
-        stage: "decision"
       });
       if (response.data.success) {
         message.success(`Business ${status} successfully!`);
         setIsRejectModalOpen(false);
-        fetchBusinessProfile(); // Refresh backend updates
+        fetchBusinessProfile();
       }
     } catch (error) {
       message.error(error.response?.data?.message || "Update execution error");
@@ -738,183 +758,354 @@ const BusinessProfilePage = ({ params }) => {
 
   if (loading) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-gray-50">
-        <Spin size="large" tip="Assembling unified business schema records..." />
-      </div>
-    );
-  }
-
-  if (!business) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <h2 className="text-xl font-bold text-gray-700">Entity Profiling Profile Missing</h2>
-        <Button onClick={() => router.back()} className="mt-4 bg-[#060853] text-white">
-          Return to Hub
-        </Button>
+      <div className="h-screen w-full flex items-center justify-center bg-[#F8FAFC]">
+        <Spin size="large" />
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen p-6 pr-10">
-      {/* Top Header Navigation */}
-      <div className="flex items-center justify-between mb-6 gap-4">
-        <div className="flex items-center gap-4">
-          <Button
-            icon={<RiArrowLeftLine />}
-            type="text"
-            onClick={() => router.back()}
-            className="hover:bg-gray-200 flex items-center justify-center"
+    <div className="bg-[#FAFAFA] min-h-screen px-8 py-6 space-y-6 text-[#2A2A2A]">
+      
+      {/* Top Navigation Row */}
+      <div className="flex items-center justify-between pb-2">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.back()}>
+          <img src="/images/arrow_left.png" alt="back" className="w-4 h-4 object-contain" />
+          <span className="text-xs font-bold text-black">Business Management</span>
+          <span className="text-xs text-gray-400">/ {business.businessName}</span>
+        </div>
+      </div>
+
+      {/* Main Corporate Profile Top Panel Grid Box */}
+      <div className="w-full bg-white border border-gray-100 rounded-xl p-6 flex flex-col lg:flex-row gap-6 shadow-sm">
+        <div className="w-full lg:w-56 h-40 shrink-0">
+          <img
+            src="/images/kitchen_banner.png"
+            alt="Business Banner"
+            className="w-full h-full object-cover rounded-lg"
+            fallback="https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=1000"
           />
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 leading-tight">
-              {business.businessName}
-            </h1>
-            <p className="text-xs text-gray-500">
-              Business Management / Account Identity Profile
-            </p>
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <h2 className="text-xl font-bold text-black tracking-tight">{business.businessName}</h2>
+          <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 mt-1">
+            <span>{business.category}</span>
+            <span>•</span>
+            <span>{business.subCategory}</span>
+            <span>•</span>
+            <span>{business.establishedYear}</span>
+          </div>
+          <p className="text-gray-500 text-xs leading-relaxed mt-2.5 max-w-3xl">
+            {business.description}
+          </p>
+
+          {/* Badge Chips Meta Information Array Row */}
+          <div className="flex flex-wrap gap-2 mt-4">
+            <span className="bg-[#EBF7F5] text-[#00A389] px-2.5 py-1 rounded text-[11px] font-medium">
+              Business ID: {business.businessID}
+            </span>
+            <span className="bg-[#EBF7F5] text-[#00A389] px-2.5 py-1 rounded text-[11px] font-medium">
+              Added: {business.addedDate}
+            </span>
+            <span className="bg-[#EBF7F5] text-[#00A389] px-2.5 py-1 rounded text-[11px] font-medium">
+              Last Updated: {business.lastUpdated}
+            </span>
+          </div>
+        </div>
+
+        {/* Verification Status Summary Pipeline Section */}
+        <div className="w-full lg:w-64 border-l lg:pl-6 border-gray-100 flex flex-col justify-between">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="font-bold text-xs text-black">Verification Status</h3>
+            <span className="text-[11px] font-semibold text-[#F2994A] flex items-center gap-1">
+              <span className="h-1.5 w-1.5 bg-[#F2994A] rounded-full"></span> Pending Review
+            </span>
+          </div>
+          <div className="space-y-2 text-xs">
+            <div className="flex items-center justify-between text-gray-500">
+              <span className="flex items-center gap-1.5 font-medium">
+                <input type="checkbox" checked readOnly className="accent-[#15BE87] h-3 w-3 rounded" /> Submitted
+              </span>
+              <span className="text-[11px]">2 days ago</span>
+            </div>
+            <div className="flex items-center justify-between text-gray-500">
+              <span className="flex items-center gap-1.5 font-medium">
+                <span className="h-3 w-3 rounded-full border-2 border-[#F2994A] bg-transparent inline-block"></span> Under Review
+              </span>
+              <span className="text-[11px] text-[#F2994A] font-medium">In Progress</span>
+            </div>
+            <div className="flex items-center justify-between text-gray-500">
+              <span className="flex items-center gap-1.5 font-medium">
+                <span className="h-3 w-3 rounded-full border border-gray-300 bg-transparent inline-block"></span> Decision
+              </span>
+              <span className="text-[11px]">Pending</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Profile Metrics Segment */}
-      <div className="w-full bg-white border border-gray-100 rounded-xl p-6 flex flex-col md:flex-row gap-6 mb-5 shadow-sm">
-        <div className="w-full md:w-64 h-48 shrink-0">
-          <img
-            src={business.banner || "https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=1000&auto=format&fit=crop"}
-            alt="Business Banner"
-            className="w-full h-full object-cover rounded-lg"
-          />
-        </div>
-
-        <div className="flex-1 space-y-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-[#2A2A2A] capitalize">
-                {business.businessName}
-              </h2>
-              <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
-                <span className="capitalize">{business.category}</span>
-                <span className="text-gray-300">•</span>
-                <span>Created {new Date(business.createdAt).toLocaleDateString()}</span>
+      {/* Grid Layout Container Segment split */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* Left Side Column Elements Block */}
+        <div className="space-y-6">
+          
+          {/* Owner Details Card Wrapper Section */}
+          <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
+            <h3 className="text-sm font-bold text-black mb-4">Owner Details</h3>
+            <div className="flex items-center gap-3 mb-5">
+              <Avatar size={44} src="/images/avatar_owner.png" className="border border-gray-200" />
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-bold text-xs text-black">{business.owner.fullName}</h4>
+                  <span className="text-[10px] text-gray-300 font-medium tracking-wide bg-gray-50 px-1 rounded">Primary Contact</span>
+                </div>
+                <p className="text-[11px] text-gray-400 font-medium mt-0.5">{business.owner.role}</p>
               </div>
             </div>
             
-            {/* Direct Workflow Decision Admin Access Controls */}
-            {business.verificationStatus === "pending" && (
-              <div className="flex items-center gap-2">
-                <Button 
-                  type="primary" 
-                  className="bg-green-600! border-none!"
-                  loading={submitting}
-                  onClick={() => handleVerify("approved")}
-                >
-                  Approve Verification
-                </Button>
-                <Button 
-                  danger 
-                  type="primary"
-                  onClick={() => setIsRejectModalOpen(true)}
-                >
-                  Decline
-                </Button>
-              </div>
-            )}
-          </div>
-
-          <p className="text-gray-600 text-sm leading-relaxed max-w-2xl">
-            {business.description || "No corporate overview statements provided by enterprise manager."}
-          </p>
-
-          <div className="flex flex-wrap gap-3 pt-2">
-            <Tag color="blue" className="px-3 py-1 font-semibold text-sm">
-              ID: {business.businessID}
-            </Tag>
-            <Tag color="cyan" className="px-3 py-1 text-sm capitalize">
-              Tier Status: {business.subscriptionStatus}
-            </Tag>
-          </div>
-        </div>
-
-        {/* Verification Status Progress Bar */}
-        <div className="w-full md:w-72 bg-[#F8FAFC] rounded-xl p-5 border border-gray-100">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="font-bold text-gray-800 text-sm">System Pipeline</h3>
-            <span className="text-xs font-bold uppercase text-blue-600 flex items-center gap-1">
-              <ClockCircleOutlined /> {business.verificationStage.replace("_", " ")}
-            </span>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Submitted Registration</span>
-              <CheckSquareFilled className="text-green-500" />
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Verification Processing</span>
-              <CheckSquareFilled className={business.verificationStatus !== "not_started" ? "text-blue-500" : "text-gray-200"} />
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Resolution Output</span>
-              <span className={`text-xs font-bold capitalize ${business.verificationStatus === "approved" ? "text-green-500" : "text-amber-600"}`}>
-                {business.verificationStatus}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Grid Meta Information Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
-        {/* Owner Information Cards */}
-        <div className="lg:col-span-5 bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-gray-900 mb-6">Account Director</h2>
-          {business.owner ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 mb-4">
-                <Avatar size={56} src={business.owner.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=Nate"} />
+            <div className="grid grid-cols-2 gap-x-4 gap-y-4 pt-2 border-t border-gray-50">
+              <div className="flex items-start gap-2.5">
+                <div className="p-2 bg-[#EBF7F5] rounded"><MailOutlined className="text-[#00A389] text-xs" /></div>
                 <div>
-                  <h4 className="font-bold text-base text-gray-800">{business.owner.fullName || business.owner.name}</h4>
-                  <p className="text-xs text-gray-400">Merchant User Identity</p>
+                  <p className="text-[10px] text-gray-400 font-semibold uppercase">Mail Address</p>
+                  <p className="text-xs font-bold text-black mt-0.5">{business.owner.email}</p>
                 </div>
               </div>
-              <div className="space-y-2 text-sm text-gray-600">
-                <p><MailOutlined className="mr-2" /> {business.owner.email}</p>
-                <p><PhoneOutlined className="mr-2" /> {business.owner.phone || "No designated backup telephone"}</p>
+              <div className="flex items-start gap-2.5">
+                <div className="p-2 bg-[#EBF7F5] rounded"><img src="/images/id_badge.png" className="w-3.5 h-3.5 object-contain" alt="" /></div>
+                <div>
+                  <p className="text-[10px] text-gray-400 font-semibold uppercase">ID Type</p>
+                  <p className="text-xs font-bold text-black mt-0.5">{business.owner.idType}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <div className="p-2 bg-[#EBF7F5] rounded"><PhoneOutlined className="text-[#00A389] text-xs" /></div>
+                <div>
+                  <p className="text-[10px] text-gray-400 font-semibold uppercase">Phone Number</p>
+                  <p className="text-xs font-bold text-black mt-0.5">{business.owner.phone}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <div className="p-2 bg-[#EBF7F5] rounded"><img src="/images/id_badge.png" className="w-3.5 h-3.5 object-contain" alt="" /></div>
+                <div>
+                  <p className="text-[10px] text-gray-400 font-semibold uppercase">ID Number</p>
+                  <p className="text-xs font-bold text-black mt-0.5">{business.owner.idNumber}</p>
+                </div>
               </div>
             </div>
-          ) : (
-            <p className="text-gray-400 italic">No assigned parent profiles.</p>
-          )}
-        </div>
+          </div>
 
-        {/* Uploaded Verification Documents Registry */}
-        <div className="lg:col-span-7 bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Audit Compliance Credentials</h2>
-          <div className="space-y-3">
-            {business.documents && business.documents.length > 0 ? (
-              business.documents.map((doc, idx) => (
-                <div key={doc.id || idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+          {/* Products & Services Selection Area Panel Section */}
+          <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
+            <h3 className="text-sm font-bold text-black mb-4">Products & Services</h3>
+            <div className="flex flex-wrap gap-2">
+              {[
+                "Food Ordering", "Seasonal Gifts", "Wedding Cakes",
+                "Home Delivering", "Event Planing", "Custom Cakes",
+                "Kits for baking", "Catering", "Small chops",
+                "Food Ordering", "Donuts & Bread", "Baking Ingredients"
+              ].map((item, idx) => (
+                <span key={idx} className="bg-[#F1F3F6] text-gray-600 px-3 py-1.5 rounded text-xs font-medium">
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Verification Legal Compliance Attachment Box Documents */}
+          <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
+            <h3 className="text-sm font-bold text-black mb-4">Verification Documents</h3>
+            <div className="space-y-3">
+              {[
+                { label: "Business License", name: "License_biekitchen.pdf", status: "Verified", color: "bg-[#EBF7F5] text-[#15BE87]" },
+                { label: "Tax Certificate", name: "Tax_biekitchen.pdf", status: "Verified", color: "bg-[#EBF7F5] text-[#15BE87]" },
+                { label: "ID Proof (Owner)", name: "biebele_id.pdf", status: "Declined", color: "bg-[#FCE8E6] text-[#EB5757]" },
+                { label: "Business Registration", name: "business_reg.pdf", status: "Under Review", color: "bg-[#E2EDFC] text-[#2F80ED]" }
+              ].map((doc, idx) => (
+                <div key={idx} className="flex items-center justify-between p-2.5 bg-white border border-gray-100 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <FilePdfOutlined className="text-xl text-red-500" />
+                    <img src="/images/pdf_icon.png" alt="pdf" className="w-5 h-5 object-contain" fallback="/images/pdf_icon.png" />
                     <div>
-                      <p className="text-sm font-bold text-gray-800 capitalize">{doc.documentType?.replace("_", " ")}</p>
-                      <a href={doc.documentUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline">
-                        Open Attached Credentials
-                      </a>
+                      <h4 className="font-bold text-xs text-black">{doc.label}</h4>
+                      <p className="text-[11px] text-gray-400 mt-0.5">{doc.name}</p>
                     </div>
                   </div>
-                  <Tag color={doc.status === "approved" ? "green" : "orange"}>{doc.status}</Tag>
+                  <div className="flex items-center gap-4">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${doc.color}`}>
+                      {doc.status}
+                    </span>
+                    <Button className="border-none bg-transparent p-0 flex items-center justify-center shadow-none h-6 w-6">
+                      <img src="/images/download_tray.png" className="w-4 h-4 object-contain" alt="download" />
+                    </Button>
+                  </div>
                 </div>
-              ))
-            ) : (
-              <p className="text-sm text-gray-400 italic py-4">No structural documents uploaded to repository yet.</p>
-            )}
+              ))}
+            </div>
           </div>
+
+          {/* Admin Flow Command Actions Section */}
+          <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm space-y-3">
+            <h3 className="text-sm font-bold text-black mb-2">Admin Actions</h3>
+            <Button 
+              onClick={() => handleVerify("approved")}
+              loading={submitting}
+              className="w-full h-10 bg-[#15BE87] hover:bg-[#12a173]! text-white text-xs font-bold rounded-lg border-none shadow-none flex items-center justify-center gap-2"
+            >
+              <img src="/images/circle_check_white.png" className="w-4 h-4 object-contain" alt="" /> Approve Business
+            </Button>
+            <Button 
+              onClick={() => setIsRejectModalOpen(true)}
+              className="w-full h-10 bg-[#7B0000] hover:bg-[#5e0000]! text-white text-xs font-bold rounded-lg border-none shadow-none flex items-center justify-center gap-2"
+            >
+              <img src="/images/circle_close_white.png" className="w-4 h-4 object-contain" alt="" /> Reject Verification
+            </Button>
+            <Button className="w-full h-10 bg-[#F2C94C] hover:bg-[#dbb53d]! text-white text-xs font-bold rounded-lg border-none shadow-none flex items-center justify-center gap-2">
+              <img src="/images/pause_white.png" className="w-4 h-4 object-contain" alt="" /> Suspend Account
+            </Button>
+            <Button className="w-full h-10 bg-white hover:bg-gray-50! text-[#060853] text-xs font-bold rounded-lg border border-[#060853] shadow-none flex items-center justify-center gap-2">
+              <img src="/images/message_bubble.png" className="w-4 h-4 object-contain" alt="" /> Send Message to Owner
+            </Button>
+          </div>
+
         </div>
+
+        {/* Right Side Column Elements Block */}
+        <div className="space-y-6">
+          
+          {/* Contact Details Information Cards Grid View Box */}
+          <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
+            <h3 className="text-sm font-bold text-black mb-4">Contact Information</h3>
+            <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-xs">
+              <div>
+                <p className="text-gray-400 font-medium">Business Email</p>
+                <p className="font-bold text-black mt-1 break-all">{business.contact.email}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 font-medium">Business Address</p>
+                <p className="font-bold text-black mt-1">{business.contact.address}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 font-medium">Phone Number</p>
+                <p className="font-bold text-black mt-1">{business.contact.phone}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 font-medium">Business Hours</p>
+                <p className="font-bold text-black mt-1">{business.contact.hours}</p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-gray-400 font-medium">Website</p>
+                <p className="font-bold text-black mt-1">{business.contact.website}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Customer Reviews Rating Analytics Bar Charts Segment */}
+          <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
+            <h3 className="text-sm font-bold text-black mb-4">Customer Reviews</h3>
+            
+            <div className="flex items-center gap-6 mb-4">
+              <div className="bg-[#FAFAFA] border border-gray-100 rounded-xl p-4 text-center w-28 shrink-0">
+                <p className="text-3xl font-bold text-black">4.9</p>
+                <p className="text-[9px] text-gray-400 font-semibold mt-0.5">(128 reviews)</p>
+                <div className="flex justify-center gap-0.5 mt-1">
+                  {Array(5).fill(0).map((_, i) => (
+                    <img key={i} src="/images/trust_star.png" className="w-2.5 h-2.5 object-contain" alt="" />
+                  ))}
+                </div>
+              </div>
+              
+              {/* Stacked Rating Bar Charts Row Mapping */}
+              <div className="flex-1 space-y-1.5">
+                {[
+                  { star: "5☆", count: 102, percent: "w-[80%] bg-[#F2C94C]" },
+                  { star: "4☆", count: 18, percent: "w-[20%] bg-[#F2C94C]" },
+                  { star: "3☆", count: 6, percent: "w-[8%] bg-[#F2C94C]" },
+                  { star: "2☆", count: 2, percent: "w-[4%] bg-gray-400" },
+                  { star: "1☆", count: 0, percent: "w-0 bg-transparent" }
+                ].map((row, i) => (
+                  <div key={i} className="flex items-center text-[11px] font-medium text-gray-500 gap-2">
+                    <span className="w-4 shrink-0">{row.star}</span>
+                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full ${row.percent}`}></div>
+                    </div>
+                    <span className="w-5 text-right shrink-0">{row.count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <p className="text-right text-xs font-bold text-[#2F80ED] cursor-pointer mb-4">See All</p>
+
+            {/* Individual Feed Reviews Comments Feed Element Row Map */}
+            <div className="space-y-3">
+              {Array(4).fill({
+                name: "Emily Davis",
+                days: "2 days ago",
+                comment: "Great Product. Loved the quality and fast shipping. Will buy again"
+              }).map((rev, idx) => (
+                <div key={idx} className="p-3 bg-white border border-gray-100 rounded-lg">
+                  <div className="flex justify-between items-center text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-black">{rev.name}</span>
+                      <div className="flex gap-0.5">
+                        {Array(5).fill(0).map((_, i) => (
+                          <img key={i} src="/images/trust_star.png" className="w-2 h-2 object-contain" alt="" />
+                        ))}
+                      </div>
+                    </div>
+                    <span className="text-gray-400 text-[10px]">{rev.days}</span>
+                  </div>
+                  <p className="text-gray-500 text-[11px] mt-2 leading-relaxed">{rev.comment}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Activity Logs Timeline Event Component Block Segment */}
+          <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
+            <h3 className="text-sm font-bold text-black mb-6">Activity Timeline</h3>
+            <div className="relative pl-6 border-l-2 border-gray-100 space-y-6">
+              
+              {[
+                { title: "Verification Submitted", detail: "2 days ago", time: "4:00pm", color: "bg-[#060853]" },
+                { title: "Documents Uploaded", detail: "Just now", time: "Just now", color: "bg-[#F2994A]" },
+                { title: "Under review", detail: "1 day ago", time: "1 day ago", color: "bg-gray-300" }
+              ].map((act, i) => (
+                <div key={i} className="relative text-xs">
+                  <span className={`absolute -left-[31px] top-0.5 h-2.5 w-2.5 rounded-full ${act.color} ring-4 ring-white`}></span>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-bold text-black">{act.title}</h4>
+                      <p className="text-[11px] text-gray-400 mt-0.5">{act.detail}</p>
+                    </div>
+                    <span className="text-gray-400 text-[11px]">{act.time}</span>
+                  </div>
+                </div>
+              ))}
+
+              {/* Assignment log containing structural user avatar indicator */}
+              <div className="relative text-xs">
+                <span className="absolute -left-[37px] top-0.5 ring-4 ring-white rounded-full">
+                  <Avatar size={22} src="/images/avatar_owner.png" />
+                </span>
+                <div className="flex justify-between items-start pl-1">
+                  <div>
+                    <h4 className="font-bold text-black">Review assigned to: Admin User</h4>
+                  </div>
+                  <span className="text-gray-400 text-[11px]">1 day ago</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
       </div>
 
-      {/* Decline Rejection Context Modal Box */}
+      {/* Decline Rejection Modal context */}
       <Modal
         title="Input Audit Rejection Context"
         open={isRejectModalOpen}
@@ -932,6 +1123,7 @@ const BusinessProfilePage = ({ params }) => {
           placeholder="e.g., Document clarity issues or mismatching corporate name validation..."
         />
       </Modal>
+
     </div>
   );
 };
@@ -939,292 +1131,264 @@ const BusinessProfilePage = ({ params }) => {
 export default BusinessProfilePage;
 
 // "use client";
-// import React, { useEffect } from "react";
-// import { Button, Avatar, Input, Badge, Rate } from "antd";
-// import { useRouter, useParams } from "next/navigation";
-// import { useBusinessStore } from "@/store/businessStore";
+// import React, { useState, useEffect, use } from "react";
+// import { Button, Tag, Input, Badge, Avatar, Spin, message, Modal } from "antd";
+// import { useRouter } from "next/navigation";
 // import {
+//   ClockCircleOutlined,
+//   CheckSquareFilled,
 //   MailOutlined,
 //   PhoneOutlined,
-//   IdcardOutlined,
-//   ScanOutlined,
-//   FileTextOutlined,
-//   CheckCircleFilled,
-//   CloseCircleFilled,
-//   ClockCircleFilled,
-//   StarFilled,
-//   StarOutlined,
+//   CheckCircleOutlined,
+//   CloseCircleOutlined,
+//   FilePdfOutlined
 // } from "@ant-design/icons";
+// import { RiArrowLeftLine } from "react-icons/ri";
+// import api from "@/api/axios";
 
-// const BusinessProfilePage = () => {
+// const BusinessProfilePage = ({ params }) => {
 //   const router = useRouter();
-//   const params = useParams();
+//   const { id } = use(params);
 
-//   const { selectedBusiness, fetchBusiness, loading } = useBusinessStore();
+//   const [loading, setLoading] = useState(true);
+//   const [business, setBusiness] = useState(null);
+//   const [submitting, setSubmitting] = useState(false);
+//   const [rejectReason, setRejectReason] = useState("");
+//   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
 
-//   const id = params?.id;
+//   const fetchBusinessProfile = async () => {
+//     try {
+//       const response = await api.get(`/admin/${id}`);
+//       if (response.data.success) {
+//         setBusiness(response.data.business);
+//       }
+//     } catch (error) {
+//       message.error(error.response?.data?.message || "Failed to fetch profile");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
 
 //   useEffect(() => {
-//     if (id) fetchBusiness(id);
+//     if (id) fetchBusinessProfile();
 //   }, [id]);
 
-//   const business = selectedBusiness;
+//   const handleVerify = async (status, reason = "") => {
+//     setSubmitting(true);
+//     try {
+//       const response = await api.patch(`/admin/${id}/verify`, {
+//         status,
+//         rejectionReason: reason,
+//         stage: "decision"
+//       });
+//       if (response.data.success) {
+//         message.success(`Business ${status} successfully!`);
+//         setIsRejectModalOpen(false);
+//         fetchBusinessProfile(); // Refresh backend updates
+//       }
+//     } catch (error) {
+//       message.error(error.response?.data?.message || "Update execution error");
+//     } finally {
+//       setSubmitting(false);
+//     }
+//   };
 
-//   if (loading || !business) {
+//   if (loading) {
 //     return (
-//       <div className="flex items-center justify-center min-h-screen text-gray-500">
-//         Loading business profile...
+//       <div className="h-screen w-full flex items-center justify-center bg-gray-50">
+//         <Spin size="large" tip="Assembling unified business schema records..." />
+//       </div>
+//     );
+//   }
+
+//   if (!business) {
+//     return (
+//       <div className="flex flex-col items-center justify-center min-h-screen">
+//         <h2 className="text-xl font-bold text-gray-700">Entity Profiling Profile Missing</h2>
+//         <Button onClick={() => router.back()} className="mt-4 bg-[#060853] text-white">
+//           Return to Hub
+//         </Button>
 //       </div>
 //     );
 //   }
 
 //   return (
-//     <div className="bg-gray-50 min-h-screen p-6">
-
-//       {/* HEADER */}
-//       <div className="flex items-center justify-between mb-6">
-//         <Button onClick={() => router.back()}>Back</Button>
-
-//         <header className="h-20 bg-white border border-gray-100 flex items-center justify-between px-8 flex-1 max-w-4xl rounded-lg shadow-sm">
-//           <Input placeholder="Search" className="max-w-md" />
-
-//           <Badge count={5}>
-//             <img src="/images/bell.png" className="h-6" />
-//           </Badge>
-
-//           <Avatar src={business.owner?.avatar || "https://i.pravatar.cc/150"} />
-//         </header>
+//     <div className="bg-gray-50 min-h-screen p-6 pr-10">
+//       {/* Top Header Navigation */}
+//       <div className="flex items-center justify-between mb-6 gap-4">
+//         <div className="flex items-center gap-4">
+//           <Button
+//             icon={<RiArrowLeftLine />}
+//             type="text"
+//             onClick={() => router.back()}
+//             className="hover:bg-gray-200 flex items-center justify-center"
+//           />
+//           <div>
+//             <h1 className="text-xl font-bold text-gray-900 leading-tight">
+//               {business.businessName}
+//             </h1>
+//             <p className="text-xs text-gray-500">
+//               Business Management / Account Identity Profile
+//             </p>
+//           </div>
+//         </div>
 //       </div>
 
-//       {/* BUSINESS HEADER CARD */}
-//       <div className="w-full bg-white border rounded-sm p-6 flex flex-col md:flex-row gap-6 mb-5">
-
-//         <div className="w-full md:w-64 h-48">
+//       {/* Profile Metrics Segment */}
+//       <div className="w-full bg-white border border-gray-100 rounded-xl p-6 flex flex-col md:flex-row gap-6 mb-5 shadow-sm">
+//         <div className="w-full md:w-64 h-48 shrink-0">
 //           <img
-//             src={business.logo?.url || "https://images.unsplash.com/photo-1552566626-52f8b828add9"}
+//             src={business.banner || "https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=1000&auto=format&fit=crop"}
+//             alt="Business Banner"
 //             className="w-full h-full object-cover rounded-lg"
 //           />
 //         </div>
 
 //         <div className="flex-1 space-y-4">
-//           <h2 className="text-xl font-bold">
-//             {business.businessName}
-//           </h2>
-
-//           <div className="text-sm text-gray-500 flex gap-2 flex-wrap">
-//             <span>{business.category}</span>
-//             <span>•</span>
-//             <span>{business.businessCity}</span>
-//             <span>•</span>
-//             <span>
-//               Established {business.establishedYear || "N/A"}
-//             </span>
+//           <div className="flex items-start justify-between">
+//             <div>
+//               <h2 className="text-xl font-bold text-[#2A2A2A] capitalize">
+//                 {business.businessName}
+//               </h2>
+//               <div className="flex items-center gap-2 text-gray-500 text-sm mt-1">
+//                 <span className="capitalize">{business.category}</span>
+//                 <span className="text-gray-300">•</span>
+//                 <span>Created {new Date(business.createdAt).toLocaleDateString()}</span>
+//               </div>
+//             </div>
+            
+//             {/* Direct Workflow Decision Admin Access Controls */}
+//             {business.verificationStatus === "pending" && (
+//               <div className="flex items-center gap-2">
+//                 <Button 
+//                   type="primary" 
+//                   className="bg-green-600! border-none!"
+//                   loading={submitting}
+//                   onClick={() => handleVerify("approved")}
+//                 >
+//                   Approve Verification
+//                 </Button>
+//                 <Button 
+//                   danger 
+//                   type="primary"
+//                   onClick={() => setIsRejectModalOpen(true)}
+//                 >
+//                   Decline
+//                 </Button>
+//               </div>
+//             )}
 //           </div>
 
-//           <p className="text-gray-600 text-sm">
-//             {business.description || "No description provided"}
+//           <p className="text-gray-600 text-sm leading-relaxed max-w-2xl">
+//             {business.description || "No corporate overview statements provided by enterprise manager."}
 //           </p>
 
-//           <div className="flex gap-3 flex-wrap">
-//             <div className="bg-[#E6FFFA] px-4 py-2 rounded-md text-[12px]">
-//               Business ID: {business.businessId || business._id}
-//             </div>
-
-//             <div className="bg-[#E6FFFA] px-4 py-2 rounded-md text-[12px]">
-//               Added:{" "}
-//               {new Date(business.createdAt).toDateString()}
-//             </div>
-
-//             <div className="bg-[#E6FFFA] px-4 py-2 rounded-md text-[12px]">
-//               Status: {business.verificationStage}
-//             </div>
+//           <div className="flex flex-wrap gap-3 pt-2">
+//             <Tag color="blue" className="px-3 py-1 font-semibold text-sm">
+//               ID: {business.businessID}
+//             </Tag>
+//             <Tag color="cyan" className="px-3 py-1 text-sm capitalize">
+//               Tier Status: {business.subscriptionStatus}
+//             </Tag>
 //           </div>
 //         </div>
 
-//         {/* VERIFICATION CARD */}
-//         <div className="w-full md:w-72 bg-[#F8FAFC] rounded-xl p-5 border">
-
-//           <div className="flex justify-between mb-5">
-//             <h3 className="font-bold text-sm">
-//               Verification Status
-//             </h3>
-
-//             <span className="text-xs font-bold uppercase text-orange-500 flex items-center gap-1">
-//               <ClockCircleFilled />
-//               {business.verificationStage}
+//         {/* Verification Status Progress Bar */}
+//         <div className="w-full md:w-72 bg-[#F8FAFC] rounded-xl p-5 border border-gray-100">
+//           <div className="flex justify-between items-center mb-6">
+//             <h3 className="font-bold text-gray-800 text-sm">System Pipeline</h3>
+//             <span className="text-xs font-bold uppercase text-blue-600 flex items-center gap-1">
+//               <ClockCircleOutlined /> {business.verificationStage.replace("_", " ")}
 //             </span>
 //           </div>
 
 //           <div className="space-y-4">
-
-//             <div className="flex justify-between">
-//               <span className="flex items-center gap-2">
-//                 <CheckCircleFilled className="text-green-500" />
-//                 Submitted
-//               </span>
-//               <span className="text-xs text-gray-400">
-//                 {business.createdAt
-//                   ? new Date(business.createdAt).toDateString()
-//                   : "—"}
+//             <div className="flex items-center justify-between">
+//               <span className="text-sm text-gray-600">Submitted Registration</span>
+//               <CheckSquareFilled className="text-green-500" />
+//             </div>
+//             <div className="flex items-center justify-between">
+//               <span className="text-sm text-gray-600">Verification Processing</span>
+//               <CheckSquareFilled className={business.verificationStatus !== "not_started" ? "text-blue-500" : "text-gray-200"} />
+//             </div>
+//             <div className="flex items-center justify-between">
+//               <span className="text-sm text-gray-600">Resolution Output</span>
+//               <span className={`text-xs font-bold capitalize ${business.verificationStatus === "approved" ? "text-green-500" : "text-amber-600"}`}>
+//                 {business.verificationStatus}
 //               </span>
 //             </div>
-
-//             <div className="flex justify-between">
-//               <span className="flex items-center gap-2 font-bold">
-//                 <ClockCircleFilled className="text-orange-400" />
-//                 Under Review
-//               </span>
-//               <span className="text-xs text-gray-500">
-//                 In progress
-//               </span>
-//             </div>
-
-//             <div className="flex justify-between">
-//               <span className="flex items-center gap-2 text-gray-400">
-//                 <CloseCircleFilled />
-//                 Decision
-//               </span>
-//               <span className="text-xs text-gray-400">
-//                 Pending
-//               </span>
-//             </div>
-
 //           </div>
 //         </div>
 //       </div>
 
-//       {/* OWNER + CONTACT GRID */}
+//       {/* Grid Meta Information Layout */}
 //       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
-
-//         {/* OWNER */}
-//         <div className="lg:col-span-5 bg-white border rounded-sm p-6">
-//           <h2 className="font-bold mb-6">Owner Details</h2>
-
-//           <div className="flex items-center gap-4 mb-6">
-//             <Avatar size={56} src={business.owner?.avatar} />
-
-//             <div>
-//               <h3 className="font-bold">
-//                 {business.owner?.fullName || "N/A"}
-//               </h3>
-//               <p className="text-xs text-gray-400">
-//                 Owner & Founder
-//               </p>
-//             </div>
-//           </div>
-
-//           <div className="space-y-4">
-
-//             <div className="flex gap-3">
-//               <MailOutlined />
-//               <div>
-//                 <p className="font-bold">
-//                   {business.owner?.email || "N/A"}
-//                 </p>
-//                 <p className="text-xs text-gray-400">Email</p>
+//         {/* Owner Information Cards */}
+//         <div className="lg:col-span-5 bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
+//           <h2 className="text-lg font-bold text-gray-900 mb-6">Account Director</h2>
+//           {business.owner ? (
+//             <div className="space-y-4">
+//               <div className="flex items-center gap-4 mb-4">
+//                 <Avatar size={56} src={business.owner.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=Nate"} />
+//                 <div>
+//                   <h4 className="font-bold text-base text-gray-800">{business.owner.fullName || business.owner.name}</h4>
+//                   <p className="text-xs text-gray-400">Merchant User Identity</p>
+//                 </div>
+//               </div>
+//               <div className="space-y-2 text-sm text-gray-600">
+//                 <p><MailOutlined className="mr-2" /> {business.owner.email}</p>
+//                 <p><PhoneOutlined className="mr-2" /> {business.owner.phone || "No designated backup telephone"}</p>
 //               </div>
 //             </div>
-
-//             <div className="flex gap-3">
-//               <PhoneOutlined />
-//               <div>
-//                 <p className="font-bold">
-//                   {business.owner?.phone || "N/A"}
-//                 </p>
-//                 <p className="text-xs text-gray-400">Phone</p>
-//               </div>
-//             </div>
-
-//             <div className="flex gap-3">
-//               <IdcardOutlined />
-//               <div>
-//                 <p className="font-bold">
-//                   {business.owner?.idType || "N/A"}
-//                 </p>
-//                 <p className="text-xs text-gray-400">ID Type</p>
-//               </div>
-//             </div>
-
-//           </div>
+//           ) : (
+//             <p className="text-gray-400 italic">No assigned parent profiles.</p>
+//           )}
 //         </div>
 
-//         {/* CONTACT */}
-//         <div className="lg:col-span-7 bg-white border rounded-sm p-6">
-//           <h2 className="font-bold mb-6">
-//             Contact Information
-//           </h2>
-
-//           <div className="grid grid-cols-2 gap-6">
-
-//             <div>
-//               <p className="text-xs text-gray-400">
-//                 Business Email
-//               </p>
-//               <p className="font-bold">
-//                 {business.businessEmail}
-//               </p>
-//             </div>
-
-//             <div>
-//               <p className="text-xs text-gray-400">
-//                 Phone
-//               </p>
-//               <p className="font-bold">
-//                 {business.businessPhone}
-//               </p>
-//             </div>
-
-//             <div>
-//               <p className="text-xs text-gray-400">
-//                 Address
-//               </p>
-//               <p className="font-bold">
-//                 {business.address}
-//               </p>
-//             </div>
-
-//             <div>
-//               <p className="text-xs text-gray-400">
-//                 Website
-//               </p>
-//               <p className="font-bold underline">
-//                 {business.website || "N/A"}
-//               </p>
-//             </div>
-
+//         {/* Uploaded Verification Documents Registry */}
+//         <div className="lg:col-span-7 bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
+//           <h2 className="text-lg font-bold text-gray-900 mb-4">Audit Compliance Credentials</h2>
+//           <div className="space-y-3">
+//             {business.documents && business.documents.length > 0 ? (
+//               business.documents.map((doc, idx) => (
+//                 <div key={doc.id || idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+//                   <div className="flex items-center gap-3">
+//                     <FilePdfOutlined className="text-xl text-red-500" />
+//                     <div>
+//                       <p className="text-sm font-bold text-gray-800 capitalize">{doc.documentType?.replace("_", " ")}</p>
+//                       <a href={doc.documentUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline">
+//                         Open Attached Credentials
+//                       </a>
+//                     </div>
+//                   </div>
+//                   <Tag color={doc.status === "approved" ? "green" : "orange"}>{doc.status}</Tag>
+//                 </div>
+//               ))
+//             ) : (
+//               <p className="text-sm text-gray-400 italic py-4">No structural documents uploaded to repository yet.</p>
+//             )}
 //           </div>
 //         </div>
 //       </div>
 
-//       {/* PRODUCTS */}
-//       <div className="bg-white border mt-6 p-6">
-//         <h2 className="font-bold mb-4">
-//           Products & Services
-//         </h2>
-
-//         <div className="flex flex-wrap gap-2">
-//           {(business.products || []).map((p, i) => (
-//             <span
-//               key={i}
-//               className="bg-gray-100 px-3 py-1 text-xs rounded"
-//             >
-//               {p}
-//             </span>
-//           ))}
-//         </div>
-//       </div>
-
-//       {/* REVIEWS (STATIC UNTIL YOU CONNECT API) */}
-//       <div className="bg-white border mt-6 p-6">
-//         <h2 className="font-bold mb-4">
-//           Customer Reviews
-//         </h2>
-
-//         <p className="text-gray-400 text-sm">
-//           Reviews will load from backend endpoint later.
-//         </p>
-//       </div>
-
+//       {/* Decline Rejection Context Modal Box */}
+//       <Modal
+//         title="Input Audit Rejection Context"
+//         open={isRejectModalOpen}
+//         onOk={() => handleVerify("rejected", rejectReason)}
+//         onCancel={() => setIsRejectModalOpen(false)}
+//         confirmLoading={submitting}
+//         okButtonProps={{ danger: true }}
+//         okText="Decline Application"
+//       >
+//         <p className="text-xs text-gray-400 mb-2">Provide information specifying missing components for systemic adjustments.</p>
+//         <Input.TextArea
+//           rows={4}
+//           value={rejectReason}
+//           onChange={(e) => setRejectReason(e.target.value)}
+//           placeholder="e.g., Document clarity issues or mismatching corporate name validation..."
+//         />
+//       </Modal>
 //     </div>
 //   );
 // };

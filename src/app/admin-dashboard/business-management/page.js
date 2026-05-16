@@ -278,10 +278,10 @@ const BusinessManagement = () => {
   const [loading, setLoading] = useState(false);
   const [businesses, setBusinesses] = useState([]);
   const [stats, setStats] = useState({
-    totalBusinesses: 3788, // Fallbacks matching UI exactly if data loading
-    totalActive: 1256,
-    totalInactive: 1012,
-    suspendedBusinesses: 1550,
+    totalBusinesses: 0,
+    totalActive: 0,
+    totalInactive: 0,
+    suspendedBusinesses: 0,
   });
   
   const [searchQuery, setSearchQuery] = useState("");
@@ -303,13 +303,17 @@ const BusinessManagement = () => {
       });
       
       if (response.data.success) {
-        setBusinesses(response.data.businesses);
-        setStats(response.data.stats);
-        setPagination((prev) => ({
-          ...prev,
-          current: Number(response.data.pagination.page),
-          total: response.data.pagination.total,
-        }));
+        setBusinesses(response.data.businesses || []);
+        if (response.data.stats) {
+          setStats(response.data.stats);
+        }
+        if (response.data.pagination) {
+          setPagination((prev) => ({
+            ...prev,
+            current: Number(response.data.pagination.page),
+            total: response.data.pagination.total,
+          }));
+        }
       }
     } catch (error) {
       message.error(error.response?.data?.message || "Failed to load businesses");
@@ -331,71 +335,83 @@ const BusinessManagement = () => {
 
   const columns = [
     {
+      title: "",
+      width: 50,
+      render: () => (
+        <img
+          src="/images/pen.png"
+          alt="edit"
+          className="w-4 opacity-50 hover:opacity-100 cursor-pointer"
+        />
+      ),
+    },
+    {
       title: "BUSINESS NAME",
       dataIndex: "businessName",
       key: "businessName",
       render: (text) => (
-        <div className="flex items-center gap-2">
-          <img src="/images/edit_square.png" alt="icon" className="w-4 h-4 object-contain" fallback="/images/edit_square.png" />
-          <span className="font-extrabold text-[#000000] text-xs">{text || "Lush hair"}</span>
-        </div>
+        <span className="font-bold text-[#1e293b]">{text || "N/A"}</span>
       ),
     },
     { 
       title: "OWNER NAME", 
       dataIndex: ["owner", "fullName"], 
       key: "owner_name",
-      render: (text) => <span className="text-gray-700 text-xs font-medium">{text || "Joe Praise"}</span>
+      render: (text) => <span>{text || "N/A"}</span>
     },
     { 
       title: "LOCATION", 
       dataIndex: "location", 
       key: "location",
-      render: (text) => <span className="text-gray-700 text-xs font-medium">{text || "Texas"}</span>
+      render: (text) => <span>{text || "N/A"}</span>
     },
     { 
       title: "DATE", 
       dataIndex: "createdAt", 
       key: "createdAt",
-      render: (date) => <span className="text-gray-700 text-xs font-medium">{date ? new Date(date).toLocaleDateString("en-GB") : "09/12/2025"}</span>
+      render: (date) => <span>{date ? new Date(date).toLocaleDateString("en-GB") : "N/A"}</span>
     },
     {
       title: "TRUST SCORE",
       dataIndex: "trustScore",
       key: "trustScore",
       render: (score) => (
-        <span className="flex items-center gap-1 text-xs font-medium text-gray-700">
-          {score || "4.5"}{" "}
-          <img src="/images/trust_star.png" alt="star" className="h-3 w-3 object-contain" />
+        <span className="flex items-center gap-1">
+          {score !== undefined && score !== null ? score : "0.0"}{" "}
+          <img src="/images/trust_star.png" alt="star" className="h-4 w-4" />
         </span>
       ),
     },
     {
-      title: "SUBSCRIBTION STATUS",
+      title: "SUBSCRIPTION STATUS",
       dataIndex: "subscriptionStatus",
       key: "subscriptionStatus",
       render: (status) => {
-        const isCleanActive = status?.toLowerCase() === "active";
+        const normalized = status?.toLowerCase();
+        let color = "#64748b";
+        if (normalized === "active") color = "#007A55";
+        if (normalized === "inactive") color = "#C70036";
+        
         return (
-          <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wide ${
-            isCleanActive ? "bg-[#E6F4EA] text-[#137333]" : "bg-[#FCE8E6] text-[#C5221F]"
-          }`}>
-            {status ? status.toUpperCase() : "ACTIVE"}
+          <span style={{ color }} className="font-bold capitalize text-[11px]">
+            {status || "unknown"}
           </span>
         );
       },
     },
     {
-      title: "VERIFICATION STATUS",
+      title: "VERIFICATION",
       dataIndex: "verificationStatus",
       key: "verification",
       render: (status) => {
         let classes = "text-[#15BE87]"; 
         let display = "Verified";
+        
         if (status === "pending") { classes = "text-[#F2994A]"; display = "Pending"; }
         if (status === "cancelled" || status === "rejected") { classes = "text-[#EB5757]"; display = "Cancelled"; }
         if (status === "completed") { classes = "text-[#2F80ED]"; display = "Completed"; }
-        return <span className={`${classes} text-xs font-medium`}>{display}</span>;
+        
+        return <span className={`${classes} text-[10px] font-medium`}>{display}</span>;
       },
     },
     {
@@ -406,16 +422,36 @@ const BusinessManagement = () => {
           {
             key: "1",
             label: (
-              <Link href={`/admin-dashboard/business-management/${record._id || 'default'}`} className="text-xs font-semibold py-1 block">
+              <Link 
+                href={`/admin-dashboard/business-management/${record._id || record.key}`}
+                className="text-[10px] font-bold py-1 block"
+              >
                 View Profile
               </Link>
             ),
           },
+          {
+            key: "2",
+            label: (
+              <span className="text-[10px] font-bold py-1 block">
+                Approve Verification
+              </span>
+            ),
+          },
+          {
+            key: "3",
+            label: (
+              <span className="text-[10px] font-bold py-1 block">
+                Suspend Business
+              </span>
+            ),
+          },
         ];
+
         return (
           <Dropdown menu={{ items: dropdownItems }} trigger={["click"]} placement="bottomRight">
-            <Button className="border-none bg-transparent p-0 flex items-center justify-center h-6 w-6 shadow-none hover:bg-gray-100 rounded-full">
-              <img src="/images/dots.png" className="w-3.5 h-3.5 object-contain" alt="dots" />
+            <Button className="border-none! bg-transparent! outline-0! p-0! flex items-center justify-center h-8 w-8">
+              <img src="/images/dots.png" className="w-5" alt="dots" />
             </Button>
           </Dropdown>
         );
@@ -424,80 +460,81 @@ const BusinessManagement = () => {
   ];
 
   return (
-    <div className="w-full bg-white min-h-screen px-8 py-6 space-y-6">
-      {/* Title Segment */}
+    <div className="mt-3 space-y-6 min-h-screen">
+      {/* Top Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-sm font-bold text-black tracking-tight">
+        <h1 className="text-2xl font-bold text-gray-900">
           Business Management
         </h1>
-        <Button className="h-9 px-4 bg-[#060853] hover:bg-[#04063b]! rounded border-none text-white text-xs font-semibold flex items-center gap-2 shadow-none">
-          <img src="/images/upload.png" alt="export" className="h-3.5 w-3.5 object-contain invert" />
+        <Button className="p-4.5! bg-[#060853]! rounded-lg border-none! text-white! flex items-center gap-2">
+          <img src="/images/upload.png" alt="export" className="h-5 invert" />
           Export Report
         </Button>
       </div>
 
-      {/* Top Balanced Analytic Cards Container Container Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-[#E2EDFC] p-4 rounded">
+      {/* Analytic Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-[#E2EDFC] p-6 rounded-xl">
         {[
-          { title: "Total Businesses", value: stats.totalBusinesses.toLocaleString(), bg: "bg-white" },
-          { title: "Total Active", value: stats.totalActive.toLocaleString(), bg: "bg-white" },
-          { title: "Total Inactive", value: stats.totalInactive.toLocaleString(), bg: "bg-white" },
-          { title: "Suspended Businesses", value: stats.suspendedBusinesses.toLocaleString(), bg: "bg-white" }
+          { title: "Total Businesses", value: stats.totalBusinesses.toLocaleString() },
+          { title: "Total Active", value: stats.totalActive.toLocaleString() },
+          { title: "Total Inactive", value: stats.totalInactive.toLocaleString() },
+          { title: "Suspended Businesses", value: stats.suspendedBusinesses.toLocaleString() }
         ].map((card, i) => (
-          <div key={i} className={`${card.bg} p-4 rounded shadow-none border border-transparent`}>
-            <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
-              <img src="/images/cube.png" alt="cube" className="h-4 w-4 object-contain" />
-              <h3 className="text-xs font-medium text-black">
-                {card.title}
-              </h3>
+          <div key={i} className="bg-white p-5 rounded-xl shadow-sm border border-blue-50">
+            <div className="flex items-center gap-3 mb-2 border-b border-gray-50 pb-3">
+              <div className="p-2 bg-blue-50 rounded-lg">
+                <img src="/images/cube.png" alt="" className="h-5 w-5" />
+              </div>
+              <h3 className="text-sm font-semibold text-gray-600">{card.title}</h3>
             </div>
-            <p className="text-3xl font-normal text-black tracking-tight mt-1">{card.value}</p>
+            <p className="text-2xl font-bold text-[#060853]">{card.value}</p>
           </div>
         ))}
       </div>
 
-      {/* Secondary Dynamic Filters Toolbar */}
-      <div className="flex justify-end items-center gap-3">
-        <div className="relative w-64">
+      {/* Action Toolbar */}
+      <div className="flex flex-col md:flex-row justify-end items-end md:items-center gap-4">
+        <div className="flex items-center gap-2 pr-2">
           <Input
-            prefix={<img src="/images/search.png" alt="search" className="h-3.5 w-3.5 object-contain text-gray-400" />}
+            prefix={<img src="/images/search.png" alt="search" className="h-5" />}
             placeholder="Search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded bg-white border border-gray-300 h-8 text-xs placeholder-gray-400 focus:border-[#060853] focus:shadow-none"
+            className="w-72 rounded-lg bg-gray-50 border border-gray-200 h-10 text-xs"
             allowClear
           />
+          <Button className="flex items-center justify-center border-gray-200 rounded-lg h-10! w-10 overflow-hidden bg-white">
+            <img src="/images/funnel.png" alt="filter" className="h-5 w-5 object-contain" />
+          </Button>
+          <Button className="flex items-center justify-center border-gray-200 rounded-lg h-10! w-10 overflow-hidden bg-white">
+            <img src="/images/grid.png" alt="grid" className="h-5 w-5 object-contain" />
+          </Button>
+          <Button className="flex items-center justify-center border-gray-200 rounded-lg h-10! w-10 overflow-hidden bg-white">
+            <img src="/images/list.png" alt="list" className="h-5 w-5 object-contain" />
+          </Button>
         </div>
-        <Button className="h-8 w-8 p-0 flex items-center justify-center border border-gray-300 rounded bg-white shadow-none">
-          <img src="/images/funnel.png" alt="filter" className="h-4 w-4 object-contain" />
-        </Button>
-        <Button className="h-8 w-8 p-0 flex items-center justify-center border border-gray-300 rounded bg-white shadow-none">
-          <img src="/images/grid_view.png" alt="grid" className="h-4 w-4 object-contain" />
-        </Button>
-        <Button className="h-8 w-8 p-0 flex items-center justify-center border border-gray-300 rounded bg-white shadow-none">
-          <img src="/images/list_view.png" alt="list" className="h-4 w-4 object-contain" />
-        </Button>
       </div>
 
-      {/* Core Database Table Platform View Container wrapper */}
-      <div className="bg-[#D2E4FC] p-6 rounded">
-        <h2 className="text-xs font-bold mb-4 text-black">Businesses</h2>
-        <div className="bg-white rounded overflow-hidden shadow-none border border-transparent">
+      {/* Main Table Segment Layout */}
+      <div className="bg-[#f0f5ff] p-8 rounded-xl">
+        <h2 className="text-sm font-bold mb-4 text-[#1e293b]">Businesses</h2>
+        <div className="bg-white rounded-xl overflow-hidden shadow-sm">
           <Table
             columns={columns}
-            dataSource={businesses.length ? businesses : Array(10).fill({ _id: "1", businessName: "Lush hair" })}
-            rowKey="_id"
+            dataSource={businesses}
+            rowKey={(record) => record._id || record.key}
             loading={loading}
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
-              total: pagination.total || 20,
+              total: pagination.total,
               showSizeChanger: false,
               position: ["bottomRight"],
+              showTotal: (total, range) => `Show ${range[0]} to ${range[1]} of ${total} results`
             }}
             onChange={handleTableChange}
-            size="middle"
-            className="custom-admin-table"
+            size="small"
+            rowClassName="hover:bg-gray-50 transition-colors"
           />
         </div>
       </div>

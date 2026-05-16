@@ -751,7 +751,7 @@ const BusinessProfilePage = ({ params }) => {
     createdAt: null,
     updatedAt: null,
     verificationStatus: "pending",
-    owner: { fullName: "N/A", role: "Owner", email: "N/A", phone: "N/A", idType: "N/A", idNumber: "N/A" },
+    owner: { name: "N/A", role: "business", email: "N/A", phone: "N/A", idType: "N/A", idNumber: "N/A" },
     contact: { email: "N/A", phone: "N/A", website: "N/A", address: "N/A", hours: "N/A" },
     productsAndServices: [],
     verificationDocuments: [],

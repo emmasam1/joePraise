@@ -109,11 +109,11 @@ export default function DashboardLayout({ children }) {
       icon: <SettingOutlined />,
       href: "/dashboard/settings",
     },
-    {
-      label: "Logout",
-      icon: <LogoutOutlined />,
-       onClick: handleLogout,
-      color: "text-red-500",
+    { 
+     label: "Logout", 
+     icon: <LogoutOutlined />, 
+     onClick: handleLogout,
+     color: "text-red-500" 
     },
   ];
 
@@ -145,7 +145,7 @@ export default function DashboardLayout({ children }) {
                     key={item.label}
                     href={item.href}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all
-        ${isActive ? "bg-[#060853] text-white" : "text-gray-500 hover:bg-gray-50"}`}
+                   ${isActive ? "bg-[#060853] text-white" : "text-gray-500 hover:bg-gray-50"}`}
                   >
                     <span className="text-lg">{item.icon}</span>
                     {item.label}
@@ -159,7 +159,7 @@ export default function DashboardLayout({ children }) {
             <p className="text-[14px] uppercase font-bold text-black mb-4 px-2 tracking-widest">
               General
             </p>
-            <nav className="space-y-1">
+            {/* <nav className="space-y-1">
               {generalItems.map((item) => {
                 const isActive = pathname.startsWith(item.href);
                 return (
@@ -174,7 +174,47 @@ export default function DashboardLayout({ children }) {
                   </Link>
                 );
               })}
-            </nav>
+            </nav> */}
+
+            <nav className="space-y-1">
+          {generalItems.map((item) => {
+            const isActive =
+              item.href && pathname.startsWith(item.href);
+
+            // If item has onClick, render button
+            if (item.onClick) {
+              return (
+                <button
+                  key={item.label}
+                  onClick={item.onClick}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                    item.color || "text-gray-500 hover:bg-gray-50"
+                  }`}
+                >
+                  <span className="text-lg">{item.icon}</span>
+                  {item.label}
+                </button>
+              );
+            }
+
+            // Otherwise render link
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all
+                ${
+                  isActive
+                    ? "bg-[#060853] text-white"
+                    : item.color || "text-gray-500 hover:bg-gray-50"
+                }`}
+              >
+                <span className="text-lg">{item.icon}</span>
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
           </div>
         </div>
       </aside>

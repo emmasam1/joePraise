@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { Input, Badge, Avatar } from "antd";
+import { Input, Badge, Avatar, Modal } from "antd";
 import {
   AppstoreOutlined,
   ShoppingCartOutlined,
@@ -12,10 +12,30 @@ import {
   LogoutOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/authStore";
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
+
+    const router = useRouter();
+  
+    const logout = useAuthStore((state) => state.logout);
+  
+  
+    const handleLogout = () => {
+      Modal.confirm({
+        title: "Logout",
+        content: "Are you sure you want to log out of JoePraise Smart Hub?",
+        okText: "Yes, Logout",
+        cancelText: "Stay",
+        okButtonProps: { danger: true },
+        onOk: () => {
+          logout();
+          router.push("/login");
+        },
+      });
+    };
 
   // --- HIDE LOGIC ---
   const isProfilePage =
@@ -92,7 +112,7 @@ export default function DashboardLayout({ children }) {
     {
       label: "Logout",
       icon: <LogoutOutlined />,
-      href: "/logout",
+       onClick: handleLogout,
       color: "text-red-500",
     },
   ];

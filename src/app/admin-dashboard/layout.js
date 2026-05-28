@@ -32,7 +32,7 @@ export default function DashboardLayout({ children }) {
         okButtonProps: { danger: true },
         onOk: () => {
           logout();
-          router.push("/login");
+          router.push("/");
         },
       });
     };

@@ -27,6 +27,7 @@ export const useAuthStore = create(
         // Clear Cookies and State
         Cookies.remove('token');
         Cookies.remove('role');
+        Cookies.remove('user');
         
         set({ 
           user: null, 

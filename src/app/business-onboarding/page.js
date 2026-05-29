@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Form,
   Input,
@@ -11,16 +11,16 @@ import {
   Upload,
   Radio,
   TimePicker,
+  message,
 } from "antd";
 import { FiCheck } from "react-icons/fi";
 import "leaflet/dist/leaflet.css";
 import dynamic from "next/dynamic";
 import { FiX } from "react-icons/fi";
 import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
-import Link from "next/link";
 import { useBusinessStore } from "@/store/businessStore";
+import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
-import CustomModal from "@/components/CustomModal";
 
 const { Dragger } = Upload;
 
@@ -33,10 +33,6 @@ const TileLayer = dynamic(
   () => import("react-leaflet").then((mod) => mod.TileLayer),
   { ssr: false },
 );
-const Marker = dynamic(
-  () => import("react-leaflet").then((mod) => mod.Marker),
-  { ssr: false },
-);
 
 const { TextArea } = Input;
 
@@ -47,15 +43,42 @@ export default function MultiStepForm() {
   const [bannerPreview, setBannerPreview] = useState(null);
   const router = useRouter();
 
+  const token = useAuthStore((state) => state.token);
+  const isAuthenticated = Boolean(token);
+
   const [businessCert, setBusinessCert] = useState(null);
   const [businessLicense, setBusinessLicense] = useState(null);
   const [taxCertificate, setTaxCertificate] = useState(null);
   const [proofOfAddress, setProofOfAddress] = useState(null);
-  // const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { onboardBusiness, onboardingLoading } = useBusinessStore();
 
+  const steps = useMemo(() => {
+    const businessSteps = [
+      "Business Information",
+      "Business Location",
+      "Business Branding",
+      "Business Hours",
+    ];
+
+    return isAuthenticated
+      ? businessSteps
+      : ["Account Information", ...businessSteps];
+  }, [isAuthenticated]);
+
+  const verificationStep = steps.length;
+  const businessInfoStep = isAuthenticated ? 0 : 1;
+  const locationStep = isAuthenticated ? 1 : 2;
+  const brandingStep = isAuthenticated ? 2 : 3;
+  const hoursStep = isAuthenticated ? 3 : 4;
+  const imageStep = Math.min(current + 1, 5);
+
   const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phoneNumber: "",
+    password: "",
+    confirmPassword: "",
     businessName: "",
     businessEmail: "",
     businessPhone: "",
@@ -92,51 +115,150 @@ export default function MultiStepForm() {
     }));
   };
 
-  const handleDocumentsChange = (files) => {
-    setFormData((prev) => ({
-      ...prev,
-      documents: Array.from(files),
-    }));
+  const hasValue = (value) => {
+    return value !== undefined && value !== null && String(value).trim() !== "";
   };
 
-  // const handleSubmit = async () => {
-  //   // Basic required validation
-  //   if (
-  //     !formData.businessName ||
-  //     !formData.businessEmail ||
-  //     !formData.businessPhone ||
-  //     !formData.category ||
-  //     !formData.address
-  //   ) {
-  //     return message.error("Please fill all required fields");
-  //   }
+  const validateAccountStep = () => {
+    if (isAuthenticated) return true;
 
-  //   await onboardBusiness(formData, router);
-  // };
+    if (!hasValue(formData.name)) {
+      message.error("Please enter your full name");
+      return false;
+    }
+
+    if (!hasValue(formData.email)) {
+      message.error("Please enter your email address");
+      return false;
+    }
+
+    if (!hasValue(formData.phoneNumber)) {
+      message.error("Please enter your phone number");
+      return false;
+    }
+
+    if (!hasValue(formData.password)) {
+      message.error("Please create a password");
+      return false;
+    }
+
+    if (formData.password.length < 6) {
+      message.error("Password must be at least 6 characters");
+      return false;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      message.error("Passwords do not match");
+      return false;
+    }
+
+    return true;
+  };
+
+  const validateBusinessInfoStep = () => {
+    if (!hasValue(formData.businessName)) {
+      message.error("Please enter your business name");
+      return false;
+    }
+
+    if (!hasValue(formData.businessEmail)) {
+      message.error("Please enter your business email");
+      return false;
+    }
+
+    if (!hasValue(formData.businessPhone)) {
+      message.error("Please enter your business phone number");
+      return false;
+    }
+
+    if (!hasValue(formData.category)) {
+      message.error("Please select a business category");
+      return false;
+    }
+
+    return true;
+  };
+
+  const validateLocationStep = () => {
+    if (!hasValue(formData.businessCountry)) {
+      message.error("Please select your business country");
+      return false;
+    }
+
+    if (!hasValue(formData.businessCity)) {
+      message.error("Please select your business city");
+      return false;
+    }
+
+    if (!hasValue(formData.address)) {
+      message.error("Please enter your business address");
+      return false;
+    }
+
+    if (!hasValue(formData.postalCode)) {
+      message.error("Please enter your postal code");
+      return false;
+    }
+
+    return true;
+  };
+
+  const validateCurrentStep = () => {
+    if (!isAuthenticated && current === 0) return validateAccountStep();
+    if (current === businessInfoStep) return validateBusinessInfoStep();
+    if (current === locationStep) return validateLocationStep();
+    return true;
+  };
 
   const handleSubmit = async () => {
-    if (current !== 4) return;
+    if (current !== verificationStep) return;
 
     try {
-      console.log("🚀 Submitting form...");
-
-      if (
-        !formData.businessName ||
-        !formData.businessEmail ||
-        !formData.businessPhone ||
-        !formData.category ||
-        !formData.address
-      ) {
-        return message.error("Please fill all required fields");
+      if (!validateAccountStep()) {
+        setCurrent(0);
+        return;
       }
 
-      const response = await onboardBusiness(formData, router);
+      if (!validateBusinessInfoStep()) {
+        setCurrent(businessInfoStep);
+        return;
+      }
 
-      console.log("✅ Onboarding Success:", response);
+      if (!validateLocationStep()) {
+        setCurrent(locationStep);
+        return;
+      }
 
-      setCurrent(4);
+      const documents = [
+        formData.businessCert,
+        formData.businessLicense,
+        formData.taxCertificate,
+        formData.proofOfAddress,
+      ].filter(Boolean);
+
+      const operatingHours =
+        hoursType === "always"
+          ? []
+          : selectedDays.map((item) => ({
+              day: item.day,
+              open: item.open || "",
+              close: item.close || "",
+              closed: false,
+            }));
+
+      const response = await onboardBusiness(
+        {
+          ...formData,
+          documents,
+          operatingHours,
+        },
+        router,
+      );
+
+      setCurrent(verificationStep);
+      return response;
     } catch (error) {
-      console.log("❌ Submission Error:", error);
+      console.log("Submission Error:", error);
     }
   };
 
@@ -152,39 +274,48 @@ export default function MultiStepForm() {
   ];
 
   const [selectedDays, setSelectedDays] = useState([
-    { day: "Monday", id: Date.now() },
+    { day: "Monday", id: Date.now(), open: "", close: "" },
   ]);
 
   const [dragIndex, setDragIndex] = useState(null);
 
-  // ✅ ADD DAY
+  // ADD DAY
   const addDay = () => {
     const usedDays = selectedDays.map((d) => d.day);
     const nextDay = allDays.find((d) => !usedDays.includes(d));
 
     if (!nextDay) return;
 
-    setSelectedDays((prev) => [...prev, { id: Date.now(), day: nextDay }]);
+    setSelectedDays((prev) => [
+      ...prev,
+      { id: Date.now(), day: nextDay, open: "", close: "" },
+    ]);
   };
 
-  // ✅ REMOVE DAY
+  // REMOVE DAY
   const removeDay = (id) => {
     setSelectedDays((prev) => prev.filter((d) => d.id !== id));
   };
 
-  // ✅ UPDATE DAY
+  // UPDATE DAY
   const updateDay = (id, newDay) => {
     setSelectedDays((prev) =>
       prev.map((d) => (d.id === id ? { ...d, day: newDay } : d)),
     );
   };
 
-  // ✅ DRAG START
+  const updateDayTime = (id, field, value) => {
+    setSelectedDays((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, [field]: value } : d)),
+    );
+  };
+
+  // DRAG START
   const handleDragStart = (index) => {
     setDragIndex(index);
   };
 
-  // ✅ DROP
+  // DROP
   const handleDrop = (index) => {
     if (dragIndex === null) return;
 
@@ -201,7 +332,9 @@ export default function MultiStepForm() {
   const next = async () => {
     try {
       await form.validateFields();
-      if (current < 4) setCurrent((c) => c + 1);
+
+      if (!validateCurrentStep()) return;
+      if (current < verificationStep) setCurrent((c) => c + 1);
     } catch (err) {
       console.log("Validation Failed:", err);
     }
@@ -219,7 +352,7 @@ export default function MultiStepForm() {
     return false; // Prevent auto-upload
   };
 
-  const DraggerContent = ({ preview, setPreview, label }) => (
+  const DraggerContent = ({ preview, setPreview, label, onClear }) => (
     <div className="relative w-full h-full min-h-30 flex flex-col items-center justify-center py-4">
       {preview ? (
         <div className="relative w-full h-full flex items-center justify-center p-2">
@@ -232,6 +365,7 @@ export default function MultiStepForm() {
             onClick={(e) => {
               e.stopPropagation(); // Don't trigger dragger
               setPreview(null);
+              if (onClear) onClear();
             }}
             className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors"
           >
@@ -261,32 +395,27 @@ export default function MultiStepForm() {
       <div className="w-full md:w-1/2 px-6 lg:px-20 py-4 flex flex-col justify-center h-full">
         <img src="/images/logo.png" alt="logo" className="w-12 mb-2" />
 
-        {/* HEADER + INDICATOR (HIDDEN ON STEP 4) */}
-        {current !== 4 && (
+        {/* HEADER + INDICATOR (HIDDEN ON VERIFICATION STEP) */}
+        {current !== verificationStep && (
           <>
             <h2 className="text-lg font-bold text-[#1e293b]">
-              Step {current + 1} of 4:{" "}
-              {current === 0
-                ? "Business Information"
-                : current === 1
-                  ? "Business Location"
-                  : current === 2
-                    ? "Business Branding"
-                    : "Business Hours"}
+              Step {current + 1} of {steps.length}: {steps[current]}
             </h2>
 
             {/* STEP INDICATOR */}
             <div className="flex items-center justify-between mb-8 max-w-md">
-              {[0, 1, 2, 3].map((stepIndex, index) => {
+              {steps.map((_, stepIndex) => {
                 const isCompleted = stepIndex < current;
                 const isActive =
-                  stepIndex === current || (current === 4 && stepIndex === 3);
+                  stepIndex === current ||
+                  (current === verificationStep &&
+                    stepIndex === steps.length - 1);
 
                 return (
                   <div
                     key={stepIndex}
                     className={`flex items-center ${
-                      index < 3 ? "w-full" : "w-auto"
+                      stepIndex < steps.length - 1 ? "w-full" : "w-auto"
                     }`}
                   >
                     <div
@@ -312,7 +441,7 @@ export default function MultiStepForm() {
                       )}
                     </div>
 
-                    {index < 3 && (
+                    {stepIndex < steps.length - 1 && (
                       <div className="flex-1 h-0.5 bg-gray-100 mx-2">
                         <div
                           className="h-full bg-green-500 transition-all duration-700"
@@ -328,34 +457,95 @@ export default function MultiStepForm() {
             {/* FORM HEADER */}
             <div className="mb-4 -mt-4">
               <h3 className="text-md font-semibold text-[#1e293b]">
-                {current === 0
-                  ? "Business Information"
-                  : current === 1
-                    ? "Business Location"
-                    : current === 2
-                      ? "Business Branding"
-                      : "Business Hours"}
+                {steps[current]}
               </h3>
 
               <p className="text-gray-500 text-xs">
-                {current === 0
-                  ? "Tell us about your business to get started"
-                  : current === 1
-                    ? "Provide the details of your physical or operational base."
-                    : current === 2
-                      ? "Enhance your brand access with a logo and banner"
-                      : "Provide the operating times and days for your physical base."}
+                {!isAuthenticated && current === 0
+                  ? "Create your account so we can link it to your business."
+                  : current === businessInfoStep
+                    ? "Tell us about your business to get started"
+                    : current === locationStep
+                      ? "Provide the details of your physical or operational base."
+                      : current === brandingStep
+                        ? "Enhance your brand access with a logo and banner"
+                        : "Provide the operating times and days for your physical base."}
               </p>
             </div>
           </>
         )}
 
         <Form form={form} layout="vertical" className="w-full">
-          {/* STEP 0 */}
-          {current === 0 && (
+          {/* ACCOUNT STEP - ONLY FOR GUEST USERS */}
+          {!isAuthenticated && current === 0 && (
             <Row gutter={[12, 0]}>
               <Col span={12}>
-                <Form.Item name="name" label="Business Name">
+                <Form.Item label="Full Name" required>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => handleChange("name", e.target.value)}
+                    placeholder="Enter Full Name"
+                    className="bg-gray-50! h-8! text-xs! rounded-md!"
+                  />
+                </Form.Item>
+              </Col>
+
+              <Col span={12}>
+                <Form.Item label="Email Address" required>
+                  <Input
+                    value={formData.email}
+                    onChange={(e) => handleChange("email", e.target.value)}
+                    placeholder="Enter Email Address"
+                    className="bg-gray-50! h-8! text-xs! rounded-md!"
+                  />
+                </Form.Item>
+              </Col>
+
+              <Col span={12}>
+                <Form.Item label="Phone Number" required>
+                  <Input
+                    value={formData.phoneNumber}
+                    onChange={(e) =>
+                      handleChange("phoneNumber", e.target.value)
+                    }
+                    addonBefore="🇳🇬"
+                    placeholder="Enter Phone Number"
+                    className="bg-gray-50! h-8! text-xs! rounded-md!"
+                  />
+                </Form.Item>
+              </Col>
+
+              <Col span={12}>
+                <Form.Item label="Password" required>
+                  <Input.Password
+                    value={formData.password}
+                    onChange={(e) => handleChange("password", e.target.value)}
+                    placeholder="Create Password"
+                    className="bg-gray-50! h-8! text-xs! rounded-md!"
+                  />
+                </Form.Item>
+              </Col>
+
+              <Col span={12}>
+                <Form.Item label="Confirm Password" required>
+                  <Input.Password
+                    value={formData.confirmPassword}
+                    onChange={(e) =>
+                      handleChange("confirmPassword", e.target.value)
+                    }
+                    placeholder="Confirm Password"
+                    className="bg-gray-50! h-8! text-xs! rounded-md!"
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+          )}
+
+          {/* BUSINESS INFORMATION STEP */}
+          {current === businessInfoStep && (
+            <Row gutter={[12, 0]}>
+              <Col span={12}>
+                <Form.Item label="Business Name" required>
                   <Input
                     value={formData.businessName}
                     onChange={(e) =>
@@ -368,7 +558,7 @@ export default function MultiStepForm() {
               </Col>
 
               <Col span={12}>
-                <Form.Item name="email" label="Business Email">
+                <Form.Item label="Business Email" required>
                   <Input
                     value={formData.businessEmail}
                     onChange={(e) =>
@@ -381,7 +571,7 @@ export default function MultiStepForm() {
               </Col>
 
               <Col span={12}>
-                <Form.Item name="phone" label="Phone Number">
+                <Form.Item label="Phone Number" required>
                   <Input
                     value={formData.businessPhone}
                     onChange={(e) =>
@@ -395,7 +585,7 @@ export default function MultiStepForm() {
               </Col>
 
               <Col span={12}>
-                <Form.Item name="website" label="Website (Optional)">
+                <Form.Item label="Website (Optional)">
                   <Input
                     value={formData.website}
                     onChange={(e) => handleChange("website", e.target.value)}
@@ -406,7 +596,7 @@ export default function MultiStepForm() {
               </Col>
 
               <Col span={24}>
-                <Form.Item name="category" label="Business Category">
+                <Form.Item label="Business Category" required>
                   <Select
                     size="small"
                     value={formData.category}
@@ -429,7 +619,7 @@ export default function MultiStepForm() {
               </Col>
 
               <Col span={24}>
-                <Form.Item name="description" label="Business Description">
+                <Form.Item label="Business Description">
                   <TextArea
                     value={formData.description}
                     onChange={(e) =>
@@ -444,11 +634,11 @@ export default function MultiStepForm() {
             </Row>
           )}
 
-          {/* STEP 1 */}
-          {current === 1 && (
+          {/* BUSINESS LOCATION STEP */}
+          {current === locationStep && (
             <Row gutter={[12, 0]}>
               <Col span={12}>
-                <Form.Item name="country" label="Country">
+                <Form.Item label="Country" required>
                   <Select
                     size="small"
                     value={formData.businessCountry}
@@ -461,7 +651,7 @@ export default function MultiStepForm() {
               </Col>
 
               <Col span={12}>
-                <Form.Item name="city" label="City">
+                <Form.Item label="City" required>
                   <Select
                     size="small"
                     value={formData.businessCity}
@@ -474,7 +664,7 @@ export default function MultiStepForm() {
               </Col>
 
               <Col span={12}>
-                <Form.Item name="address" label="Address">
+                <Form.Item label="Address" required>
                   <Input
                     value={formData.address}
                     onChange={(e) => handleChange("address", e.target.value)}
@@ -485,7 +675,7 @@ export default function MultiStepForm() {
               </Col>
 
               <Col span={12}>
-                <Form.Item name="postalCode" label="Postal Code">
+                <Form.Item label="Postal Code" required>
                   <Input
                     value={formData.postalCode}
                     onChange={(e) => handleChange("postalCode", e.target.value)}
@@ -520,8 +710,8 @@ export default function MultiStepForm() {
             </Row>
           )}
 
-          {/* STEP 2 */}
-          {current === 2 && (
+          {/* BUSINESS BRANDING STEP */}
+          {current === brandingStep && (
             <Row gutter={[0, 24]}>
               {/* LOGO UPLOAD */}
               <Col span={24} className="-mb-5">
@@ -531,7 +721,6 @@ export default function MultiStepForm() {
                       Upload Logo
                     </span>
                   }
-                  name="logo"
                 >
                   <Dragger
                     accept="image/*"
@@ -549,6 +738,7 @@ export default function MultiStepForm() {
                       preview={logoPreview}
                       setPreview={setLogoPreview}
                       label="Logo"
+                      onClear={() => handleFileChange("logo", null)}
                     />
                   </Dragger>
                 </Form.Item>
@@ -562,7 +752,6 @@ export default function MultiStepForm() {
                       Upload Banner (Optional)
                     </span>
                   }
-                  name="banner"
                   extra={
                     <span className="text-[10px] text-gray-400">
                       Best ratio: 16:9. Max size: 2MB
@@ -585,6 +774,7 @@ export default function MultiStepForm() {
                       preview={bannerPreview}
                       setPreview={setBannerPreview}
                       label="Banner"
+                      onClear={() => handleFileChange("banner", null)}
                     />
                   </Dragger>
                 </Form.Item>
@@ -592,8 +782,8 @@ export default function MultiStepForm() {
             </Row>
           )}
 
-          {/* STEP 3 */}
-          {current === 3 && (
+          {/* BUSINESS HOURS STEP */}
+          {current === hoursStep && (
             <div className="space-y-2">
               {/* TOP OPTIONS */}
               <Row gutter={[12, 12]}>
@@ -685,6 +875,9 @@ export default function MultiStepForm() {
                               format="h:mm a"
                               placeholder="Open"
                               className="!h-9 !text-xs"
+                              onChange={(_, timeString) =>
+                                updateDayTime(item.id, "open", timeString)
+                              }
                             />
                           </Form.Item>
 
@@ -694,6 +887,9 @@ export default function MultiStepForm() {
                               format="h:mm a"
                               placeholder="Close"
                               className="!h-9 !text-xs"
+                              onChange={(_, timeString) =>
+                                updateDayTime(item.id, "close", timeString)
+                              }
                             />
                           </Form.Item>
                         </div>
@@ -729,8 +925,8 @@ export default function MultiStepForm() {
             </div>
           )}
 
-          {/* STEP 4 */}
-          {current === 4 && (
+          {/* VERIFICATION STEP */}
+          {current === verificationStep && (
             <Row gutter={[0, 24]}>
               <Row gutter={[16, 12]}>
                 {/* 1. Business Registration Certificate */}
@@ -756,6 +952,7 @@ export default function MultiStepForm() {
                         preview={businessCert}
                         setPreview={setBusinessCert}
                         label="Certificate"
+                        onClear={() => handleFileChange("businessCert", null)}
                       />
                     </Dragger>
                   </Form.Item>
@@ -784,6 +981,9 @@ export default function MultiStepForm() {
                         preview={businessLicense}
                         setPreview={setBusinessLicense}
                         label="License"
+                        onClear={() =>
+                          handleFileChange("businessLicense", null)
+                        }
                       />
                     </Dragger>
                   </Form.Item>
@@ -812,6 +1012,9 @@ export default function MultiStepForm() {
                         preview={taxCertificate}
                         setPreview={setTaxCertificate}
                         label="TIN"
+                        onClear={() =>
+                          handleFileChange("taxCertificate", null)
+                        }
                       />
                     </Dragger>
                   </Form.Item>
@@ -840,6 +1043,9 @@ export default function MultiStepForm() {
                         preview={proofOfAddress}
                         setPreview={setProofOfAddress}
                         label="Address"
+                        onClear={() =>
+                          handleFileChange("proofOfAddress", null)
+                        }
                       />
                     </Dragger>
                   </Form.Item>
@@ -860,7 +1066,7 @@ export default function MultiStepForm() {
             </Row>
           )}
 
-          {current !== 4 && (
+          {current !== verificationStep && (
             <>
               {/* BUTTONS */}
               <div className="flex justify-between mt-4">
@@ -872,25 +1078,16 @@ export default function MultiStepForm() {
                   Back
                 </Button>
 
-                {current === 3 ? (
+                {current === hoursStep ? (
                   <Button
                     type="primary"
-                    onClick={() => setCurrent(4)}
+                    onClick={() => {
+                      if (validateCurrentStep()) setCurrent(verificationStep);
+                    }}
                     className="h-10 px-15! !bg-[#060853] !border-none"
                   >
                     Save & Continue
                   </Button>
-                ) : current === 4 ? (
-                  <div className="mt-4 w-full flex items-center justify-center">
-                    <Button
-                      type="primary"
-                      onClick={handleSubmit}
-                      loading={onboardingLoading}
-                      className="h-10 px-15! !bg-[#060853] !border-none"
-                    >
-                      Submit Verification
-                    </Button>
-                  </div>
                 ) : (
                   <Button
                     type="primary"
@@ -911,27 +1108,11 @@ export default function MultiStepForm() {
         <div
           className="absolute inset-0 bg-center bg-cover"
           style={{
-            backgroundImage: `url('/images/reg_img_${current + 1}.png')`,
+            backgroundImage: `url('/images/reg_img_${imageStep}.png')`,
           }}
         />
         <div className="absolute inset-0 bg-black/20" />
       </div>
-
-      {/* <CustomModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="max-w-lg" >
-              <div className="flex flex-col justify-center items-center mb-5">
-                  <div className="rounded-full h-25 w-25 bg-[#EDF4FD] mb-5 flex justify-center items-center">
-                      <img src="/images/mail.png" alt="mail" className="h-20" />
-                  </div>
-                <h2 className="font-bold text-2xl">Verification Pending</h2>
-                <p className="text-[#6A7282] text-center mt-4">
-                  Your business verification is under review.
-                  <br />
-                  You will receive an email once approval is completed.
-                </p>
-      
-                <Button onClick={handleSubmit} className="text-white! p-5! text-lg mt-5 bg-[#060853]! rounded-lg border-none">Go To Dashboard</Button>
-              </div>
-            </CustomModal> */}
     </div>
   );
 }

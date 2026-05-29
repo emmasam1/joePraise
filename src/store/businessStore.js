@@ -1,105 +1,125 @@
+
 import { create } from "zustand";
 import api from "@/api/axios";
 import { message } from "antd";
+import { useAuthStore } from "@/store/authStore";
+
+const hasValue = (value) => {
+  return value !== undefined && value !== null && String(value).trim() !== "";
+};
+
+const appendIfPresent = (payload, key, value) => {
+  if (hasValue(value)) {
+    payload.append(key, value);
+  }
+};
+
+const normalizeFile = (file) => {
+  return file?.originFileObj || file;
+};
 
 export const useBusinessStore = create((set, get) => ({
   onboardingLoading: false,
-   loading: false,
+  loading: false,
   businesses: [],
   selectedBusiness: null,
 
   onboardBusiness: async (formData, router) => {
     set({ onboardingLoading: true });
 
-    console.log("🚀 ONBOARDING STARTED");
-    console.log("📦 Form Data:", formData);
-
     try {
       const payload = new FormData();
 
-      // REQUIRED
-      payload.append("businessName", formData.businessName);
-      payload.append("businessEmail", formData.businessEmail);
-      payload.append("businessPhone", formData.businessPhone);
-      payload.append("category", formData.category);
-      payload.append("address", formData.address);
-      payload.append("postalCode", formData.postalCode);
-      payload.append("businessCountry", formData.businessCountry);
-      payload.append("businessCity", formData.businessCity);
+      // ACCOUNT FIELDS - REQUIRED ONLY WHEN THE USER IS NOT LOGGED IN
+      appendIfPresent(payload, "name", formData.name);
+      appendIfPresent(payload, "email", formData.email);
+      appendIfPresent(payload, "phoneNumber", formData.phoneNumber);
+      appendIfPresent(payload, "password", formData.password);
+      appendIfPresent(payload, "referredByCode", formData.referredByCode);
+
+      // REQUIRED BUSINESS FIELDS
+      payload.append("businessName", formData.businessName || "");
+      payload.append("businessEmail", formData.businessEmail || "");
+      payload.append("businessPhone", formData.businessPhone || "");
+      payload.append("category", formData.category || "");
+      payload.append("address", formData.address || "");
+      payload.append("postalCode", formData.postalCode || "");
+      payload.append("businessCountry", formData.businessCountry || "");
+      payload.append("businessCity", formData.businessCity || "");
 
       // OPTIONAL TEXT FIELDS
-      if (formData.description)
-        payload.append("description", formData.description);
+      appendIfPresent(payload, "businessState", formData.businessState);
+      appendIfPresent(payload, "description", formData.description);
+      appendIfPresent(payload, "website", formData.website);
+      appendIfPresent(payload, "instagram", formData.instagram);
+      appendIfPresent(payload, "twitter", formData.twitter);
+      appendIfPresent(payload, "facebook", formData.facebook);
+      appendIfPresent(payload, "mapLink", formData.mapLink);
+      appendIfPresent(payload, "direction", formData.direction);
+      appendIfPresent(payload, "docType", formData.docType || "CAC");
 
-      if (formData.website)
-        payload.append("website", formData.website);
-
-      if (formData.instagram)
-        payload.append("instagram", formData.instagram);
-
-      if (formData.twitter)
-        payload.append("twitter", formData.twitter);
-
-      if (formData.facebook)
-        payload.append("facebook", formData.facebook);
+      if (Array.isArray(formData.operatingHours)) {
+        payload.append(
+          "operatingHours",
+          JSON.stringify(formData.operatingHours),
+        );
+      }
 
       // FILES
       if (formData.logo) {
-        payload.append("logo", formData.logo);
-        console.log("🖼️ Logo added");
+        payload.append("logo", normalizeFile(formData.logo));
       }
 
       if (formData.banner) {
-        payload.append("banner", formData.banner);
-        console.log("🖼️ Banner added");
+        payload.append("banner", normalizeFile(formData.banner));
       }
 
-      if (formData.documents?.length > 0) {
-        formData.documents.forEach((doc, i) => {
-          payload.append("documents", doc);
-          console.log(`📄 Document ${i + 1} added`);
-        });
-      }
+      const documents =
+        formData.documents?.length > 0
+          ? formData.documents
+          : [
+              formData.businessCert,
+              formData.businessLicense,
+              formData.taxCertificate,
+              formData.proofOfAddress,
+            ].filter(Boolean);
 
-      // DEBUG PAYLOAD
-      console.log("📤 FINAL FORM DATA:");
-      for (let pair of payload.entries()) {
-        console.log("➡️", pair[0], pair[1]);
-      }
+      documents.forEach((doc) => {
+        payload.append("documents", normalizeFile(doc));
+      });
 
-      // API CALL (NO HEADERS NEEDED)
-      const response = await api.post("/business/onboard", payload);
-
-      console.log("📥 RESPONSE:", response.data);
+      const response = await api.post("/business/onboard", payload, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       if (response.data.success) {
+        const { user, accessToken, refreshToken } = response.data;
+        const authStore = useAuthStore.getState();
+
+        if (user && accessToken && authStore.setLoginSuccess) {
+          authStore.setLoginSuccess(user, accessToken, refreshToken);
+        }
+
         message.success(
-          response.data.message || "Business onboarded successfully"
+          response.data.message || "Business onboarded successfully",
         );
 
-        console.log("✅ SUCCESS → Redirecting...");
         router.push("/dashboard");
-      } else {
-        console.warn("⚠️ API returned success=false", response.data);
       }
 
       return response.data;
     } catch (error) {
-      console.error("❌ ONBOARDING FAILED:", error);
-      console.error("📛 Backend Error:", error?.response?.data);
-
       message.error(
-        error?.response?.data?.message ||
-          "Failed to onboard business"
+        error?.response?.data?.message || "Failed to onboard business",
       );
 
       throw error;
     } finally {
       set({ onboardingLoading: false });
-      console.log("🔄 LOADING RESET");
     }
   },
-
 
   fetchBusinesses: async (params = {}) => {
     set({ loading: true });
@@ -122,7 +142,6 @@ export const useBusinessStore = create((set, get) => ({
     }
   },
 
-
   fetchBusiness: async (id) => {
     set({ loading: true });
 
@@ -142,7 +161,6 @@ export const useBusinessStore = create((set, get) => ({
     }
   },
 
-
   verifyBusiness: async (id, payload) => {
     try {
       const res = await api.patch(`/admin/${id}/verify`, payload);
@@ -160,5 +178,4 @@ export const useBusinessStore = create((set, get) => ({
       throw error;
     }
   },
-
 }));

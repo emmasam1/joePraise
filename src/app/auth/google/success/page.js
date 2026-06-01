@@ -28,13 +28,18 @@ const GoogleSuccessContent = () => {
       
       message.success(`Welcome back, ${userData.name}!`);
 
-      if (role === "admin") {
-        router.push("/admin-dashboard");
-      } else if (role === "business") {
-        router.push("/dashboard");
-      } else {
-        router.push("/");
-      }
+      // if (role === "admin") {
+      //   router.push("/admin-dashboard");
+      // } else if (role === "business") {
+      //   router.push("/dashboard");
+      // } else {
+      //   router.push("/");
+      // }
+      const user = useAuthStore.getState().user;
+
+      if (user.role === "admin") router.push("/admin-dashboard");
+      else if (user.role === "business") router.push("/dashboard");
+      else router.push("/");
     } else {
       message.error("Google authentication failed. Please try again.");
       router.push("/login");

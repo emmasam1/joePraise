@@ -31,14 +31,28 @@ const LoginPage = () => {
     const response = await api.post("/auth/login", { email, password });
     const { data } = response;
 
+    // if (data.success) {
+    //   // This trigger saves to both Zustand and Cookies
+    //   setLoginSuccess(data.user, data.accessToken);
+    //   message.success("Logged in successfully!");
+
+    //   // Route based on role
+    //   if (data.user.role === "admin") router.push("/admin-dashboard");
+    //   else if (data.user.role === "business") router.push("/dashboard");
+    //   else router.push("/");
+    // }
     if (data.success) {
-      // This trigger saves to both Zustand and Cookies
-      setLoginSuccess(data.user, data.accessToken);
+      const { setAccessToken, getMe } = useAuthStore.getState();
+
+      setAccessToken(data.accessToken);
+      await getMe();
+
       message.success("Logged in successfully!");
 
-      // Route based on role
-      if (data.user.role === "admin") router.push("/admin-dashboard");
-      else if (data.user.role === "business") router.push("/dashboard");
+      const user = useAuthStore.getState().user;
+
+      if (user.role === "admin") router.push("/admin-dashboard");
+      else if (user.role === "business") router.push("/dashboard");
       else router.push("/");
     }
   } catch (error) {

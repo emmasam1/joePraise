@@ -9,9 +9,13 @@ import {
   ExportOutlined,
 } from "@ant-design/icons";
 import { Button } from "antd"
+import { useAuthStore } from "@/store/authStore";
 
 
 export default function DashboardPage() {
+
+  const user = useAuthStore((state) => state.user);
+
   const statsCard = [
     {
       id: 1,
@@ -41,7 +45,10 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex justify-between items-center mt-5">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Business Dashboard</h1>
+          {/* <h1 className="text-xl font-bold text-gray-900">Business Dashboard</h1> */}
+          <h1 className="text-xl font-bold text-gray-900">
+             Welcome back, {user?.name}
+          </h1>
         </div>
         <Button className="p-4.5! bg-[#060853]! rounded-lg border-none! text-white!">
           <img src="/images/upload.png" alt="export" className="h-7" />

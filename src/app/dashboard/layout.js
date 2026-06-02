@@ -23,6 +23,7 @@ export default function DashboardLayout({ children }) {
   const router = useRouter();
 
   const logout = useAuthStore((state) => state.logout);
+  const {user, authLoading} = useAuthStore();
 
   // State to handle the absolute pop-out menu
   const [isRevenueOpen, setIsRevenueOpen] = useState(false);
@@ -74,12 +75,6 @@ export default function DashboardLayout({ children }) {
       icon: <QuestionCircleOutlined />,
       href: "/dashboard/support",
     },
-    // {
-    //   label: "Logout",
-    //   icon: <LogoutOutlined />,
-    //   href: "/logout",
-    //   color: "text-red-500",
-    // },
     { 
       label: "Logout", 
       icon: <LogoutOutlined />, 
@@ -87,6 +82,19 @@ export default function DashboardLayout({ children }) {
       color: "text-red-500" 
     },
   ];
+
+      if (authLoading) {
+      return (
+        <div className="h-screen flex items-center justify-center bg-[#F8FAFC]">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-[#060853] border-t-transparent rounded-full animate-spin" />
+            <p className="text-gray-500 font-medium">
+              Loading dashboard...
+            </p>
+          </div>
+        </div>
+      );
+    }
 
   return (
     <div className="flex h-screen w-full bg-[#F8FAFC] overflow-hidden font-sans p-4">
@@ -254,13 +262,13 @@ export default function DashboardLayout({ children }) {
             </Badge>
 
             <div className="flex items-center gap-3 p-1.5 pr-4 rounded-full border border-gray-50 bg-white shadow-sm">
-              <Avatar src="https://i.pravatar.cc/150?u=michelle" size={36} />
+              <Avatar src={user?.avatar?.url} size={36} />
               <div className="flex flex-col text-right">
                 <span className="text-[11px] font-bold text-gray-900 leading-tight">
-                  Michelle Ajoma
+                  {user?.name}
                 </span>
                 <span className="text-[9px] text-gray-400">
-                  Lush Hair Beauty Salon
+                 {user?.business?.businessName || user?.role}
                 </span>
               </div>
             </div>

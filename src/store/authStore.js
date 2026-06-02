@@ -87,6 +87,7 @@ export const useAuthStore = create(
       user: null,
       token: null,
       isAuthenticated: false, 
+      authLoading: true, // NEW
 
       setLoginSuccess: (user, token) => {
         // Sync to Cookies for Middleware (Visible to Server)
@@ -135,6 +136,10 @@ export const useAuthStore = create(
           }
         } catch (error) {
           console.error("Get Me Error:", error);
+        }finally {
+          set({
+            authLoading: false,
+          });
         }
       },
 
@@ -147,7 +152,8 @@ export const useAuthStore = create(
         set({ 
           user: null, 
           token: null, 
-          isAuthenticated: false 
+          isAuthenticated: false,
+          authLoading: false,
         });
       },
       

@@ -1,12 +1,9 @@
 "use client";
 import React, { useState } from "react";
 import { Input, Button, Select } from "antd";
+import { useRouter } from "next/navigation";
 import {
   StarFilled,
-} from "@ant-design/icons";
-
-import {
-  // SearchOutlined,
   AimOutlined,
   HistoryOutlined,
   FireOutlined,
@@ -15,7 +12,15 @@ import {
 import Image from "next/image";
 
 const LandingPage = () => {
+  const router = useRouter();
   const [activeCity, setActiveCity] = useState("Los Angeles");
+
+  // Handler to route the user to the business listings page based on selection
+  const handleCategoryClick = (categoryName) => {
+    // Normalizing category slug names if needed, or simply forwarding them over as query values
+    const queryValue = encodeURIComponent(categoryName.toLowerCase());
+    router.push(`/directory?category=${queryValue}`);
+  };
 
   const categories = [
     {
@@ -210,11 +215,9 @@ const LandingPage = () => {
         "/images/image8.png",
       ],
     },
-    // ... add 5 more objects here to reach 6
   ];
 
   const SearchDropdown = () => (
-    // Use w-[400px] or similar to ensure enough space for the tags
     <div className="p-5 w-[380px] bg-white">
       <p className="text-gray-400 text-[13px] mb-5">
         Find most searched and popular items close to you
@@ -235,6 +238,7 @@ const LandingPage = () => {
           ].map((item) => (
             <button
               key={item}
+              onClick={() => handleCategoryClick(item)}
               className="px-4 py-1.5 border border-gray-100 rounded-full text-xs font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all"
             >
               {item}
@@ -252,6 +256,7 @@ const LandingPage = () => {
           {["Restaurants", "Hotel", "Plumbers", "Bar"].map((item) => (
             <button
               key={item}
+              onClick={() => handleCategoryClick(item)}
               className="px-4 py-1.5 border border-gray-100 rounded-full text-xs font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all"
             >
               {item}
@@ -264,8 +269,8 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* 2. Hero Section */}
-      <section className="py-20 px-4 text-center bg-linear-to-b from-white to-gray-50">
+      {/* Hero Section */}
+      <section className="py-20 px-4 text-center bg-gradient-to-b from-white to-gray-50">
         <h1 className="text-4xl md:text-5xl font-extrabold text-[#2A2A2A] mb-6">
           Search over <span className="text-[#00D094]">30,000+</span> businesses
           in <br />
@@ -284,7 +289,7 @@ const LandingPage = () => {
             />
             <Select
               showSearch
-              suffixIcon={null} // This removes the arrow
+              suffixIcon={null}
               placeholder="Location"
               variant="borderless"
               className="w-full h-12 text-base font-medium custom-select placeholder:text-[#4A4A4A]"
@@ -293,8 +298,7 @@ const LandingPage = () => {
                   value: "current",
                   label: (
                     <div className="text-[#060853] font-bold flex items-center gap-2 py-1">
-                      <AimOutlined className="text-[#060853]" /> Current
-                      Location
+                      <AimOutlined className="text-[#060853]" /> Current Location
                     </div>
                   ),
                 },
@@ -317,7 +321,6 @@ const LandingPage = () => {
               placeholder="Category"
               variant="borderless"
               className="w-full h-12 text-base font-medium custom-select placeholder:text-[#4A4A4A]"
-              // ADD THIS LINE:
               dropdownStyle={{ minWidth: "350px" }}
               dropdownMatchSelectWidth={false}
               dropdownRender={() => <SearchDropdown />}
@@ -338,15 +341,15 @@ const LandingPage = () => {
           {/* Primary Search Button */}
           <Button
             type="primary"
+            onClick={() => handleCategoryClick("All")}
             className="bg-[#060853]! hover:bg-[#060853]! text-white! h-14! px-12 rounded-xl font-bold text-base flex items-center gap-3 border-none shadow-none"
           >
-            Search  <Image src="/images/search_white.png" alt="Search" width={16} height={16} />
+            Search <Image src="/images/search_white.png" alt="Search" width={16} height={16} />
           </Button>
         </div>
 
-        {/* Categories */}
+        {/* Categories Row 1 & 2 */}
         <div className="flex flex-col items-center gap-4 mt-12">
-          {/* First Row: First 7 items */}
           <div className="flex flex-wrap justify-center gap-4">
             {[
               "Events",
@@ -359,6 +362,7 @@ const LandingPage = () => {
             ].map((cat) => (
               <Button
                 key={cat}
+                onClick={() => handleCategoryClick(cat)}
                 className="bg-white px-6 h-12 rounded-full! shadow-sm border-none cursor-pointer transition-all hover:bg-white hover:text-inherit focus:outline-none! active:outline-none!"
               >
                 <p className="text-xs font-bold text-gray-700">{cat}</p>
@@ -366,11 +370,11 @@ const LandingPage = () => {
             ))}
           </div>
 
-          {/* Second Row: Last 2 items centered */}
           <div className="flex justify-center gap-4">
             {["Restaurant", "More"].map((cat) => (
               <Button
                 key={cat}
+                onClick={() => handleCategoryClick(cat)}
                 className="bg-white px-6 h-12 rounded-full! shadow-sm border-none cursor-pointer transition-all hover:bg-white hover:text-inherit focus:outline-none active:outline-none"
               >
                 <p className="text-xs font-bold text-gray-700">{cat}</p>
@@ -380,19 +384,19 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Main Feature Categories Grid Box */}
       <section className="py-12 px-6 bg-white">
         <div className="max-w-7xl mx-auto flex flex-wrap justify-center gap-6">
           {categories.map((cat, index) => (
             <div
               key={index}
+              onClick={() => handleCategoryClick(cat.title)}
               className="w-40 h-44 bg-white border border-gray-100 rounded-md flex flex-col items-center justify-between py-8 px-4 cursor-pointer hover:shadow-md transition-shadow group"
             >
-              {/* Title */}
               <span className="text-sm font-bold text-gray-900 text-center leading-tight">
                 {cat.title}
               </span>
 
-              {/* Icon Container with specific pink background */}
               <div className="w-20 h-20 rounded-full bg-[#F5E6E6] flex items-center justify-center transition-transform group-hover:scale-110">
                 <span className="text-[#800000] text-2xl flex items-center justify-center">
                   {cat.icon}
@@ -403,7 +407,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* 3. New Listings Grid */}
+      {/* New Listings Grid */}
       <section className="py-16 px-10 max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <span className="text-[#00D094] font-bold text-lg uppercase tracking-wider">
@@ -412,10 +416,8 @@ const LandingPage = () => {
           <h2 className="text-3xl font-bold text-[#2A2A2A] mt-2">
             New Listings in our Directory
           </h2>
-
           <p className="text-black my-3">
-            Lorem ipsum dolor sit amet dummying text fo the printing and
-            typesetting industry
+            Lorem ipsum dolor sit amet dummying text fo the printing and typesetting industry
           </p>
         </div>
 
@@ -423,9 +425,8 @@ const LandingPage = () => {
           {listings.map((item, index) => (
             <div
               key={index}
-              className="bg-white rounded-xl border border-gray-200  overflow-hidden flex flex-col"
+              className="bg-white rounded-xl border border-gray-200 overflow-hidden flex flex-col"
             >
-              {/* Header: User Info */}
               <div className="flex items-center gap-3 p-4">
                 <Image
                   src={item.avatar}
@@ -445,11 +446,7 @@ const LandingPage = () => {
                 </div>
               </div>
 
-              {/* Image Grid: 2 columns */}
-              <div
-                className={`grid gap-0.5 h-52 relative ${item.images?.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}
-              >
-                {/* Always render the first image */}
+              <div className={`grid gap-0.5 h-52 relative ${item.images?.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
                 <div className="relative w-full h-full">
                   <Image
                     src={item.images[0]}
@@ -459,8 +456,6 @@ const LandingPage = () => {
                     sizes="(max-width: 768px) 100vw, 33vw"
                   />
                 </div>
-
-                {/* Only render the second image if it exists */}
                 {item.images?.length > 1 && (
                   <div className="relative w-full h-full">
                     <Image
@@ -474,20 +469,16 @@ const LandingPage = () => {
                 )}
               </div>
 
-              {/* Body: Title and Rating */}
               <div className="p-4 flex-1">
                 <h3 className="text-xl font-bold text-[#2A2A2A] mb-1">
                   {item.title}
                 </h3>
-
                 <div className="flex items-center gap-2 mb-2">
                   <div className="flex text-red-700 text-sm">
                     {[...Array(5)].map((_, i) => (
                       <StarFilled
                         key={i}
-                        className={
-                          i < item.rating ? "text-red-800" : "text-gray-300"
-                        }
+                        className={i < item.rating ? "text-red-800" : "text-gray-300"}
                       />
                     ))}
                   </div>
@@ -495,11 +486,7 @@ const LandingPage = () => {
                     {item.reviews}
                   </span>
                 </div>
-
-                <p className="text-gray-500 text-sm font-medium">
-                  $$ • {item.price}
-                </p>
-
+                <p className="text-gray-500 text-sm font-medium">$$ • {item.price}</p>
                 <p className="text-gray-500 text-sm mt-2 leading-relaxed">
                   {item.category?.length > 98 ? (
                     <>
@@ -514,16 +501,11 @@ const LandingPage = () => {
                 </p>
               </div>
 
-              {/* Footer: Interaction Icons */}
               <div className="px-4 py-3 border-t border-gray-100 flex justify-between items-center text-gray-400">
                 <div className="flex gap-6 items-center">
                   <img src="/images/bulb.png" alt="Bulb" className="w-4 h-4" />
                   <img src="/images/like.png" alt="Bulb" className="w-4 h-4" />
-                  <img
-                    src="/images/message_2.png"
-                    alt="Bulb"
-                    className="w-4 h-4"
-                  />
+                  <img src="/images/message_2.png" alt="Bulb" className="w-4 h-4" />
                 </div>
                 <img src="/images/share.png" alt="Bulb" className="w-4 h-4" />
               </div>
@@ -532,6 +514,7 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Popular Listings Grid Container */}
       <section className="py-16 px-10 max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <span className="text-[#00D094] font-bold text-lg uppercase tracking-wider">
@@ -540,21 +523,17 @@ const LandingPage = () => {
           <h2 className="text-3xl font-bold text-[#2A2A2A] mt-2">
             Popular Listings in our Directory
           </h2>
-
           <p className="text-black my-3">
-            Lorem ipsum dolor sit amet dummying text fo the printing and
-            typesetting industry
+            Lorem ipsum dolor sit amet dummying text fo the printing and typesetting industry
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
-          {/* Apply .slice(0, 3) to limit the output */}
           {listings.slice(0, 3).map((item, index) => (
             <div
               key={index}
-              className="bg-white rounded-xl border border-gray-200  overflow-hidden flex flex-col"
+              className="bg-white rounded-xl border border-gray-200 overflow-hidden flex flex-col"
             >
-              {/* Header: User Info */}
               <div className="flex items-center gap-3 p-4">
                 <Image
                   src={item.avatar}
@@ -574,11 +553,7 @@ const LandingPage = () => {
                 </div>
               </div>
 
-              {/* Image Grid: 2 columns */}
-              <div
-                className={`grid gap-0.5 h-52 relative ${item.images?.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}
-              >
-                {/* Always render the first image */}
+              <div className={`grid gap-0.5 h-52 relative ${item.images?.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
                 <div className="relative w-full h-full">
                   <Image
                     src={item.images[0]}
@@ -588,8 +563,6 @@ const LandingPage = () => {
                     sizes="(max-width: 768px) 100vw, 33vw"
                   />
                 </div>
-
-                {/* Only render the second image if it exists */}
                 {item.images?.length > 1 && (
                   <div className="relative w-full h-full">
                     <Image
@@ -603,20 +576,16 @@ const LandingPage = () => {
                 )}
               </div>
 
-              {/* Body: Title and Rating */}
               <div className="p-4 flex-1">
                 <h3 className="text-xl font-bold text-[#2A2A2A] mb-1">
                   {item.title}
                 </h3>
-
                 <div className="flex items-center gap-2 mb-2">
                   <div className="flex text-red-700 text-sm">
                     {[...Array(5)].map((_, i) => (
                       <StarFilled
                         key={i}
-                        className={
-                          i < item.rating ? "text-red-800" : "text-gray-300"
-                        }
+                        className={i < item.rating ? "text-red-800" : "text-gray-300"}
                       />
                     ))}
                   </div>
@@ -624,11 +593,7 @@ const LandingPage = () => {
                     {item.reviews}
                   </span>
                 </div>
-
-                <p className="text-gray-500 text-sm font-medium">
-                  $$ • {item.price}
-                </p>
-
+                <p className="text-gray-500 text-sm font-medium">$$ • {item.price}</p>
                 <p className="text-gray-500 text-sm mt-2 leading-relaxed">
                   {item.category?.length > 98 ? (
                     <>
@@ -643,16 +608,11 @@ const LandingPage = () => {
                 </p>
               </div>
 
-              {/* Footer: Interaction Icons */}
               <div className="px-4 py-3 border-t border-gray-100 flex justify-between items-center text-gray-400">
                 <div className="flex gap-6 items-center">
                   <img src="/images/bulb.png" alt="Bulb" className="w-4 h-4" />
                   <img src="/images/like.png" alt="Bulb" className="w-4 h-4" />
-                  <img
-                    src="/images/message_2.png"
-                    alt="Bulb"
-                    className="w-4 h-4"
-                  />
+                  <img src="/images/message_2.png" alt="Bulb" className="w-4 h-4" />
                 </div>
                 <img src="/images/share.png" alt="Bulb" className="w-4 h-4" />
               </div>
@@ -661,16 +621,15 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Weekly Newsletter Form Bar Banner */}
       <section className="w-full bg-[#060853] py-24 px-6 flex items-center justify-center">
         <div className="w-full max-w-7xl flex flex-col lg:flex-row items-center justify-between gap-12">
-          {/* Left Side: Heading */}
           <div className="flex-1">
             <h2 className="text-2xl md:text-3xl font-semibold text-white tracking-tight text-center lg:text-left">
               Don't miss our weekly updates
             </h2>
           </div>
 
-          {/* Right Side: Search/Subscribe Bar */}
           <div className="flex-1 w-full max-w-xl bg-[#1D293D80]!">
             <div className="relative flex items-center h-18 bg-[#1D293D80]! border border-white/10 rounded-2xl overflow-hidden px-2">
               <Input
@@ -678,7 +637,6 @@ const LandingPage = () => {
                 variant="borderless"
                 className="flex-1 bg-[#1D293D80]! text-white! text-lg placeholder:text-white! focus:ring-0 px-6 h-full"
               />
-
               <Button className="h-14! bg-[#15BE87]! hover:bg-[#15BE87]! border-none! text-white! font-bold uppercase text-xs tracking-[1px] rounded-lg! px-8 transition-all flex items-center justify-center">
                 SUBSCRIBE
               </Button>
@@ -687,8 +645,8 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Explore Searches City Tags Block */}
       <section className="py-20 px-6 bg-white font-sans max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-10">
           <h2 className="text-3xl font-bold text-black mb-2">
             Explore searches in popular cities
@@ -698,7 +656,6 @@ const LandingPage = () => {
           </p>
         </div>
 
-        {/* City Tags */}
         <div className="flex flex-wrap gap-3 mb-16">
           {cities.map((city) => (
             <button
@@ -715,9 +672,7 @@ const LandingPage = () => {
           ))}
         </div>
 
-        {/* Search Lists Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-          {/* Top Searches */}
           <div>
             <h3 className="font-bold text-black mb-6">
               Top Searches in {activeCity}, CA
@@ -725,19 +680,16 @@ const LandingPage = () => {
             <div className="grid grid-cols-2 gap-y-4 gap-x-4">
               {searchData.top.map(([left, right], i) => (
                 <React.Fragment key={i}>
-                  <span className="text-gray-500 text-sm hover:text-[#060853] cursor-pointer">
+                  <span onClick={() => handleCategoryClick(left)} className="text-gray-500 text-sm hover:text-[#060853] cursor-pointer">
                     {left}
                   </span>
-                  <span className="text-gray-500 text-sm hover:text-[#060853] cursor-pointer">
+                  <span onClick={() => handleCategoryClick(right)} className="text-gray-500 text-sm hover:text-[#060853] cursor-pointer">
                     {right}
                   </span>
                 </React.Fragment>
               ))}
             </div>
-            <p
-              type="link"
-              className="p-0 mt-6 text-[#060853] font-bold flex items-center gap-2"
-            >
+            <p className="p-0 mt-6 text-[#060853] font-bold flex items-center gap-2 cursor-pointer">
               Show more{" "}
               <Image
                 src="/images/arrow_down.png"
@@ -748,7 +700,6 @@ const LandingPage = () => {
             </p>
           </div>
 
-          {/* Trending Searches */}
           <div>
             <h3 className="font-bold text-black mb-6">
               Trending Searches in {activeCity}, CA
@@ -756,19 +707,16 @@ const LandingPage = () => {
             <div className="grid grid-cols-2 gap-y-4 gap-x-4">
               {searchData.trending.map(([left, right], i) => (
                 <React.Fragment key={i}>
-                  <span className="text-gray-500 text-sm hover:text-[#060853] cursor-pointer">
+                  <span onClick={() => handleCategoryClick(left)} className="text-gray-500 text-sm hover:text-[#060853] cursor-pointer">
                     {left}
                   </span>
-                  <span className="text-gray-500 text-sm hover:text-[#060853] cursor-pointer">
+                  <span onClick={() => handleCategoryClick(right)} className="text-gray-500 text-sm hover:text-[#060853] cursor-pointer">
                     {right}
                   </span>
                 </React.Fragment>
               ))}
             </div>
-            <p
-              type="link"
-              className="p-0 mt-6 text-[#060853] font-bold flex  gap-2"
-            >
+            <p className="p-0 mt-6 text-[#060853] font-bold flex gap-2 cursor-pointer">
               Show more{" "}
               <Image
                 src="/images/arrow_down.png"
@@ -779,7 +727,6 @@ const LandingPage = () => {
             </p>
           </div>
 
-          {/* Seasonal Searches */}
           <div>
             <h3 className="font-bold text-black mb-6">
               Seasonal Searches in {activeCity}, CA
@@ -788,6 +735,7 @@ const LandingPage = () => {
               {searchData.seasonal.map((item, i) => (
                 <span
                   key={i}
+                  onClick={() => handleCategoryClick(item)}
                   className="text-gray-500 text-sm hover:text-[#060853] cursor-pointer"
                 >
                   {item}

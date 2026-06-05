@@ -1,4 +1,6 @@
 "use client";
+export const dynamic = "force-dynamic"; // Forces Next.js to skip incorrect static-bailout checks
+
 import React, { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { 
@@ -12,10 +14,9 @@ import {
   DownOutlined
 } from '@ant-design/icons';
 
-// 1. Move the search logic and main view rendering into a sub-component
 function DirectoryContent() {
   const searchParams = useSearchParams();
-  const currentCategory = searchParams.get('category'); // Safe inside Suspense Boundary
+  const currentCategory = searchParams.get('category'); 
 
   const [categoryOpen, setCategoryOpen] = useState(true);
   const [subCategoryOpen, setSubCategoryOpen] = useState(true);
@@ -27,7 +28,7 @@ function DirectoryContent() {
       rating: 4.2,
       reviews: 231,
       location: "Lagos, Nigeria",
-      priceRange: "$450 - $600",
+      priceRange: "₦450 - ₦600",
       status: "Closed until 11:30 AM",
       statusColor: "text-red-500",
       description: "Re-opened in the fall of 2010 by brothers Brian and Peter Quarter, Old Princeton Landing welcomes locals and visitors alike. With the recent merging...",
@@ -40,51 +41,12 @@ function DirectoryContent() {
       rating: 4.0,
       reviews: 231,
       location: "Lagos, Nigeria",
-      priceRange: "$50 - $70",
+      priceRange: "₦50 - ₦70",
       status: "Opened",
       statusColor: "text-blue-600",
       description: "Re-opened in the fall of 2010 by brothers Brian and Peter Quarter, Old Princeton Landing welcomes locals and visitors alike. With the recent merging...",
       tags: ["Seafood", "Burgers", "Breakfast & Brunch"],
       image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500&auto=format&fit=crop&q=60"
-    },
-    {
-      id: 3,
-      name: "Beep's Burger",
-      rating: 3.2,
-      reviews: 51,
-      location: "Lagos, Nigeria",
-      priceRange: "$150 - $200",
-      status: "Opened",
-      statusColor: "text-blue-600",
-      description: "My younger daughter and I love to pop in here to have a burger. A thick, juicy burger with...",
-      tags: ["Burgers", "Breakfast & Brunch"],
-      image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=60"
-    },
-    {
-      id: 4,
-      name: "Roam Artisan Burgers",
-      rating: 3.0,
-      reviews: 33,
-      location: "Lagos, Nigeria",
-      priceRange: "$50 - $100",
-      status: "Opened",
-      statusColor: "text-blue-600",
-      description: "My younger daughter and I love to pop in here to have a burger. A thick, juicy burger with...",
-      tags: ["Burger", "Pizza", "Italian"],
-      image: "https://images.unsplash.com/photo-1550547660-d9450f859349?w=500&auto=format&fit=crop&q=60"
-    },
-    {
-      id: 5,
-      name: "Flats Burgers",
-      rating: 2.0,
-      reviews: 50,
-      location: "Lagos, Nigeria",
-      priceRange: "$50 - $250",
-      status: "Closed until 11:30 AM",
-      statusColor: "text-red-500",
-      description: "My younger daughter and I love to pop in here to have a burger. A thick, juicy burger with...",
-      tags: ["American", "Burgers", "Sandwiches"],
-      image: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=500&auto=format&fit=crop&q=60"
     }
   ];
 
@@ -199,7 +161,6 @@ function DirectoryContent() {
 
         {/* RIGHT STREAMING CONTENT FEED CARD STREAM */}
         <main className="flex-1 w-full space-y-6">
-          {/* Header Metric Indicator Row */}
           <div className="flex justify-between items-center mb-4">
             <span className="text-xs font-bold text-gray-400">
               <span className="text-gray-900 font-extrabold">1,251</span> Restaurants
@@ -209,19 +170,12 @@ function DirectoryContent() {
             </div>
           </div>
 
-          {/* Listing Directory Render Stack */}
           {directoryItems.map((item) => (
             <div key={item.id} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex flex-col md:flex-row gap-6 relative group hover:shadow-md transition-all">
-              
-              {/* Left Aspect Wrapped Mock Image */}
               <div className="w-full md:w-56 h-44 rounded-xl overflow-hidden relative bg-gray-100 shrink-0">
                 <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                <div className="absolute left-3 bottom-3 bg-white/90 backdrop-blur-xs rounded-full p-2 text-xs flex items-center justify-center shadow-sm w-8 h-8 font-black">
-                  ⇄
-                </div>
               </div>
 
-              {/* Central Information Stack */}
               <div className="flex-1 flex flex-col justify-between py-1">
                 <div>
                   <div className="flex justify-between items-start">
@@ -232,7 +186,6 @@ function DirectoryContent() {
                     </div>
                   </div>
 
-                  {/* Rating Badge Row Setup */}
                   <div className="flex items-center gap-1 mt-1 mb-3">
                     {[...Array(5)].map((_, i) => (
                       <StarFilled key={i} className={`text-xs ${i < Math.floor(item.rating) ? 'text-red-700' : 'text-gray-200'}`} />
@@ -241,7 +194,6 @@ function DirectoryContent() {
                     <span className="text-xs font-bold text-gray-400">({item.reviews} Reviews)</span>
                   </div>
 
-                  {/* Geographic Context Line */}
                   <div className="flex items-center gap-6 text-xs text-gray-400 font-bold mb-3">
                     <span className="flex items-center gap-1">
                       <EnvironmentOutlined className="text-[10px]" /> {item.location}
@@ -252,13 +204,11 @@ function DirectoryContent() {
                     <span className={`${item.statusColor} font-black`}>{item.status}</span>
                   </div>
 
-                  {/* Primary Narrative Context Blurb Block */}
                   <p className="text-xs text-gray-400 leading-relaxed font-medium mb-4">
                     {item.description} <span className="text-[#10B981] font-black cursor-pointer">more</span>
                   </p>
                 </div>
 
-                {/* Bottom Interactive Layer Component */}
                 <div className="flex justify-between items-end pt-2 border-t border-gray-50">
                   <div className="flex gap-2">
                     {item.tags.map((tag) => (
@@ -271,28 +221,15 @@ function DirectoryContent() {
                     🗂️ Order
                   </button>
                 </div>
-
               </div>
             </div>
           ))}
-
-          {/* Footer Pagination Component */}
-          <div className="flex justify-center items-center gap-2 pt-8">
-            <button className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-100 bg-white text-xs text-gray-400 font-black">‹</button>
-            <button className="w-8 h-8 rounded-lg flex items-center justify-center bg-[#060853] text-white text-xs font-black shadow-sm">1</button>
-            <button className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-100 bg-white text-xs text-gray-500 font-black">2</button>
-            <button className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-100 bg-white text-xs text-gray-500 font-black">3</button>
-            <span className="text-gray-300 px-1 text-xs">...</span>
-            <button className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-100 bg-white text-xs text-gray-500 font-black">6</button>
-            <button className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-100 bg-white text-xs text-gray-400 font-black">›</button>
-          </div>
         </main>
       </div>
     </div>
   );
 }
 
-// 2. Export the main entry point page wrapped cleanly inside <Suspense>
 export default function DirectoryPage() {
   return (
     <Suspense fallback={

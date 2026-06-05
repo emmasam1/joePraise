@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { 
   SearchOutlined, 
@@ -12,11 +12,12 @@ import {
   DownOutlined
 } from '@ant-design/icons';
 
-export default function DirectoryPage() {
+// 1. Move the search logic and main view rendering into a sub-component
+function DirectoryContent() {
   const searchParams = useSearchParams();
-  const currentCategory = searchParams.get('category'); // Returns "restaurants"
+  const currentCategory = searchParams.get('category'); // Safe inside Suspense Boundary
 
-   const [categoryOpen, setCategoryOpen] = useState(true);
+  const [categoryOpen, setCategoryOpen] = useState(true);
   const [subCategoryOpen, setSubCategoryOpen] = useState(true);
 
   const directoryItems = [
@@ -88,8 +89,7 @@ export default function DirectoryPage() {
   ];
 
   return (
-     <div className="bg-[#F8FAFC] min-h-screen text-[#0F172A] font-sans">
-      
+    <div className="bg-[#F8FAFC] min-h-screen text-[#0F172A] font-sans">
       {/* Top Main Universal Search Bar Header */}
       <div className="max-w-7xl mx-auto pt-10 px-4 text-center">
         <h1 className="text-2xl font-black text-[#060853] mb-6">Find a business directory</h1>
@@ -199,7 +199,6 @@ export default function DirectoryPage() {
 
         {/* RIGHT STREAMING CONTENT FEED CARD STREAM */}
         <main className="flex-1 w-full space-y-6">
-          
           {/* Header Metric Indicator Row */}
           <div className="flex justify-between items-center mb-4">
             <span className="text-xs font-bold text-gray-400">
@@ -287,9 +286,21 @@ export default function DirectoryPage() {
             <button className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-100 bg-white text-xs text-gray-500 font-black">6</button>
             <button className="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-100 bg-white text-xs text-gray-400 font-black">›</button>
           </div>
-
         </main>
       </div>
     </div>
+  );
+}
+
+// 2. Export the main entry point page wrapped cleanly inside <Suspense>
+export default function DirectoryPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center text-xs font-bold text-gray-400">
+        Loading Directory...
+      </div>
+    }>
+      <DirectoryContent />
+    </Suspense>
   );
 }

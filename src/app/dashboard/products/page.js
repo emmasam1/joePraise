@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import CustomModal from "@/components/CustomModal";
 import ConfirmActionModal from "@/components/ConfirmActionModal";
 import Image from "next/image";
+import { InboxOutlined } from "@ant-design/icons";
 
 const { TextArea } = Input;
 
@@ -15,11 +16,7 @@ const ProductManagementPage = () => {
   const [isSelected, setIsSelected] = useState(null);
 
   const [productType, setProductType] = useState("physical");
-  
-  // State tracking for dynamic pricing layout changes
   const [priceType, setPriceType] = useState("fixed");
-
-  // Track selected fulfillment location type ("my-location", "client-location", "virtual")
   const [fulfillmentLocation, setFulfillmentLocation] = useState("my-location");
 
   // Track selected days by their index positions (0 = Mon, 1 = Tue, etc.)
@@ -284,147 +281,124 @@ const ProductManagementPage = () => {
             <TextArea rows={4} placeholder="Describe what makes this cake or service special..." className="rounded-lg" />
           </div>
 
-          {/* Metrics Layout Rendered from Frame 238564.png */}
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-              <div>
-                <label className="block text-[13px] font-extrabold text-black mb-1.5 tracking-tight">SKU / product code</label>
-                <Input placeholder="...eg. PROD-0001" className="h-12 rounded-lg border-gray-200 placeholder:text-gray-400 text-sm" />
+          {/* DYNAMIC METRICS SECTION SWITCH */}
+          {productType === "digital" ? (
+            /* Digital Product Layout Block */
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start w-full pt-2">
+              {/* Drag and Drop Upload Zone */}
+              <div className="border border-[#060853] bg-[#F8FAFC] rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer min-h-[180px] hover:bg-gray-50 transition-colors">
+                <InboxOutlined className="text-gray-300 text-xl mb-3 opacity-60" />
+                <p className="text-[#1e293b] font-medium text-base mb-1">Click to upload or drag & drop</p>
+                <p className="text-gray-400 text-xs">PDF, ZIP, MP4, EPUB - max 2GB</p>
               </div>
-              <div>
-                <label className="block text-[13px] font-extrabold text-black mb-1.5 tracking-tight">Stock quantity</label>
-                <Input type="number" defaultValue={0} className="h-12 rounded-lg border-gray-200 text-sm" />
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-              <div>
-                <label className="block text-[13px] font-extrabold text-black mb-1.5 tracking-tight">Weight (kg)</label>
-                <Input placeholder="0.0" className="h-12 rounded-lg border-gray-200 placeholder:text-gray-400 text-sm" />
-              </div>
-              <div>
-                <label className="block text-[13px] font-extrabold text-black mb-1.5 tracking-tight">Dimensions (L x W x H cm)</label>
-                <Input placeholder="e.g. 20 × 15 × 10" className="h-12 rounded-lg border-gray-200 placeholder:text-gray-400 text-sm" />
-              </div>
-            </div>
+              {/* Configuration Dropdowns */}
+              <div className="space-y-5">
+                <div>
+                  <label className="block text-sm font-extrabold text-black mb-2 tracking-tight">Access duration</label>
+                  <Select
+                    defaultValue="lifetime"
+                    className="w-full h-12 text-sm"
+                    options={[
+                      { value: "lifetime", label: "Lifetime access" },
+                      { value: "limited", label: "Limited duration" },
+                    ]}
+                  />
+                </div>
 
-            {/* Service / Fulfillment Selection Cards Group implemented from Frame 238564.png */}
-            <div className="pt-2">
-              <div className="grid grid-cols-3 gap-4">
-                <button
-                  type="button"
-                  onClick={() => setFulfillmentLocation("my-location")}
-                  className={`flex flex-col items-center justify-center p-6 rounded-xl border text-center transition-all outline-none min-h-[105px]
-                    ${fulfillmentLocation === "my-location"
-                      ? "border-[#060853] bg-[#F1F5F9] ring-1 ring-[#060853]" 
-                      : "border-gray-200 bg-white hover:border-gray-300"
-                    }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-5 h-5 text-black mb-2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                  </svg>
-                  <span className="text-sm font-medium text-gray-800">At my location</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setFulfillmentLocation("client-location")}
-                  className={`flex flex-col items-center justify-center p-6 rounded-xl border text-center transition-all outline-none min-h-[105px]
-                    ${fulfillmentLocation === "client-location"
-                      ? "border-[#060853] bg-[#F1F5F9] ring-1 ring-[#060853]" 
-                      : "border-gray-200 bg-white hover:border-gray-300"
-                    }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-5 h-5 text-black mb-2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-                  </svg>
-                  <span className="text-sm font-medium text-gray-800">At client location</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setFulfillmentLocation("virtual")}
-                  className={`flex flex-col items-center justify-center p-6 rounded-xl border text-center transition-all outline-none min-h-[105px]
-                    ${fulfillmentLocation === "virtual"
-                      ? "border-[#060853] bg-[#F1F5F9] ring-1 ring-[#060853]" 
-                      : "border-gray-200 bg-white hover:border-gray-300"
-                    }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-5 h-5 text-black mb-2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
-                  </svg>
-                  <span className="text-sm font-medium text-gray-800">Online/Virtual</span>
-                </button>
+                <div>
+                  <label className="block text-sm font-extrabold text-black mb-2 tracking-tight">Download limit</label>
+                  <Select
+                    defaultValue="unlimited"
+                    className="w-full h-12 text-sm"
+                    options={[
+                      { value: "unlimited", label: "Unlimited" },
+                      { value: "once", label: "1 time download" },
+                      { value: "custom", label: "Custom cap" },
+                    ]}
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          ) : (
+            /* Physical Product / Service Layout Block */
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                <div>
+                  <label className="block text-[13px] font-extrabold text-black mb-1.5 tracking-tight">SKU / product code</label>
+                  <Input placeholder="...eg. PROD-0001" className="h-12 rounded-lg border-gray-200 placeholder:text-gray-400 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-[13px] font-extrabold text-black mb-1.5 tracking-tight">Stock quantity</label>
+                  <Input type="number" defaultValue={0} className="h-12 rounded-lg border-gray-200 text-sm" />
+                </div>
+              </div>
 
-        {/* Scheduling Config Container Component */}
-        <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 space-y-4">
-          <div className="flex justify-between items-center mb-1">
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-bold text-gray-800">Appointment booking</p>
-              <span className="bg-[#E2EDFC] text-[#060853] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Scheduling</span>
-            </div>
-            <Switch defaultChecked />
-          </div>
-          <p className="text-[11px] text-gray-500 mb-2">Let customers schedule and pay for appointments directly</p>
-          
-          <div className="border-t border-gray-200 pt-4 space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-2">Available days</label>
-              <div className="flex gap-2">
-                {daysList.map((day, idx) => (
+              <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                <div>
+                  <label className="block text-[13px] font-extrabold text-black mb-1.5 tracking-tight">Weight (kg)</label>
+                  <Input placeholder="0.0" className="h-12 rounded-lg border-gray-200 placeholder:text-gray-400 text-sm" />
+                </div>
+                <div>
+                  <label className="block text-[13px] font-extrabold text-black mb-1.5 tracking-tight">Dimensions (L x W x H cm)</label>
+                  <Input placeholder="e.g. 20 × 15 × 10" className="h-12 rounded-lg border-gray-200 placeholder:text-gray-400 text-sm" />
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <div className="grid grid-cols-3 gap-4">
                   <button
-                    key={idx}
                     type="button"
-                    onClick={() => toggleDay(idx)}
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold transition-all
-                      ${selectedDays.includes(idx) ? "bg-[#060853] text-white" : "bg-white border border-gray-200 text-gray-400"}`}
+                    onClick={() => setFulfillmentLocation("my-location")}
+                    className={`flex flex-col items-center justify-center p-6 rounded-xl border text-center transition-all outline-none min-h-[105px]
+                      ${fulfillmentLocation === "my-location"
+                        ? "border-[#060853] bg-[#F1F5F9] ring-1 ring-[#060853]" 
+                        : "border-gray-200 bg-white hover:border-gray-300"
+                      }`}
                   >
-                    {day}
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-5 h-5 text-black mb-2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                    </svg>
+                    <span className="text-sm font-medium text-gray-800">At my location</span>
                   </button>
-                ))}
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Opening time</label>
-                <Select placeholder="Select" className="w-full h-10" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Closing time</label>
-                <Select placeholder="Select" className="w-full h-10" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Earliest booking notice</label>
-                <Select placeholder="Select" className="w-full h-10" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Latest booking window</label>
-                <Select placeholder="Select" className="w-full h-10" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Buffer between sessions</label>
-                <Select placeholder="Select" className="w-full h-10" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Max bookings per day</label>
-                <Input type="number" defaultValue={1} className="h-10 rounded-lg" />
-              </div>
-            </div>
+                  <button
+                    type="button"
+                    onClick={() => setFulfillmentLocation("client-location")}
+                    className={`flex flex-col items-center justify-center p-6 rounded-xl border text-center transition-all outline-none min-h-[105px]
+                      ${fulfillmentLocation === "client-location"
+                        ? "border-[#060853] bg-[#F1F5F9] ring-1 ring-[#060853]" 
+                        : "border-gray-200 bg-white hover:border-gray-300"
+                      }`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-5 h-5 text-black mb-2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                    </svg>
+                    <span className="text-sm font-medium text-gray-800">At client location</span>
+                  </button>
 
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">Cancellation policy</label>
-              <Select placeholder="Select" className="w-full h-10" />
+                  <button
+                    type="button"
+                    onClick={() => setFulfillmentLocation("virtual")}
+                    className={`flex flex-col items-center justify-center p-6 rounded-xl border text-center transition-all outline-none min-h-[105px]
+                      ${fulfillmentLocation === "virtual"
+                        ? "border-[#060853] bg-[#F1F5F9] ring-1 ring-[#060853]" 
+                        : "border-gray-200 bg-white hover:border-gray-300"
+                      }`}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-5 h-5 text-black mb-2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+                    </svg>
+                    <span className="text-sm font-medium text-gray-800">Online/Virtual</span>
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Pricing Section (Updated with Dynamic Form Inputs Conditionals) */}
+        {/* Pricing Section */}
         <div className="space-y-4">
           <h2 className="text-sm font-bold text-gray-800">Pricing</h2>
           <div className="flex gap-4 mb-2">
@@ -440,7 +414,6 @@ const ProductManagementPage = () => {
             </Radio.Group>
           </div>
 
-          {/* Conditional Layout Switching Logic */}
           {priceType === "fixed" && (
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1">Price</label>
@@ -450,19 +423,17 @@ const ProductManagementPage = () => {
 
           {priceType === "range" && (
             <div className="flex gap-4 items-end">
-              <div className="flex-1">
+              <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">From (Min Price)</label>
-                <Input prefix="₦" placeholder="0.00" className="h-10 w-full! rounded-lg" />
+                <Input prefix="₦" placeholder="0.00" className="h-10 w-48 rounded-lg" />
               </div>
               <span className="text-gray-400 font-semibold mb-2">to</span>
-              <div className="flex-1">
+              <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">To (Max Price)</label>
-                <Input prefix="₦" placeholder="0.00" className="h-10 w-full! rounded-lg" />
+                <Input prefix="₦" placeholder="0.00" className="h-10 w-48 rounded-lg" />
               </div>
             </div>
           )}
-
-          {/* Note: inputs vanish automatically for 'free' and 'negotiable' */}
         </div>
 
         {/* Media Upload Section */}
@@ -539,7 +510,70 @@ const ProductManagementPage = () => {
           </div>
         </div>
 
-        {/* Submit Actions Button Footer */}
+        {/* Scheduling Config Container Component */}
+        <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm mt-6 space-y-4">
+          <div className="flex justify-between items-center mb-1">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-gray-900">Appointment booking</span>
+              <span className="bg-[#E2EDFC] text-[#060853] text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Scheduling</span>
+            </div>
+            <Switch defaultChecked />
+          </div>
+          <p className="text-[12px] text-gray-500 mb-2">Let customers schedule and pay for appointments directly</p>
+          
+          <div className="border-t border-gray-100 pt-4 space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-2">Available days</label>
+              <div className="flex gap-2">
+                {daysList.map((day, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => toggleDay(idx)}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold transition-all
+                      ${selectedDays.includes(idx) ? "bg-[#060853] text-white" : "bg-white border border-gray-200 text-gray-400"}`}
+                  >
+                    {day}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Opening time</label>
+                <Select placeholder="Select" className="w-full h-10" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Closing time</label>
+                <Select placeholder="Select" className="w-full h-10" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Earliest booking notice</label>
+                <Select placeholder="Select" className="w-full h-10" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Latest booking window</label>
+                <Select placeholder="Select" className="w-full h-10" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Buffer between sessions</label>
+                <Select placeholder="Select" className="w-full h-10" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Max bookings per day</label>
+                <Input type="number" defaultValue={1} className="h-10 rounded-lg" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1">Cancellation policy</label>
+              <Select placeholder="Select" className="w-full h-10" />
+            </div>
+          </div>
+        </div>
+
+       {/* Submit Actions Button Footer */}
         <div className="flex justify-between items-center pt-4 border-t">
           <Button onClick={() => setIsAddingProduct(false)} className="rounded-lg h-10 font-bold border-gray-300 text-gray-600">
             Save as Draft
@@ -548,6 +582,21 @@ const ProductManagementPage = () => {
             Save & Publish
           </Button>
         </div>
+
+        <div className="bg-[#FBFBFB] border border-gray-200 p-3 rounded-sm">
+          <div className="flex justify-between items-center mb-1">
+            <div>
+
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-bold text-gray-800">Appointment booking</p>
+              <span className="bg-[#E2EDFC] text-[#060853] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Scheduling</span>
+            </div>
+            <span className="text-[#2A2A2A] text-xs">Let customers schedule and pay for appointments directly</span>
+            </div>
+            <Switch defaultChecked />
+          </div>
+        </div>
+       
       </div>
     );
   }

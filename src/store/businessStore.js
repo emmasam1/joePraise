@@ -95,15 +95,43 @@ export const useBusinessStore = create((set, get) => ({
       });
 
       if (response.data.success) {
-        const { user, accessToken, refreshToken } = response.data;
         const authStore = useAuthStore.getState();
 
-        if (user && accessToken && authStore.setLoginSuccess) {
-          authStore.setLoginSuccess(user, accessToken, refreshToken);
+        /**
+         * NEW USER
+         */
+        if (response.data.requiresVerification) {
+          message.success(response.data.message);
+
+          router.push(
+            `/verification-code?email=${encodeURIComponent(
+              response.data.email
+            )}&type=registration`
+          );
+
+          return response.data;
+        }
+
+        /**
+         * EXISTING AUTHENTICATED USER
+         */
+        const {
+          user,
+          accessToken,
+          refreshToken,
+        } = response.data;
+
+        if (user && accessToken) {
+          authStore.setLoginSuccess(
+            user,
+            accessToken,
+            refreshToken
+          );
         }
 
         message.success(
-          response.data.message || "Business onboarded successfully",
+          response.data.message ||
+            "Business onboarded successfully"
         );
 
         router.push("/dashboard");

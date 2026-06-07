@@ -95,15 +95,26 @@ const VerificationContent = () => {
 
         if (response.data.success) {
           // Immediately save tokens & user into Zustand store
-          setLoginSuccess(response.data.user, response.data.accessToken);
+          //setLoginSuccess(response.data.user, response.data.accessToken);
+          setLoginSuccess(
+                response.data.user,
+                response.data.accessToken,
+                response.data.refreshToken
+              );
           
           // Route user to your custom green success screen!
           router.push("/verification-successful");
         }
       }
     } catch (error) {
-      message.error(error.response?.data?.message || "Invalid or expired verification code");
-    } finally {
+   console.error("Verification Error:", error);
+
+      if (error?.response?.data?.message) {
+        message.error(error.response.data.message);
+      } else {
+        message.error(error.message || "Something went wrong");
+      }
+  } finally {
       setLoading(false);
     }
   };

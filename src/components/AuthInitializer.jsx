@@ -1,3 +1,5 @@
+
+
 "use client";
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
@@ -6,11 +8,19 @@ export default function AuthInitializer() {
   const token = useAuthStore((state) => state.token);
   const getMe = useAuthStore((state) => state.getMe);
 
-  useEffect(() => {
+ useEffect(() => {
+  const initialize = async () => {
     if (token) {
-      getMe();
+      await getMe();
+    } else {
+      useAuthStore.setState({
+        authLoading: false,
+      });
     }
-  }, [token, getMe]);
+  };
+
+  initialize();
+}, [token, getMe]);
 
   return null;
 }

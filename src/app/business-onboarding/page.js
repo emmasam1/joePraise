@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useMemo, useState } from "react";
@@ -44,7 +45,9 @@ export default function MultiStepForm() {
   const router = useRouter();
 
   const token = useAuthStore((state) => state.token);
-  const isAuthenticated = Boolean(token);
+  //const isAuthenticated = Boolean(token);
+
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   const [businessCert, setBusinessCert] = useState(null);
   const [businessLicense, setBusinessLicense] = useState(null);
@@ -246,17 +249,20 @@ export default function MultiStepForm() {
               closed: false,
             }));
 
-      const response = await onboardBusiness(
-        {
-          ...formData,
-          documents,
-          operatingHours,
-        },
-        router,
-      );
+        const response = await onboardBusiness(
+          {
+            ...formData,
+            documents,
+            operatingHours,
+          },
+          router,
+        );
 
-      setCurrent(verificationStep);
-      return response;
+        if (!response?.requiresVerification) {
+          message.success("Business onboarding successful");
+        }
+
+        return response;
     } catch (error) {
       console.log("Submission Error:", error);
     }

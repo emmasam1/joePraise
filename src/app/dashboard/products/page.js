@@ -1,50 +1,157 @@
+
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Input, Button, Table, Dropdown, Select, Radio, Switch, Upload } from "antd";
 import { motion, AnimatePresence } from "framer-motion"; 
 import CustomModal from "@/components/CustomModal";
 import ConfirmActionModal from "@/components/ConfirmActionModal";
 import Image from "next/image";
 import { InboxOutlined } from "@ant-design/icons";
+import { useListingStore } from "@/store/listingStore";
 
 const { TextArea } = Input;
 
 const ProductManagementPage = () => {
+  const { createService, getMyServices, services, loading } = useListingStore();
+
   const [activeTab, setActiveTab] = useState("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeletingModalOpen, setIsDeletingModalOpen] = useState(false);
   const [isSelected, setIsSelected] = useState(null);
+  const [isAddingProduct, setIsAddingProduct] = useState(false);
+
+  // Core structured single-state form handling
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "cakes",
+    description: "",
+    sku: "",
+    stock: 0,
+    weight: "",
+    dimensions: "",
+    price: "",
+    minPrice: "",
+    maxPrice: "",
+    openingTime: "",
+    closingTime: "",
+    earliestNotice: "",
+    latestWindow: "",
+    bufferSession: "",
+    maxBookingsPerDay: 1,
+    cancellationPolicy: "",
+    digitalAccessDuration: "lifetime",
+    digitalDownloadLimit: "unlimited",
+  });
 
   const [productType, setProductType] = useState("physical");
   const [priceType, setPriceType] = useState("fixed");
   const [fulfillmentLocation, setFulfillmentLocation] = useState("my-location");
+  
+  // Visibility and Feature toggles
+  const [isPublished, setIsPublished] = useState(true);
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [schedulingEnabled, setSchedulingEnabled] = useState(true);
 
-  // Track selected days by their index positions (0 = Mon, 1 = Tue, etc.)
+  // Track selected days by index (0 = Mon, 1 = Tue, etc.)
   const [selectedDays, setSelectedDays] = useState([0, 1, 2, 3, 4]);
   const daysList = ["M", "T", "W", "T", "F", "S", "S"];
 
+  // Separated states for preview urls vs raw binary files for multipart payload transmission
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [rawImageFiles, setRawImageFiles] = useState([]);
+
+  // Fetch initial services listing on mount
+  useEffect(() => {
+    getMyServices();
+  }, []);
+
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
   const toggleDay = (idx) => {
-    setSelectedDays(prev => 
-      prev.includes(idx) ? prev.filter(d => d !== idx) : [...prev, idx]
+    setSelectedDays((prev) => 
+      prev.includes(idx) ? prev.filter((d) => d !== idx) : [...prev, idx]
     );
   };
 
-  // State to hold uploaded image display preview data strings
-  const [uploadedImages, setUploadedImages] = useState([]);
-
   const handleImageUpload = ({ fileList }) => {
-    const formattedUrls = fileList.map(file => {
+    const formattedUrls = fileList.map((file) => {
       if (file.url) return file.url;
       if (file.originFileObj) return URL.createObjectURL(file.originFileObj);
       return null;
     }).filter(Boolean);
-    
     setUploadedImages(formattedUrls);
+
+    const rawFiles = fileList.map((file) => file.originFileObj || file).filter(Boolean);
+    setRawImageFiles(rawFiles);
   };
 
-  // Handler to remove a selected image by its specific slot index position
   const removeImage = (indexToRemove) => {
-    setUploadedImages(prev => prev.filter((_, idx) => idx !== indexToRemove));
+    setUploadedImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+    setRawImageFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  // Submit Handler Framework
+  const handleSubmitListing = async (forcedDraftStatus = false) => {
+    let calculatedStatus = "pending_review";
+    if (forcedDraftStatus) {
+      calculatedStatus = "draft";
+    } else if (isPaused) {
+      calculatedStatus = "paused";
+    } else if (!isPublished) {
+      calculatedStatus = "draft";
+    }
+
+    const payload = {
+      name: formData.name,
+      category: formData.category,
+      description: formData.description,
+      productType,
+      priceType,
+      fulfillmentLocation,
+      status: calculatedStatus,
+      isFeatured,
+      images: rawImageFiles,
+    };
+
+    if (productType === "digital") {
+      payload.digitalAccessDuration = formData.digitalAccessDuration;
+      payload.digitalDownloadLimit = formData.digitalDownloadLimit;
+    } else {
+      payload.sku = formData.sku;
+      payload.stock = formData.stock;
+      payload.weight = formData.weight;
+      payload.dimensions = formData.dimensions;
+    }
+
+    if (priceType === "fixed") {
+      payload.price = formData.price || 0;
+    } else if (priceType === "range") {
+      payload.minPrice = formData.minPrice || 0;
+      payload.maxPrice = formData.maxPrice || 0;
+    }
+
+    if (schedulingEnabled) {
+      payload.schedulingEnabled = "true";
+      payload.availableDays = JSON.stringify(selectedDays);
+      payload.openingTime = formData.openingTime;
+      payload.closingTime = formData.closingTime;
+      payload.earliestBookingNotice = formData.earliestNotice;
+      payload.latestBookingWindow = formData.latestWindow;
+      payload.bufferBetweenSessions = formData.bufferSession;
+      payload.maxBookingsPerDay = formData.maxBookingsPerDay;
+      payload.cancellationPolicy = formData.cancellationPolicy;
+    }
+
+    try {
+      await createService(payload);
+      setIsAddingProduct(false);
+      getMyServices(); 
+    } catch (err) {
+      console.error("Listing creation failed:", err);
+    }
   };
 
   const productTypeTabs = [
@@ -67,15 +174,13 @@ const ProductManagementPage = () => {
       icon: "/images/clock.png",
     },
   ];
-  
-  const [isAddingProduct, setIsAddingProduct] = useState(false);
 
   const statsCard = [
-    { id: 1, title: "Total Products", value: "45", img: "/images/cube.png", size: "md" },
-    { id: 2, title: "Active Orders", value: "34", img: "/images/active.png", size: "xmd" },
-    { id: 3, title: "Draft", value: "6", img: "/images/draft.png", size: "xmd" },
-    { id: 4, title: "Out of Stock", value: "8", img: "/images/out-of-stock.png", size: "md" },
-  ];
+  { id: 1, title: "Total Products", value: services?.length || "0", img: "/images/cube.png", size: "md" },
+  { id: 2, title: "Active Orders", value: services?.filter(s => s.listingStatus === "published" && s.approvalStatus === "approved").length || "0", img: "/images/active.png", size: "xmd" },
+  { id: 3, title: "Draft", value: services?.filter(s => s.listingStatus === "draft").length || "0", img: "/images/draft.png", size: "xmd" },
+  { id: 4, title: "Out of Stock", value: services?.filter(s => s.type === "physical_product" && s.physicalProduct && Number(s.physicalProduct.stock) === 0).length || "0", img: "/images/out-of-stock.png", size: "md" },
+];
 
   const tabs = ["All", "Active", "Draft", "Paused", "Out of Stock"];
 
@@ -92,56 +197,102 @@ const ProductManagementPage = () => {
     },
     {
       title: "Product",
-      dataIndex: "title",
+      dataIndex: "title", 
       key: "id",
-      render: (_, record) => (
-        <div className="flex items-center gap-3">
-          <img src={record.image} alt={record.title} className="w-10 h-10 rounded-lg object-cover" />
-          <div className="flex flex-col">
-            <span className="font-semibold text-[#1e293b] text-sm">{record.title}</span>
-            <span className="text-[10px] text-gray-500">{record.category}</span>
+      render: (_, record) => {
+        const imageSrc = typeof record.images?.[0] === "object" 
+          ? record.images[0]?.url 
+          : record.images?.[0] || "/images/cake.png";
+
+        return (
+          <div className="flex items-center gap-3">
+            <img 
+              src={imageSrc} 
+              alt={record.title} 
+              className="w-10 h-10 rounded-lg object-cover" 
+            />
+            <div className="flex flex-col">
+              <span className="font-semibold text-[#1e293b] text-sm">{record.title || "Untitled Product"}</span>
+              <span className="text-[10px] text-gray-500 capitalize">{record.category}</span>
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       title: "CATEGORY",
-      dataIndex: "prodcut",
-      key: "prodcut",
-      render: (_, record) => <span className="font-semibold text-black">{record.prodcut}</span>,
+      dataIndex: "category",
+      key: "category",
+      render: (text) => <span className="font-semibold text-black capitalize">{text}</span>,
     },
     {
       title: "PRICE",
       dataIndex: "price",
       key: "price",
-      render: (_, record) => <span className="text-black">{record.price}</span>,
-    },
-    {
-      title: "EARNING",
-      dataIndex: "earning",
-      key: "earning",
-      render: (_, record) => <span className="text-black">₦{record.earning}</span>,
-    },
-    {
-      title: "STATUS",
-      dataIndex: "status",
-      key: "status",
       render: (_, record) => {
-        let statusColor = "#9CA3AF";
-        if (record.status === "Draft") statusColor = "#FFC542";
-        else if (record.status === "Paused") statusColor = "#A71818";
-        else if (record.status === "Active") statusColor = "#15BE87";
-        else if (record.status === "Out of Stock") statusColor = "#870A0A";
-
-        return <span style={{ color: statusColor }} className="text-xs">{record.status}</span>;
+        const type = record.pricingType || "fixed";
+        if (type === "fixed") {
+          return <span className="text-black">₦{record.price?.toLocaleString() || "0"}</span>;
+        } else if (type === "range") {
+          return <span className="text-black">₦{record.minPrice?.toLocaleString()} - ₦{record.maxPrice?.toLocaleString()}</span>;
+        } else if (type === "negotiable" || type === "quote") {
+          return <span className="text-black">Negotiable</span>;
+        }
+        return <span className="text-black">Free</span>;
       },
     },
+    {
+      title: "EARNINGS",
+      dataIndex: "earnings",
+      key: "earnings",
+      render: (text) => <span className="font-semibold text-black capitalize">{text || "₦0"}</span>,
+    },
+    {
+  title: "STATUS",
+  dataIndex: "approvalStatus", 
+  key: "status",
+  render: (_, record) => {
+    let currentStatus = record.listingStatus || "draft";
+    let approval = record.approvalStatus || "pending";
+    
+    let displayLabel = currentStatus.replace("_", " ");
+    let statusColor = "#9CA3AF";
+
+    // 1. Structural workflow system lifecycles come first
+    if (currentStatus === "draft") {
+      statusColor = "#FFC542";
+      displayLabel = "Draft";
+    } else if (approval === "rejected") {
+      statusColor = "#EF4444";
+      displayLabel = "Rejected";
+    } else if (currentStatus === "pending_review" || approval === "pending") {
+      statusColor = "#3B82F6";
+      displayLabel = "Pending Review";
+    } else if (currentStatus === "paused" || record.isPaused) {
+      statusColor = "#A71818";
+      displayLabel = "Paused";
+    } 
+    // 2. Physical stock level notifications apply ONLY if it is live/published
+    else if (
+      record.type === "physical_product" && 
+      record.physicalProduct && 
+      Number(record.physicalProduct.stock) === 0
+    ) {
+      statusColor = "#870A0A";
+      displayLabel = "Out of Stock";
+    } else if (approval === "approved" && currentStatus === "published") {
+      statusColor = "#15BE87";
+      displayLabel = "Active";
+    }
+
+    return <span style={{ color: statusColor }} className="text-xs font-semibold capitalize">{displayLabel}</span>;
+  },
+},
     {
       title: "",
       key: "action",
       render: (_, record) => {
         const items = [
-          { key: "1", label: <span className="text-[10px] font-bold py-1 block">Add</span> },
           {
             key: "view",
             label: (
@@ -156,11 +307,11 @@ const ProductManagementPage = () => {
               </span>
             ),
           },
-          { key: "3", label: <span className="text-[10px] font-bold py-1 block">Edit</span> },
+          { key: "edit", label: <span className="text-[10px] font-bold py-1 block">Edit</span> },
           {
-            key: "4",
+            key: "delete",
             label: (
-              <span onClick={() => setIsDeletingModalOpen(true)} className="text-[10px] font-bold py-1 block">
+              <span onClick={() => setIsDeletingModalOpen(true)} className="text-[10px] font-bold py-1 block cursor-pointer text-red-500">
                 Delete
               </span>
             ),
@@ -178,24 +329,27 @@ const ProductManagementPage = () => {
     },
   ];
 
-  const data = [
-    {
-      key: "1",
-      image: "/images/cake.png",
-      title: "Custom Celebration Cakes",
-      category: "Weddings, anniversaries, Birthdays",
-      prodcut: "Cakes",
-      price: "25,000.00",
-      earning: "25,000",
-      status: "Paused",
-    },
-  ];
+  // Refined structural filter workflows
+
+  const filteredServices = services.filter((service) => {
+  if (activeTab === "All") return true;
+  if (activeTab === "Active") return service.approvalStatus === "approved" && service.listingStatus === "published";
+  if (activeTab === "Draft") return service.listingStatus === "draft";
+  if (activeTab === "Paused") return service.isPaused || service.listingStatus === "paused";
+  if (activeTab === "Out of Stock") {
+    return (
+      service.type === "physical_product" && 
+      service.physicalProduct && 
+      Number(service.physicalProduct.stock) === 0
+    );
+  }
+  return true;
+});
 
   // --- RENDERING ADD PRODUCT FORM VIEW ---
   if (isAddingProduct) {
     return (
       <div className="space-y-6 p-6 bg-white mt-5">
-        {/* Header Block */}
         <div className="flex justify-between items-center border-b pb-4">
           <div>
             <h1 className="text-xl font-bold text-gray-900">Add Product / Service</h1>
@@ -209,7 +363,6 @@ const ProductManagementPage = () => {
           </Button>
         </div>
 
-        {/* Top Type Switcher Tabs */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
           {productTypeTabs.map((tab) => {
             const isActive = productType === tab.id;
@@ -233,7 +386,6 @@ const ProductManagementPage = () => {
                   />
                 )}
 
-                {/* Icon Container */}
                 <div 
                   className={`flex items-center justify-center w-12 h-12 rounded-xl transition-colors duration-200 shrink-0
                     ${isActive ? "bg-[#060853] text-white" : "bg-gray-100 text-gray-500"}`}
@@ -245,7 +397,6 @@ const ProductManagementPage = () => {
                   />
                 </div>
 
-                {/* Text Content */}
                 <div className="flex flex-col space-y-1">
                   <span className="font-bold text-gray-900 text-[15px] leading-tight">
                     {tab.title}
@@ -259,45 +410,59 @@ const ProductManagementPage = () => {
           })}
         </div>
 
-        {/* Basic Information Section */}
         <div className="space-y-5">
           <h2 className="text-sm font-bold text-gray-800 border-b border-gray-200 pb-2">Basic Information</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1">Name *</label>
-              <Input placeholder="e.g. Luxury Chocolate Layered Cake" className="h-10 rounded-lg" />
+              <Input 
+                value={formData.name}
+                onChange={(e) => handleInputChange("name", e.target.value)}
+                placeholder="e.g. Luxury Chocolate Layered Cake" 
+                className="h-10 rounded-lg" 
+              />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1">Category *</label>
-              <Select placeholder="Select category" className="w-full h-10 custom-select" defaultValue="cakes">
+              <Select 
+                value={formData.category}
+                onChange={(val) => handleInputChange("category", val)}
+                placeholder="Select category" 
+                className="w-full h-10 custom-select"
+              >
                 <Select.Option value="cakes">Cakes & Pastries</Select.Option>
                 <Select.Option value="bread">Bread & Bakery</Select.Option>
+                <Select.Option value="consultancy">Consultancy</Select.Option>
+                <Select.Option value="styling">Hair Styling</Select.Option>
               </Select>
             </div>
           </div>
 
           <div>
             <label className="block text-xs font-bold text-gray-700 mb-1">Description</label>
-            <TextArea rows={4} placeholder="Describe what makes this cake or service special..." className="rounded-lg" />
+            <TextArea 
+              value={formData.description}
+              onChange={(e) => handleInputChange("description", e.target.value)}
+              rows={4} 
+              placeholder="Describe what makes this cake or service special..." 
+              className="rounded-lg" 
+            />
           </div>
 
-          {/* DYNAMIC METRICS SECTION SWITCH */}
           {productType === "digital" ? (
-            /* Digital Product Layout Block */
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start w-full pt-2">
-              {/* Drag and Drop Upload Zone */}
               <div className="border border-[#060853] bg-[#F8FAFC] rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer min-h-[180px] hover:bg-gray-50 transition-colors">
                 <InboxOutlined className="text-gray-300 text-xl mb-3 opacity-60" />
                 <p className="text-[#1e293b] font-medium text-base mb-1">Click to upload or drag & drop</p>
                 <p className="text-gray-400 text-xs">PDF, ZIP, MP4, EPUB - max 2GB</p>
               </div>
 
-              {/* Configuration Dropdowns */}
               <div className="space-y-5">
                 <div>
                   <label className="block text-sm font-extrabold text-black mb-2 tracking-tight">Access duration</label>
                   <Select
-                    defaultValue="lifetime"
+                    value={formData.digitalAccessDuration}
+                    onChange={(val) => handleInputChange("digitalAccessDuration", val)}
                     className="w-full h-12 text-sm"
                     options={[
                       { value: "lifetime", label: "Lifetime access" },
@@ -309,39 +474,58 @@ const ProductManagementPage = () => {
                 <div>
                   <label className="block text-sm font-extrabold text-black mb-2 tracking-tight">Download limit</label>
                   <Select
-                    defaultValue="unlimited"
+                    value={formData.digitalDownloadLimit}
+                    onChange={(val) => handleInputChange("digitalDownloadLimit", val)}
                     className="w-full h-12 text-sm"
                     options={[
                       { value: "unlimited", label: "Unlimited" },
                       { value: "once", label: "1 time download" },
-                      { value: "custom", label: "Custom cap" },
                     ]}
                   />
                 </div>
               </div>
             </div>
           ) : (
-            /* Physical Product / Service Layout Block */
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                 <div>
                   <label className="block text-[13px] font-extrabold text-black mb-1.5 tracking-tight">SKU / product code</label>
-                  <Input placeholder="...eg. PROD-0001" className="h-12 rounded-lg border-gray-200 placeholder:text-gray-400 text-sm" />
+                  <Input 
+                    value={formData.sku}
+                    onChange={(e) => handleInputChange("sku", e.target.value)}
+                    placeholder="...eg. PROD-0001" 
+                    className="h-12 rounded-lg border-gray-200 text-sm" 
+                  />
                 </div>
                 <div>
                   <label className="block text-[13px] font-extrabold text-black mb-1.5 tracking-tight">Stock quantity</label>
-                  <Input type="number" defaultValue={0} className="h-12 rounded-lg border-gray-200 text-sm" />
+                  <Input 
+                    type="number" 
+                    value={formData.stock}
+                    onChange={(e) => handleInputChange("stock", parseInt(e.target.value) || 0)}
+                    className="h-12 rounded-lg border-gray-200 text-sm" 
+                  />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                 <div>
                   <label className="block text-[13px] font-extrabold text-black mb-1.5 tracking-tight">Weight (kg)</label>
-                  <Input placeholder="0.0" className="h-12 rounded-lg border-gray-200 placeholder:text-gray-400 text-sm" />
+                  <Input 
+                    value={formData.weight}
+                    onChange={(e) => handleInputChange("weight", e.target.value)}
+                    placeholder="0.0" 
+                    className="h-12 rounded-lg border-gray-200 text-sm" 
+                  />
                 </div>
                 <div>
                   <label className="block text-[13px] font-extrabold text-black mb-1.5 tracking-tight">Dimensions (L x W x H cm)</label>
-                  <Input placeholder="e.g. 20 × 15 × 10" className="h-12 rounded-lg border-gray-200 placeholder:text-gray-400 text-sm" />
+                  <Input 
+                    value={formData.dimensions}
+                    onChange={(e) => handleInputChange("dimensions", e.target.value)}
+                    placeholder="e.g. 20 × 15 × 10" 
+                    className="h-12 rounded-lg border-gray-200 text-sm" 
+                  />
                 </div>
               </div>
 
@@ -349,17 +533,13 @@ const ProductManagementPage = () => {
                 <div className="grid grid-cols-3 gap-4">
                   <button
                     type="button"
-                    onClick={() => setFulfillmentLocation("my-location")}
+                    onClick={() => setFulfillmentLocation("seller_location")}
                     className={`flex flex-col items-center justify-center p-6 rounded-xl border text-center transition-all outline-none min-h-[105px]
-                      ${fulfillmentLocation === "my-location"
+                      ${fulfillmentLocation === "seller_location"
                         ? "border-[#060853] bg-[#F1F5F9] ring-1 ring-[#060853]" 
                         : "border-gray-200 bg-white hover:border-gray-300"
                       }`}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-5 h-5 text-black mb-2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                    </svg>
                     <span className="text-sm font-medium text-gray-800">At my location</span>
                   </button>
 
@@ -372,24 +552,18 @@ const ProductManagementPage = () => {
                         : "border-gray-200 bg-white hover:border-gray-300"
                       }`}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-5 h-5 text-black mb-2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-                    </svg>
                     <span className="text-sm font-medium text-gray-800">At client location</span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => setFulfillmentLocation("virtual")}
+                    onClick={() => setFulfillmentLocation("online_virtual")}
                     className={`flex flex-col items-center justify-center p-6 rounded-xl border text-center transition-all outline-none min-h-[105px]
-                      ${fulfillmentLocation === "virtual"
+                      ${fulfillmentLocation === "online_virtual"
                         ? "border-[#060853] bg-[#F1F5F9] ring-1 ring-[#060853]" 
                         : "border-gray-200 bg-white hover:border-gray-300"
                       }`}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-5 h-5 text-black mb-2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
-                    </svg>
                     <span className="text-sm font-medium text-gray-800">Online/Virtual</span>
                   </button>
                 </div>
@@ -398,7 +572,6 @@ const ProductManagementPage = () => {
           )}
         </div>
 
-        {/* Pricing Section */}
         <div className="space-y-4">
           <h2 className="text-sm font-bold text-gray-800">Pricing</h2>
           <div className="flex gap-4 mb-2">
@@ -409,15 +582,20 @@ const ProductManagementPage = () => {
             >
               <Radio value="fixed">Fixed Price</Radio>
               <Radio value="range">Price Range</Radio>
-              <Radio value="negotiable">Negotiable</Radio>
-              <Radio value="free">Free</Radio>
+              <Radio value="quote">Negotiable</Radio>
             </Radio.Group>
           </div>
 
           {priceType === "fixed" && (
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1">Price</label>
-              <Input prefix="₦" placeholder="0.00" className="h-10 w-64 rounded-lg" />
+              <Input 
+                prefix="₦" 
+                value={formData.price}
+                onChange={(e) => handleInputChange("price", e.target.value)}
+                placeholder="0.00" 
+                className="h-10 w-64 rounded-lg" 
+              />
             </div>
           )}
 
@@ -425,18 +603,29 @@ const ProductManagementPage = () => {
             <div className="flex gap-4 items-end">
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">From (Min Price)</label>
-                <Input prefix="₦" placeholder="0.00" className="h-10 w-48 rounded-lg" />
+                <Input 
+                  prefix="₦" 
+                  value={formData.minPrice}
+                  onChange={(e) => handleInputChange("minPrice", e.target.value)}
+                  placeholder="0.00" 
+                  className="h-10 w-48 rounded-lg" 
+                />
               </div>
               <span className="text-gray-400 font-semibold mb-2">to</span>
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">To (Max Price)</label>
-                <Input prefix="₦" placeholder="0.00" className="h-10 w-48 rounded-lg" />
+                <Input 
+                  prefix="₦" 
+                  value={formData.maxPrice}
+                  onChange={(e) => handleInputChange("maxPrice", e.target.value)}
+                  placeholder="0.00" 
+                  className="h-10 w-48 rounded-lg" 
+                />
               </div>
             </div>
           )}
         </div>
 
-        {/* Media Upload Section */}
         <div className="space-y-4">
           <h2 className="text-sm font-bold text-gray-800">Upload Media File</h2>
           <Upload
@@ -463,7 +652,7 @@ const ProductManagementPage = () => {
                       <button
                         type="button"
                         onClick={() => removeImage(i)}
-                        className="absolute top-1 right-1 bg-black/60 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10 shadow-sm"
+                        className="absolute top-1 right-1 bg-black/60 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10"
                       >
                         &times;
                       </button>
@@ -481,122 +670,168 @@ const ProductManagementPage = () => {
           <p className="text-[10px] text-gray-400 mt-1">Up to 8 images. Hover over any image to delete it.</p>
         </div>
 
-        {/* Visibility Options Status Module */}
         <div className="space-y-3 bg-gray-50/50 p-4 rounded-xl border">
           <div className="flex justify-between items-center border-b pb-2">
             <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Visibility & status</span>
-            <Switch defaultChecked />
+            <Switch checked={isPublished} onChange={(checked) => setIsPublished(checked)} />
           </div>
           <div className="flex justify-between items-center pt-1">
             <div>
-              <p className="text-xs font-bold text-gray-800">Active</p>
-              <p className="text-[11px] text-gray-500">Mark as available for purchase or booking</p>
+              <p className="text-xs font-bold text-gray-800">Active / Live</p>
+              <p className="text-[11px] text-gray-500">Mark as available for purchase or immediate booking</p>
             </div>
-            <Switch />
+            <Switch checked={!isPaused} onChange={(checked) => setIsPaused(!checked)} />
           </div>
           <div className="flex justify-between items-center border-t pt-2">
             <div>
               <p className="text-xs font-bold text-gray-800">Featured</p>
               <p className="text-[11px] text-gray-500">Highlight this listing in featured sections on the marketplace</p>
             </div>
-            <Switch />
-          </div>
-          <div className="flex justify-between items-center border-t pt-2">
-            <div>
-              <p className="text-xs font-bold text-gray-800">Paused</p>
-              <p className="text-[11px] text-gray-500">Temporarily hide this listing from customers</p>
-            </div>
-            <Switch />
+            <Switch checked={isFeatured} onChange={(checked) => setIsFeatured(checked)} />
           </div>
         </div>
 
-        {/* Scheduling Config Container Component */}
         <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm mt-6 space-y-4">
           <div className="flex justify-between items-center mb-1">
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold text-gray-900">Appointment booking</span>
               <span className="bg-[#E2EDFC] text-[#060853] text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">Scheduling</span>
             </div>
-            <Switch defaultChecked />
+            <Switch checked={schedulingEnabled} onChange={(checked) => setSchedulingEnabled(checked)} />
           </div>
           <p className="text-[12px] text-gray-500 mb-2">Let customers schedule and pay for appointments directly</p>
           
-          <div className="border-t border-gray-100 pt-4 space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-2">Available days</label>
-              <div className="flex gap-2">
-                {daysList.map((day, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => toggleDay(idx)}
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold transition-all
-                      ${selectedDays.includes(idx) ? "bg-[#060853] text-white" : "bg-white border border-gray-200 text-gray-400"}`}
-                  >
-                    {day}
-                  </button>
-                ))}
+          {schedulingEnabled && (
+            <div className="border-t border-gray-100 pt-4 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-2">Available days</label>
+                <div className="flex gap-2">
+                  {daysList.map((day, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => toggleDay(idx)}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold transition-all
+                        ${selectedDays.includes(idx) ? "bg-[#060853] text-white" : "bg-white border border-gray-200 text-gray-400"}`}
+                    >
+                      {day}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Opening time</label>
-                <Select placeholder="Select" className="w-full h-10" />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Opening time</label>
+                  <Select 
+                    value={formData.openingTime} 
+                    onChange={(val) => handleInputChange("openingTime", val)}
+                    placeholder="Select" 
+                    className="w-full h-10"
+                    options={[
+                      { value: "08:00", label: "08:00 AM" },
+                      { value: "09:00", label: "09:00 AM" },
+                      { value: "10:00", label: "10:00 AM" },
+                    ]}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Closing time</label>
+                  <Select 
+                    value={formData.closingTime} 
+                    onChange={(val) => handleInputChange("closingTime", val)}
+                    placeholder="Select" 
+                    className="w-full h-10"
+                    options={[
+                      { value: "17:00", label: "05:00 PM" },
+                      { value: "18:00", label: "06:00 PM" },
+                      { value: "20:00", label: "08:00 PM" },
+                    ]}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Earliest booking notice</label>
+                  <Select 
+                    value={formData.earliestNotice} 
+                    onChange={(val) => handleInputChange("earliestNotice", val)}
+                    placeholder="Select" 
+                    className="w-full h-10"
+                    options={[
+                      { value: "2-hours", label: "2 Hours notice" },
+                      { value: "24-hours", label: "24 Hours notice" },
+                    ]}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Latest booking window</label>
+                  <Select 
+                    value={formData.latestWindow} 
+                    onChange={(val) => handleInputChange("latestWindow", val)}
+                    placeholder="Select" 
+                    className="w-full h-10"
+                    options={[
+                      { value: "30-days", label: "30 Days out" },
+                      { value: "60-days", label: "60 Days out" },
+                    ]}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Buffer between sessions</label>
+                  <Select 
+                    value={formData.bufferSession} 
+                    onChange={(val) => handleInputChange("bufferSession", val)}
+                    placeholder="Select" 
+                    className="w-full h-10"
+                    options={[
+                      { value: "15-mins", label: "15 Mins" },
+                      { value: "30-mins", label: "30 Mins" },
+                    ]}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Max bookings per day</label>
+                  <Input 
+                    type="number" 
+                    value={formData.maxBookingsPerDay} 
+                    onChange={(e) => handleInputChange("maxBookingsPerDay", parseInt(e.target.value) || 1)}
+                    className="h-10 rounded-lg" 
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Closing time</label>
-                <Select placeholder="Select" className="w-full h-10" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Earliest booking notice</label>
-                <Select placeholder="Select" className="w-full h-10" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Latest booking window</label>
-                <Select placeholder="Select" className="w-full h-10" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Buffer between sessions</label>
-                <Select placeholder="Select" className="w-full h-10" />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Max bookings per day</label>
-                <Input type="number" defaultValue={1} className="h-10 rounded-lg" />
-              </div>
-            </div>
 
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">Cancellation policy</label>
-              <Select placeholder="Select" className="w-full h-10" />
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Cancellation policy</label>
+                <Select 
+                  value={formData.cancellationPolicy} 
+                  onChange={(val) => handleInputChange("cancellationPolicy", val)}
+                  placeholder="Select" 
+                  className="w-full h-10"
+                  options={[
+                    { value: "flexible", label: "Flexible (Full refund up to 24h before)" },
+                    { value: "strict", label: "Strict (No refund within 48h)" },
+                  ]}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
-       {/* Submit Actions Button Footer */}
         <div className="flex justify-between items-center pt-4 border-t">
-          <Button onClick={() => setIsAddingProduct(false)} className="rounded-lg h-10 font-bold border-gray-300 text-gray-600">
+          <Button 
+            loading={loading}
+            onClick={() => handleSubmitListing(true)} 
+            className="rounded-lg h-10 font-bold border-gray-300 text-gray-600"
+          >
             Save as Draft
           </Button>
-          <Button className="bg-[#060853]! text-white! rounded-lg h-10 px-8 font-bold border-none">
+          <Button 
+            loading={loading}
+            onClick={() => handleSubmitListing(false)} 
+            className="bg-[#060853]! text-white! rounded-lg h-10 px-8 font-bold border-none"
+          >
             Save & Publish
           </Button>
         </div>
-
-        <div className="bg-[#FBFBFB] border border-gray-200 p-3 rounded-sm">
-          <div className="flex justify-between items-center mb-1">
-            <div>
-
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-bold text-gray-800">Appointment booking</p>
-              <span className="bg-[#E2EDFC] text-[#060853] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Scheduling</span>
-            </div>
-            <span className="text-[#2A2A2A] text-xs">Let customers schedule and pay for appointments directly</span>
-            </div>
-            <Switch defaultChecked />
-          </div>
-        </div>
-       
       </div>
     );
   }
@@ -606,7 +841,7 @@ const ProductManagementPage = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center mt-5">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">Baker</h1>
+          <h1 className="text-xl font-bold text-gray-900">Services & Products</h1>
         </div>
         <div className="flex gap-4">
           <Button 
@@ -653,11 +888,11 @@ const ProductManagementPage = () => {
                   className={`relative px-4 rounded-lg p-1.5 text-xs font-bold transition-colors z-10 
                     ${isActive ? "text-white" : "text-gray-500 hover:text-gray-700"}`}
                 >
-                  {tab}
+                  <span className="relative z-10">{tab}</span>
                   {isActive && (
                     <motion.div
                       layoutId="activeTabPill"
-                      className="absolute inset-0 bg-[#060853] rounded-full z-[-1]"
+                      className="absolute inset-0 bg-[#060853] rounded-lg z-0"
                       initial={false}
                       transition={{ type: "spring", stiffness: 350, damping: 30 }}
                     />
@@ -673,15 +908,6 @@ const ProductManagementPage = () => {
               placeholder="Search"
               className="w-72 rounded-lg bg-gray-50 border border-gray-200 h-10 text-xs"
             />
-            <Button className="flex items-center justify-center border-gray-200 rounded-lg h-10! overflow-hidden">
-              <img src="/images/funnel.png" alt="filter" className="h-8 w-8 object-contain" />
-            </Button>
-            <Button className="flex items-center justify-center border-gray-200 rounded-lg h-10! overflow-hidden">
-              <img src="/images/grid.png" alt="grid" className="h-8 w-8 object-contain" />
-            </Button>
-            <Button className="flex items-center justify-center border-gray-200 rounded-lg h-10! overflow-hidden">
-              <img src="/images/list.png" alt="list" className="h-8 w-8 object-contain" />
-            </Button>
           </div>
         </div>
 
@@ -694,38 +920,47 @@ const ProductManagementPage = () => {
             variants={tabVariants}
             transition={{ duration: 0.2 }}
           >
-            {activeTab === "All" && (
-              <div className="bg-[#f0f5ff] p-8 min-h-screen">
-                <h2 className="text-sm font-bold mb-4 text-[#1e293b]">My Products/Services</h2>
-                <div className="bg-white rounded-xl overflow-hidden shadow-sm">
-                  <Table
-                    columns={columns}
-                    dataSource={data}
-                    pagination={false}
-                    className="custom-table"
-                    size="small"
-                    rowClassName="hover:bg-gray-50 transition-colors"
-                  />
-                </div>
+            <div className="bg-[#f0f5ff] p-8 min-h-screen">
+              <h2 className="text-sm font-bold mb-4 text-[#1e293b]">My Products/Services</h2>
+              <div className="bg-white rounded-xl overflow-hidden shadow-sm">
+                <Table
+                  columns={columns}
+                  dataSource={filteredServices}
+                  rowKey={(record) => record._id?.$oid || record._id}
+                  pagination={{ pageSize: 10 }}
+                  className="custom-table"
+                  size="small"
+                  loading={loading}
+                />
               </div>
-            )}
+            </div>
           </motion.div>
         </AnimatePresence>
       </div>
 
       {/* VIEW MODAL */}
-      <CustomModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} size="max-w-md" title="Product ID: #0045">
-        <div className="h-72 w-full relative overflow-hidden">
-          {isSelected?.image ? (
-            <Image src={isSelected.image} alt={isSelected.title} fill className="object-cover" />
+      <CustomModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        size="max-w-md" 
+        title={`Product ID: #${isSelected?._id?.$oid?.slice(-4) || isSelected?._id?.slice(-4) || "0045"}`}
+      >
+        <div className="h-72 w-full relative overflow-hidden rounded-lg">
+          {isSelected?.images?.[0]?.url || isSelected?.images?.[0] ? (
+            <Image 
+              src={isSelected?.images?.[0]?.url || isSelected?.images?.[0]} 
+              alt={isSelected?.title || "Product Image"} 
+              fill 
+              className="object-cover" 
+            />
           ) : (
             <div className="flex items-center justify-center h-full bg-gray-200 text-sm text-gray-500">No Image</div>
           )}
         </div>
-        <h2 className="font-bold text-black mb-2 mt-3">Product Details</h2>
-        <div className="flex justify-between">
-          <p className="text-black text-[11px]">{isSelected?.category}</p>
-          <p className="text-[11px] font-bold">{isSelected?.status}</p>
+        <h2 className="font-bold text-black mb-2 mt-3">{isSelected?.title || "Product Details"}</h2>
+        <div className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+          <p className="text-black text-xs capitalize font-medium">Category: {isSelected?.category}</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-blue-900">{isSelected?.approvalStatus || "Pending"}</p>
         </div>
       </CustomModal>
 

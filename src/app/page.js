@@ -10,10 +10,17 @@ import {
 } from "@ant-design/icons";
 
 import Image from "next/image";
+import { useListingStore } from "@/store/listingStore";
 
 const LandingPage = () => {
   const router = useRouter();
   const [activeCity, setActiveCity] = useState("Los Angeles");
+  const { getAllservices, services, loading } = useListingStore();
+
+    // Fetch initial services listing on mount
+    useEffect(() => {
+      getAllservices();
+    }, []);
 
   // Handler to route the user to the business listings page based on selection
   const handleCategoryClick = (categoryName) => {

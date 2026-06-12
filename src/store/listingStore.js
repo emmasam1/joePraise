@@ -74,4 +74,16 @@ export const useListingStore = create((set, get) => ({
       throw error;
     }
   },
+
+  getAllservices: async () => {
+    try {
+      const res = await api.get("/services");
+      set({
+        services: res.data.services || [],
+      });
+      return res.data;
+    } catch (error) {
+      throw error;
+    }
+  }
 }));

@@ -350,7 +350,7 @@ export default function BusinessProfilePage() {
               {business.documents && business.documents.length > 0 ? (
                 business.documents.map((doc, idx) => {
                   const label = doc.documentType === 'CAC' ? 'Business License' : doc.documentType === 'ID_CARD' ? 'ID Proof (Owner)' : 'Utility Document';
-                  const docName = doc.documentUrl ? doc.documentUrl.substring(doc.documentUrl.lastIndexOf('/') + 1).split('?')[0] : "attachment.pdf";
+                  const docName = doc.url ? doc.url.substring(doc.url.lastIndexOf('/') + 1).split('?')[0] : "attachment.pdf";
                   return (
                     <div key={doc.id || idx} className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 transition-colors">
                       <div className="flex items-center gap-3">
@@ -364,7 +364,7 @@ export default function BusinessProfilePage() {
                         <span className={`text-[9px] font-bold px-2 py-0.5 rounded ${doc.status === 'approved' || doc.status === 'verified' ? 'bg-[#E6FFFA] text-[#0D9488]' : doc.status === 'rejected' || doc.status === 'declined' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
                           {doc.status === 'approved' || doc.status === 'verified' ? 'Verified' : doc.status === 'rejected' || doc.status === 'declined' ? 'Declined' : 'Under Review'}
                         </span>
-                        <a href={doc.documentUrl} target="_blank" rel="noreferrer" className="text-gray-400 hover:text-slate-600 flex items-center justify-center">
+                        <a href={doc.url} target="_blank" rel="noreferrer" className="text-gray-400 hover:text-slate-600 flex items-center justify-center">
                           <UploadOutlined className="rotate-180 transform" />
                         </a>
                       </div>

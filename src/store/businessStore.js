@@ -189,21 +189,63 @@ export const useBusinessStore = create((set, get) => ({
     }
   },
 
+  // verifyBusiness: async (id, payload) => {
+  //   try {
+  //     const res = await api.patch(`/admin/${id}/verify`, payload);
+
+  //     if (res.data.success) {
+  //       message.success(res.data.message);
+
+  //       // refresh list after update
+  //       get().fetchBusinesses();
+  //     }
+
+  //     return res.data;
+  //   } catch (error) {
+  //     message.error("Verification failed");
+  //     throw error;
+  //   }
+  // },
+
   verifyBusiness: async (id, payload) => {
-    try {
-      const res = await api.patch(`/admin/${id}/verify`, payload);
+  try {
+    const res = await api.patch(`/admin/${id}/verify`, payload);
 
-      if (res.data.success) {
-        message.success(res.data.message);
+    if (res.data.success) {
+      message.success(res.data.message);
 
-        // refresh list after update
-        get().fetchBusinesses();
+      // Update current business immediately
+      if (get().selectedBusiness) {
+        set({
+          selectedBusiness: {
+            ...get().selectedBusiness,
+            verificationStatus:
+              res.data.business.verificationStatus,
+            verificationStage:
+              res.data.business.verificationStage,
+            verifiedAt:
+              res.data.business.verifiedAt,
+            rejectionReason:
+              res.data.business.rejectionReason,
+          },
+        });
       }
 
-      return res.data;
-    } catch (error) {
-      message.error("Verification failed");
-      throw error;
+      // Refresh latest data from backend
+      await get().fetchBusiness(id);
+
+      // Refresh business list
+      await get().fetchBusinesses();
     }
-  },
+
+    return res.data;
+  } catch (error) {
+    message.error(
+      error?.response?.data?.message ||
+      "Verification failed"
+    );
+    throw error;
+  }
+},
+
 }));

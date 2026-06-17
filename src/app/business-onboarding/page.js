@@ -1,7 +1,7 @@
-
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import { useMap } from 'react-leaflet';
 import {
   Form,
   Input,
@@ -18,7 +18,7 @@ import { FiCheck } from "react-icons/fi";
 import "leaflet/dist/leaflet.css";
 import dynamic from "next/dynamic";
 import { FiX } from "react-icons/fi";
-import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
+import { PlusOutlined, DeleteOutlined, CheckCircleFilled, } from "@ant-design/icons";
 import { useBusinessStore } from "@/store/businessStore";
 import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
@@ -26,17 +26,27 @@ import { useRouter } from "next/navigation";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 
+import { Country, City } from "country-state-city";
+
 const { Dragger } = Upload;
 
-// This loads the map only on the client side to prevent errors
-const MapContainer = dynamic(
-  () => import("react-leaflet").then((mod) => mod.MapContainer),
-  { ssr: false },
-);
-const TileLayer = dynamic(
-  () => import("react-leaflet").then((mod) => mod.TileLayer),
-  { ssr: false },
-);
+function ChangeView({ center }) {
+  const map = useMap();
+  map.setView(center, 13);
+  return null;
+}
+
+// These can stay outside the function too
+const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), { ssr: false });
+
+function MapController({ center }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center) map.flyTo(center, 13);
+  }, [center, map]);
+  return null;
+}
 
 const { TextArea } = Input;
 
@@ -107,6 +117,14 @@ export default function MultiStepForm() {
     proofOfAddress: null,
   });
 
+  const countries = useMemo(() => Country.getAllCountries(), []);
+  const cities = useMemo(() => formData.businessCountry ? City.getCitiesOfCountry(formData.businessCountry) : [], [formData.businessCountry]);
+  
+  const selectedCityCoords = useMemo(() => {
+    const city = cities.find((c) => c.name === formData.businessCity);
+    return city ? [parseFloat(city.latitude), parseFloat(city.longitude)] : [9.0578, 7.4951];
+  }, [formData.businessCity, cities]);
+
   const handleChange = (field, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -114,12 +132,42 @@ export default function MultiStepForm() {
     }));
   };
 
+  {/* Create a state for coordinates based on address */}
+const [coords, setCoords] = useState([9.0578, 7.4951]);
+
+// ... inside your Location Step JSX ...
+<div className="w-full h-40 rounded-lg overflow-hidden border border-gray-200 relative z-0">
+  <MapContainer
+    key={`${formData.businessCountry}-${formData.businessCity}`} // This forces a re-render
+    center={coords}
+    zoom={13}
+    style={{ height: "100%", width: "100%" }}
+  >
+    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+    <ChangeView center={coords} />
+  </MapContainer>
+</div>
+
+
   const handleFileChange = (field, file) => {
     setFormData((prev) => ({
       ...prev,
       [field]: file,
     }));
   };
+
+  const validations = {
+  length: formData.password.length >= 8,
+  numberOrSymbol: /[0-9!@#$%^&*(),.?":{}|<>]/.test(formData.password),
+  case:
+    /[a-z]/.test(formData.password) &&
+    /[A-Z]/.test(formData.password),
+};
+
+const passwordValid =
+  validations.length &&
+  validations.numberOrSymbol &&
+  validations.case;
 
   const hasValue = (value) => {
     return value !== undefined && value !== null && String(value).trim() !== "";
@@ -148,15 +196,22 @@ export default function MultiStepForm() {
       return false;
     }
 
-    if (formData.password.length < 6) {
-      message.error("Password must be at least 6 characters");
-      return false;
-    }
+    if (!passwordValid) {
+  message.error(
+    "Password must be at least 8 characters and contain uppercase, lowercase and a number or symbol."
+  );
+  return false;
+}
 
-    if (formData.password !== formData.confirmPassword) {
-      message.error("Passwords do not match");
-      return false;
-    }
+    if (!hasValue(formData.confirmPassword)) {
+  message.error("Please confirm your password");
+  return false;
+}
+
+if (formData.password !== formData.confirmPassword) {
+  message.error("Passwords do not match");
+  return false;
+}
 
     return true;
   };
@@ -172,7 +227,7 @@ export default function MultiStepForm() {
       return false;
     }
 
-    if (!hasValue(formData.phoneNumber)) {
+    if (!hasValue(formData.businessPhone)) {
       message.error("Please enter your business phone number");
       return false;
     }
@@ -209,10 +264,20 @@ export default function MultiStepForm() {
     return true;
   };
 
+  const validateBrandingStep = () => {
+    // Check if logo exists (it's stored in formData.logo)
+    if (!formData.logo) {
+      message.error("Please upload your business logo");
+      return false;
+    }
+    return true;
+  };
+
   const validateCurrentStep = () => {
     if (!isAuthenticated && current === 0) return validateAccountStep();
     if (current === businessInfoStep) return validateBusinessInfoStep();
     if (current === locationStep) return validateLocationStep();
+    if (current === brandingStep) return validateBrandingStep();
     return true;
   };
 
@@ -252,20 +317,20 @@ export default function MultiStepForm() {
               closed: false,
             }));
 
-        const response = await onboardBusiness(
-          {
-            ...formData,
-            documents,
-            operatingHours,
-          },
-          router,
-        );
+      const response = await onboardBusiness(
+        {
+          ...formData,
+          documents,
+          operatingHours,
+        },
+        router,
+      );
 
-        if (!response?.requiresVerification) {
-          message.success("Business onboarding successful");
-        }
+      if (!response?.requiresVerification) {
+        message.success("Business onboarding successful");
+      }
 
-        return response;
+      return response;
     } catch (error) {
       console.log("Submission Error:", error);
     }
@@ -374,6 +439,7 @@ export default function MultiStepForm() {
             onClick={(e) => {
               e.stopPropagation(); // Don't trigger dragger
               setPreview(null);
+              handleFileChange("logo", null);
               if (onClear) onClear();
             }}
             className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors"
@@ -397,6 +463,7 @@ export default function MultiStepForm() {
       )}
     </div>
   );
+
 
   return (
     <div className="h-screen w-full flex md:flex-row bg-white text-black overflow-hidden font-sans">
@@ -513,57 +580,128 @@ export default function MultiStepForm() {
               <Col span={12}>
                 <Form.Item label="Phone Number" required>
                   <PhoneInput
-                      country={"ng"}
-                      value={formData.phoneNumber}
-                      onChange={(phoneNumber) =>
-                        handleChange("phoneNumber", `+${phoneNumber}`)
-                      }
-                      enableSearch={false}
-                      countryCodeEditable={false}
-                      disableDropdown={false}
-                      enableClickOutside={true}
-                      dropdownStyle={{
-                        maxHeight: "300px",
-                        overflowY: "auto",
-                        zIndex: 9999,
-                      }}
-                      containerStyle={{
-                        width: "100%",
-                      }}
-                      inputStyle={{
-                        width: "100%",
-                        height: "40px",
-                        borderRadius: "8px",
-                        color: "black",
-                        // background: "#F9FAFB",
-                      }}
-                    />
-                </Form.Item>
-              </Col>
-
-              <Col span={12}>
-                <Form.Item label="Password" required>
-                  <Input.Password
-                    value={formData.password}
-                    onChange={(e) => handleChange("password", e.target.value)}
-                    placeholder="Create Password"
-                    className="bg-gray-50! h-9! text-xs! rounded-md!"
-                  />
-                </Form.Item>
-              </Col>
-
-              <Col span={12}>
-                <Form.Item label="Confirm Password" required>
-                  <Input.Password
-                    value={formData.confirmPassword}
-                    onChange={(e) =>
-                      handleChange("confirmPassword", e.target.value)
+                    country={"gb"}
+                    value={formData.phoneNumber}
+                    onChange={(phoneNumber) =>
+                      handleChange("phoneNumber", `+${phoneNumber}`)
                     }
-                    placeholder="Confirm Password"
-                    className="bg-gray-50! h-9! text-xs! rounded-md!"
+                    enableSearch={false}
+                    countryCodeEditable={false}
+                    enableClickOutside
+                    containerStyle={{
+                      width: "100%",
+                    }}
+                    buttonStyle={{
+                      background: "#f9fafb",
+                      border: "1px solid #d9d9d9",
+                      borderRight: "none",
+                      borderRadius: "6px 0 0 6px",
+                      height: "36px",
+                    }}
+                    inputStyle={{
+                      width: "100%",
+                      height: "36px",
+                      background: "#f9fafb",
+                      color: "black",
+                      fontSize: "12px",
+                      border: "1px solid #d9d9d9",
+                      borderRadius: "6px",
+                    }}
+                    dropdownStyle={{
+                      maxHeight: "250px",
+                      overflowY: "auto",
+                      zIndex: 99999,
+                    }}
                   />
                 </Form.Item>
               </Col>
+
+             <Col xs={24} md={12}>
+  <Form.Item label="Password" required>
+    <Input.Password
+      value={formData.password}
+      onChange={(e) =>
+        handleChange("password", e.target.value)
+      }
+      placeholder="Create Password"
+      className="bg-gray-50! h-9! text-xs! rounded-md!"
+    />
+  </Form.Item>
+
+  <div className="mb-4 space-y-1 h-16">
+    <p
+      className={`text-[10px] flex items-center gap-1 ${
+        validations.length
+          ? "text-[#15BE87]"
+          : "text-gray-400"
+      }`}
+    >
+      {validations.length ? (
+        <CheckCircleFilled className="text-[9px]" />
+      ) : (
+        <span className="w-1.5 h-1.5 rounded-full bg-gray-300 ml-0.5" />
+      )}
+      At least 8 characters
+    </p>
+
+    <p
+      className={`text-[10px] flex items-center gap-1 ${
+        validations.numberOrSymbol
+          ? "text-[#15BE87]"
+          : "text-gray-400"
+      }`}
+    >
+      {validations.numberOrSymbol ? (
+        <CheckCircleFilled className="text-[9px]" />
+      ) : (
+        <span className="w-1.5 h-1.5 rounded-full bg-gray-300 ml-0.5" />
+      )}
+      One number or symbol
+    </p>
+
+    <p
+      className={`text-[10px] flex items-center gap-1 ${
+        validations.case
+          ? "text-[#15BE87]"
+          : "text-gray-400"
+      }`}
+    >
+      {validations.case ? (
+        <CheckCircleFilled className="text-[9px]" />
+      ) : (
+        <span className="w-1.5 h-1.5 rounded-full bg-gray-300 ml-0.5" />
+      )}
+      Lowercase and uppercase
+    </p>
+  </div>
+</Col>
+
+<Col xs={24} md={12}>
+  <Form.Item
+    label="Confirm Password"
+    validateStatus={
+      formData.confirmPassword &&
+      formData.password !== formData.confirmPassword
+        ? "error"
+        : ""
+    }
+    help={
+      formData.confirmPassword &&
+      formData.password !== formData.confirmPassword
+        ? "Passwords do not match"
+        : ""
+    }
+  >
+    <Input.Password
+      value={formData.confirmPassword}
+      onChange={(e) =>
+        handleChange("confirmPassword", e.target.value)
+      }
+      placeholder="Confirm Password"
+      className="bg-gray-50! h-9! text-xs! rounded-md!"
+    />
+  </Form.Item>
+</Col>
             </Row>
           )}
 
@@ -598,35 +736,34 @@ export default function MultiStepForm() {
 
               <Col span={12}>
                 <Form.Item label="Phone Number" required>
-                   <PhoneInput
-                   className="bg-gray-50! text-xs! rounded-md!"
-                      country={"ng"}
-                      value={formData.phoneNumber}
-                      onChange={(phoneNumber) =>
-                        handleChange("phoneNumber", `+${phoneNumber}`)
-                      }
-                      enableSearch={false}
-                      countryCodeEditable={false}
-                      disableDropdown={false}
-                      enableClickOutside={true}
-                      dropdownStyle={{
-                        maxHeight: "300px",
-                        overflowY: "auto",
-                        zIndex: 9999,
-                      }}
-                      containerStyle={{
-                        width: "100%",
-                      }}
-                      inputStyle={{
-                        width: "100%",
-                        height: "40px",
-                        borderRadius: "8px",
-                        color: "black",
-                        // border: "#E2E8F0 !impotant"
-                        // background: "#F9FAFB",
-                      }}
-                      
-                    />
+                  <PhoneInput
+                    className="bg-gray-50! text-xs! rounded-md!"
+                    country={"gb"}
+                    value={formData.businessPhone}
+                    onChange={(phoneNumber) =>
+                      handleChange("businessPhone", `+${phoneNumber}`)
+                    }
+                    enableSearch={false}
+                    countryCodeEditable={false}
+                    disableDropdown={false}
+                    enableClickOutside={true}
+                    dropdownStyle={{
+                      maxHeight: "300px",
+                      overflowY: "auto",
+                      zIndex: 9999,
+                    }}
+                    containerStyle={{
+                      width: "100%",
+                    }}
+                    inputStyle={{
+                      width: "100%",
+                      height: "40px",
+                      borderRadius: "8px",
+                      color: "black",
+                      // border: "#E2E8F0 !impotant"
+                      // background: "#F9FAFB",
+                    }}
+                  />
                 </Form.Item>
               </Col>
 
@@ -684,30 +821,64 @@ export default function MultiStepForm() {
           {current === locationStep && (
             <Row gutter={[12, 0]}>
               <Col span={12}>
-                <Form.Item label="Country" required>
-                  <Select
-                    size="small"
-                    value={formData.businessCountry}
-                    onChange={(value) => handleChange("businessCountry", value)}
-                    placeholder="Select Country"
-                    className="bg-gray-50! h-9! text-xs! rounded-md!"
-                    options={[{ value: "nigeria", label: "Nigeria" }]}
-                  />
-                </Form.Item>
-              </Col>
+    <Form.Item label="Country" required>
+      <Select
+        showSearch
+        size="small"
+        placeholder="Select Country"
+        value={formData.businessCountry}
+        className="bg-gray-50! h-9! text-xs! rounded-md!"
+        optionFilterProp="children"
+        onChange={(value) => {
+          handleChange("businessCountry", value);
+
+          // Reset city when country changes
+          handleChange("businessCity", "");
+        }}
+      filterOption={(input, option) => {
+    const text = typeof option?.children === 'string' 
+      ? option.children 
+      : (Array.isArray(option?.children) ? option.children.join(' ') : '');
+    return text.toLowerCase().includes(input.toLowerCase());
+  }}
+>
+  {countries.map((country) => (
+    <Select.Option key={country.isoCode} value={country.isoCode}>
+      {country.flag} {country.name}
+    </Select.Option>
+  ))}
+      </Select>
+    </Form.Item>
+  </Col>
 
               <Col span={12}>
-                <Form.Item label="City" required>
-                  <Select
-                    size="small"
-                    value={formData.businessCity}
-                    onChange={(value) => handleChange("businessCity", value)}
-                    placeholder="Select City"
-                    className="bg-gray-50! h-9! text-xs! rounded-md!"
-                    options={[{ value: "abuja", label: "Abuja" }]}
-                  />
-                </Form.Item>
-              </Col>
+    <Form.Item label="City" required>
+      <Select
+        showSearch
+        size="small"
+        placeholder="Select City"
+        value={formData.businessCity}
+        className="bg-gray-50! h-9! text-xs! rounded-md!"
+        disabled={!formData.businessCountry}
+        optionFilterProp="children"
+        onChange={(value) => handleChange("businessCity", value)}
+        filterOption={(input, option) =>
+          option?.children
+            ?.toLowerCase()
+            .includes(input.toLowerCase())
+        }
+      >
+        {cities.map((city, index) => (
+          <Select.Option
+            key={`${city.name}-${index}`}
+            value={city.name}
+          >
+            {city.name}
+          </Select.Option>
+        ))}
+      </Select>
+    </Form.Item>
+  </Col>
 
               <Col span={12}>
                 <Form.Item label="Address" required>
@@ -739,19 +910,26 @@ export default function MultiStepForm() {
                   Add your exact location
                 </div>
 
-                <div className="w-full h-40 rounded-lg overflow-hidden border border-gray-200 relative z-0">
-                  <MapContainer
-                    center={[9.0578, 7.4951]}
-                    zoom={13}
-                    style={{ height: "100%", width: "100%" }}
-                    scrollWheelZoom={false}
-                  >
-                    <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-                  </MapContainer>
-                </div>
+
+
+
+
+<Col span={24}>
+  <div className="text-xs font-medium mb-1">Map Location (Optional)</div>
+  <div className="text-[10px] text-gray-400 mb-2">Add your exact location</div>
+
+  <div className="w-full h-40 rounded-lg overflow-hidden border border-gray-200 relative z-0">
+    <MapContainer
+      key={`${formData.businessCountry}-${formData.businessCity}`}
+      center={selectedCityCoords}
+      zoom={13}
+      style={{ height: "100%", width: "100%" }}
+    >
+      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      <MapController center={selectedCityCoords} />
+    </MapContainer>
+  </div>
+</Col>
               </Col>
             </Row>
           )}
@@ -1058,9 +1236,7 @@ export default function MultiStepForm() {
                         preview={taxCertificate}
                         setPreview={setTaxCertificate}
                         label="TIN"
-                        onClear={() =>
-                          handleFileChange("taxCertificate", null)
-                        }
+                        onClear={() => handleFileChange("taxCertificate", null)}
                       />
                     </Dragger>
                   </Form.Item>
@@ -1089,9 +1265,7 @@ export default function MultiStepForm() {
                         preview={proofOfAddress}
                         setPreview={setProofOfAddress}
                         label="Address"
-                        onClear={() =>
-                          handleFileChange("proofOfAddress", null)
-                        }
+                        onClear={() => handleFileChange("proofOfAddress", null)}
                       />
                     </Dragger>
                   </Form.Item>

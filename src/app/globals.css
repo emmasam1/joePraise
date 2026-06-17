@@ -125,3 +125,27 @@ body {
   border-radius: 12px;
   max-height: 300px;
 }
+
+.react-tel-input {
+  width: 100%;
+}
+
+.react-tel-input .country-list {
+  position: fixed !important;
+  z-index: 99999 !important;
+  max-height: 300px !important;
+  overflow-y: auto !important;
+  box-shadow: 0 5px 20px rgba(0,0,0,.15);
+}
+
+.react-tel-input .selected-flag {
+  background: transparent !important;
+}
+
+.react-tel-input .selected-flag:hover {
+  background: #f3f4f6 !important;
+}
+
+.react-tel-input .flag-dropdown {
+  border: none !important;
+}

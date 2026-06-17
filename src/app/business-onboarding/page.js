@@ -48,8 +48,6 @@ export default function MultiStepForm() {
   const router = useRouter();
 
   const token = useAuthStore((state) => state.token);
-  //const isAuthenticated = Boolean(token);
-
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   const [businessCert, setBusinessCert] = useState(null);
@@ -57,7 +55,8 @@ export default function MultiStepForm() {
   const [taxCertificate, setTaxCertificate] = useState(null);
   const [proofOfAddress, setProofOfAddress] = useState(null);
 
-  const { onboardBusiness, onboardingLoading } = useBusinessStore();
+  // Pull both actions from your business store
+  const { onboardBusiness, registerInitialUser, onboardingLoading } = useBusinessStore();
 
   const steps = useMemo(() => {
     const businessSteps = [
@@ -72,6 +71,13 @@ export default function MultiStepForm() {
       : ["Account Information", ...businessSteps];
   }, [isAuthenticated]);
 
+  const prev = () => {
+  setCurrent((step) => {
+    const next = step - 1;
+    return next < 0 ? 0 : next;
+  });
+};
+
   const verificationStep = steps.length;
   const businessInfoStep = isAuthenticated ? 0 : 1;
   const locationStep = isAuthenticated ? 1 : 2;
@@ -85,6 +91,7 @@ export default function MultiStepForm() {
     phoneNumber: "",
     password: "",
     confirmPassword: "",
+    referredByCode: "", // Captured for onboarding route links
     businessName: "",
     businessEmail: "",
     businessPhone: "",
@@ -172,10 +179,11 @@ export default function MultiStepForm() {
       return false;
     }
 
-    if (!hasValue(formData.phoneNumber)) {
-      message.error("Please enter your business phone number");
-      return false;
-    }
+
+    if (!hasValue(formData.businessPhone)) {
+        message.error("Please enter your business phone number");
+        return false;
+      }
 
     if (!hasValue(formData.category)) {
       message.error("Please select a business category");
@@ -216,11 +224,41 @@ export default function MultiStepForm() {
     return true;
   };
 
+  // INTERCEPT "CONTINUE" TO HANDLE GUEST SIGN UP AT STEP 0
+  const next = async () => {
+    try {
+      await form.validateFields();
+
+      // Ensure form arrays pass local check configurations
+      if (!validateCurrentStep()) return;
+
+      // CRITICAL FIX: If unauthenticated guest clicks continue on Step 0, submit to backend initial registration immediately!
+      if (!isAuthenticated && current === 0) {
+        await registerInitialUser(
+          {
+            name: formData.name,
+            email: formData.email,
+            phoneNumber: formData.phoneNumber,
+            password: formData.password,
+            referredByCode: formData.referredByCode,
+          },
+          router
+        );
+        return; // Halt process here. Store routes user to verification screen.
+      }
+
+      if (current < verificationStep) setCurrent((c) => c + 1);
+    } catch (err) {
+      console.log("Validation Failed:", err);
+    }
+  };
+
   const handleSubmit = async () => {
     if (current !== verificationStep) return;
 
     try {
-      if (!validateAccountStep()) {
+      // Validate configuration states relative to Auth scope status
+      if (!isAuthenticated && !validateAccountStep()) {
         setCurrent(0);
         return;
       }
@@ -252,26 +290,26 @@ export default function MultiStepForm() {
               closed: false,
             }));
 
-        const response = await onboardBusiness(
-          {
-            ...formData,
-            documents,
-            operatingHours,
-          },
-          router,
-        );
+      const response = await onboardBusiness(
+        {
+          ...formData,
+          documents,
+          operatingHours,
+        },
+        router,
+      );
 
-        if (!response?.requiresVerification) {
-          message.success("Business onboarding successful");
-        }
+      if (response?.success && !response?.requiresVerification) {
+        message.success("Business onboarding successful");
+      }
 
-        return response;
+      return response;
     } catch (error) {
       console.log("Submission Error:", error);
     }
   };
 
-  const [hoursType, setHoursType] = useState("always"); // 'always' or 'selected'
+  const [hoursType, setHoursType] = useState("always"); 
   const allDays = [
     "Monday",
     "Tuesday",
@@ -288,7 +326,6 @@ export default function MultiStepForm() {
 
   const [dragIndex, setDragIndex] = useState(null);
 
-  // ADD DAY
   const addDay = () => {
     const usedDays = selectedDays.map((d) => d.day);
     const nextDay = allDays.find((d) => !usedDays.includes(d));
@@ -301,12 +338,10 @@ export default function MultiStepForm() {
     ]);
   };
 
-  // REMOVE DAY
   const removeDay = (id) => {
     setSelectedDays((prev) => prev.filter((d) => d.id !== id));
   };
 
-  // UPDATE DAY
   const updateDay = (id, newDay) => {
     setSelectedDays((prev) =>
       prev.map((d) => (d.id === id ? { ...d, day: newDay } : d)),
@@ -319,12 +354,10 @@ export default function MultiStepForm() {
     );
   };
 
-  // DRAG START
   const handleDragStart = (index) => {
     setDragIndex(index);
   };
 
-  // DROP
   const handleDrop = (index) => {
     if (dragIndex === null) return;
 
@@ -338,27 +371,11 @@ export default function MultiStepForm() {
     setDragIndex(null);
   };
 
-  const next = async () => {
-    try {
-      await form.validateFields();
-
-      if (!validateCurrentStep()) return;
-      if (current < verificationStep) setCurrent((c) => c + 1);
-    } catch (err) {
-      console.log("Validation Failed:", err);
-    }
-  };
-
-  const prev = () => {
-    if (current > 0) setCurrent((c) => c - 1);
-  };
-
-  // Helper to handle the file and set preview
   const handlePreview = (file, setPreview) => {
     const reader = new FileReader();
     reader.onload = (e) => setPreview(e.target.result);
     reader.readAsDataURL(file);
-    return false; // Prevent auto-upload
+    return false; 
   };
 
   const DraggerContent = ({ preview, setPreview, label, onClear }) => (
@@ -372,7 +389,7 @@ export default function MultiStepForm() {
           />
           <button
             onClick={(e) => {
-              e.stopPropagation(); // Don't trigger dragger
+              e.stopPropagation(); 
               setPreview(null);
               if (onClear) onClear();
             }}
@@ -397,8 +414,7 @@ export default function MultiStepForm() {
       )}
     </div>
   );
-
-  return (
+    return (
     <div className="h-screen w-full flex md:flex-row bg-white text-black overflow-hidden font-sans">
       {/* LEFT CONTENT */}
       <div className="w-full md:w-1/2 px-6 lg:px-20 py-4 flex flex-col justify-center h-full">
@@ -601,9 +617,9 @@ export default function MultiStepForm() {
                    <PhoneInput
                    className="bg-gray-50! text-xs! rounded-md!"
                       country={"ng"}
-                      value={formData.phoneNumber}
-                      onChange={(phoneNumber) =>
-                        handleChange("phoneNumber", `+${phoneNumber}`)
+                      value={formData.businessPhone}
+                      onChange={(phone) =>
+                        handleChange("businessPhone", `+${phone}`)
                       }
                       enableSearch={false}
                       countryCodeEditable={false}

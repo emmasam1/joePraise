@@ -73,6 +73,53 @@ const VerificationContent = () => {
   };
 
   // 2. Submit OTP Handler
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   if (!otpCode || otpCode.length < 6) {
+  //     return message.error("Please enter the complete 6-digit verification code");
+  //   }
+  //   if (!email) {
+  //     return message.error("Email context missing. Please try logging in or registering again.");
+  //   }
+
+  //   setLoading(true);
+  //   try {
+  //     if (type === "reset") {
+  //       router.push(`/new-password?email=${encodeURIComponent(email)}&code=${encodeURIComponent(otpCode)}`);
+  //     } else {
+  //       // Regular registration verification flow
+  //       const response = await api.post("/auth/verify-email", {
+  //         email,
+  //         code: otpCode,
+  //       });
+
+  //       if (response.data.success) {
+  //         // Immediately save tokens & user into Zustand store
+  //         //setLoginSuccess(response.data.user, response.data.accessToken);
+  //         setLoginSuccess(
+  //               response.data.user,
+  //               response.data.accessToken,
+  //               response.data.refreshToken
+  //             );
+          
+  //         // Route user to your custom green success screen!
+  //         router.push("/verification-successful");
+  //       }
+  //     }
+  //   } catch (error) {
+  //  console.error("Verification Error:", error);
+
+  //     if (error?.response?.data?.message) {
+  //       message.error(error.response.data.message);
+  //     } else {
+  //       message.error(error.message || "Something went wrong");
+  //     }
+  // } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // 2. Submit OTP Handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!otpCode || otpCode.length < 6) {
@@ -94,30 +141,27 @@ const VerificationContent = () => {
         });
 
         if (response.data.success) {
+          const { user, accessToken, refreshToken } = response.data;
+
           // Immediately save tokens & user into Zustand store
-          //setLoginSuccess(response.data.user, response.data.accessToken);
-          setLoginSuccess(
-                response.data.user,
-                response.data.accessToken,
-                response.data.refreshToken
-              );
+          setLoginSuccess(user, accessToken, refreshToken);
           
-          // Route user to your custom green success screen!
-          router.push("/verification-successful");
+          // 🚀 Route based on the backend onboarding step intent indicator
+          if (user.onboardingStep === "business_personal") {
+            router.push("/verification-successful?type=business_onboarding");
+          } else {
+            router.push("/verification-successful?type=registration");
+          }
         }
       }
     } catch (error) {
-   console.error("Verification Error:", error);
-
-      if (error?.response?.data?.message) {
-        message.error(error.response.data.message);
-      } else {
-        message.error(error.message || "Something went wrong");
-      }
-  } finally {
+      console.error("Verification Error:", error);
+      message.error(error.response?.data?.message || "Something went wrong");
+    } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="h-screen w-full flex flex-col md:flex-row bg-white font-sans overflow-hidden">

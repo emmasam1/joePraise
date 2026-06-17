@@ -24,18 +24,39 @@ export const useBusinessStore = create((set, get) => ({
   businesses: [],
   selectedBusiness: null,
 
+  // STEP 1: Register Initial Personal Details (Unauthenticated Guest Flow)
+  registerInitialUser: async (accountData, router) => {
+    set({ onboardingLoading: true });
+    try {
+      const response = await api.post("/business/register-initial", accountData);
+
+      if (response.data.success && response.data.requiresVerification) {
+        message.success(response.data.message);
+        
+        // Push to OTP layout along with email query params
+        router.push(
+          `/verification-code?email=${encodeURIComponent(
+            response.data.email
+          )}&type=registration`
+        );
+      }
+      return response.data;
+    } catch (error) {
+      message.error(
+        error?.response?.data?.message || "Account registration failed"
+      );
+      throw error;
+    } finally {
+      set({ onboardingLoading: false });
+    }
+  },
+
+  // STEP 3: Complete Business Onboarding (Authenticated Users Only)
   onboardBusiness: async (formData, router) => {
     set({ onboardingLoading: true });
 
     try {
       const payload = new FormData();
-
-      // ACCOUNT FIELDS - REQUIRED ONLY WHEN THE USER IS NOT LOGGED IN
-      appendIfPresent(payload, "name", formData.name);
-      appendIfPresent(payload, "email", formData.email);
-      appendIfPresent(payload, "phoneNumber", formData.phoneNumber);
-      appendIfPresent(payload, "password", formData.password);
-      appendIfPresent(payload, "referredByCode", formData.referredByCode);
 
       // REQUIRED BUSINESS FIELDS
       payload.append("businessName", formData.businessName || "");
@@ -65,7 +86,7 @@ export const useBusinessStore = create((set, get) => ({
         );
       }
 
-      // FILES
+      // BRANDING FILES
       if (formData.logo) {
         payload.append("logo", normalizeFile(formData.logo));
       }
@@ -74,6 +95,7 @@ export const useBusinessStore = create((set, get) => ({
         payload.append("banner", normalizeFile(formData.banner));
       }
 
+      // VERIFICATION DOCUMENTS
       const documents =
         formData.documents?.length > 0
           ? formData.documents
@@ -96,30 +118,7 @@ export const useBusinessStore = create((set, get) => ({
 
       if (response.data.success) {
         const authStore = useAuthStore.getState();
-
-        /**
-         * NEW USER
-         */
-        if (response.data.requiresVerification) {
-          message.success(response.data.message);
-
-          router.push(
-            `/verification-code?email=${encodeURIComponent(
-              response.data.email
-            )}&type=registration`
-          );
-
-          return response.data;
-        }
-
-        /**
-         * EXISTING AUTHENTICATED USER
-         */
-        const {
-          user,
-          accessToken,
-          refreshToken,
-        } = response.data;
+        const { user, accessToken, refreshToken } = response.data;
 
         if (user && accessToken) {
           authStore.setLoginSuccess(
@@ -130,8 +129,7 @@ export const useBusinessStore = create((set, get) => ({
         }
 
         message.success(
-          response.data.message ||
-            "Business onboarded successfully"
+          response.data.message || "Business onboarded successfully"
         );
 
         router.push("/dashboard");
@@ -142,19 +140,18 @@ export const useBusinessStore = create((set, get) => ({
       message.error(
         error?.response?.data?.message || "Failed to onboard business",
       );
-
       throw error;
     } finally {
       set({ onboardingLoading: false });
     }
   },
 
+  // ADMIN / MANAGEMENT UTILITIES
   fetchBusinesses: async (params = {}) => {
     set({ loading: true });
 
     try {
       const query = new URLSearchParams(params).toString();
-
       const res = await api.get(`/admin?${query}`);
 
       if (res.data.success) {
@@ -189,63 +186,35 @@ export const useBusinessStore = create((set, get) => ({
     }
   },
 
-  // verifyBusiness: async (id, payload) => {
-  //   try {
-  //     const res = await api.patch(`/admin/${id}/verify`, payload);
-
-  //     if (res.data.success) {
-  //       message.success(res.data.message);
-
-  //       // refresh list after update
-  //       get().fetchBusinesses();
-  //     }
-
-  //     return res.data;
-  //   } catch (error) {
-  //     message.error("Verification failed");
-  //     throw error;
-  //   }
-  // },
-
   verifyBusiness: async (id, payload) => {
-  try {
-    const res = await api.patch(`/admin/${id}/verify`, payload);
+    try {
+      const res = await api.patch(`/admin/${id}/verify`, payload);
 
-    if (res.data.success) {
-      message.success(res.data.message);
+      if (res.data.success) {
+        message.success(res.data.message);
 
-      // Update current business immediately
-      if (get().selectedBusiness) {
-        set({
-          selectedBusiness: {
-            ...get().selectedBusiness,
-            verificationStatus:
-              res.data.business.verificationStatus,
-            verificationStage:
-              res.data.business.verificationStage,
-            verifiedAt:
-              res.data.business.verifiedAt,
-            rejectionReason:
-              res.data.business.rejectionReason,
-          },
-        });
+        if (get().selectedBusiness) {
+          set({
+            selectedBusiness: {
+              ...get().selectedBusiness,
+              verificationStatus: res.data.business.verificationStatus,
+              verificationStage: res.data.business.verificationStage,
+              verifiedAt: res.data.business.verifiedAt,
+              rejectionReason: res.data.business.rejectionReason,
+            },
+          });
+        }
+
+        await get().fetchBusiness(id);
+        await get().fetchBusinesses();
       }
 
-      // Refresh latest data from backend
-      await get().fetchBusiness(id);
-
-      // Refresh business list
-      await get().fetchBusinesses();
+      return res.data;
+    } catch (error) {
+      message.error(
+        error?.response?.data?.message || "Verification failed"
+      );
+      throw error;
     }
-
-    return res.data;
-  } catch (error) {
-    message.error(
-      error?.response?.data?.message ||
-      "Verification failed"
-    );
-    throw error;
-  }
-},
-
+  },
 }));

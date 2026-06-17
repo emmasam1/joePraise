@@ -23,6 +23,9 @@ import { useBusinessStore } from "@/store/businessStore";
 import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
 
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+
 const { Dragger } = Upload;
 
 // This loads the map only on the client side to prevent errors
@@ -169,7 +172,7 @@ export default function MultiStepForm() {
       return false;
     }
 
-    if (!hasValue(formData.businessPhone)) {
+    if (!hasValue(formData.phoneNumber)) {
       message.error("Please enter your business phone number");
       return false;
     }
@@ -491,7 +494,7 @@ export default function MultiStepForm() {
                     value={formData.name}
                     onChange={(e) => handleChange("name", e.target.value)}
                     placeholder="Enter Full Name"
-                    className="bg-gray-50! h-8! text-xs! rounded-md!"
+                    className="bg-gray-50! h-9! text-xs! rounded-md!"
                   />
                 </Form.Item>
               </Col>
@@ -502,22 +505,39 @@ export default function MultiStepForm() {
                     value={formData.email}
                     onChange={(e) => handleChange("email", e.target.value)}
                     placeholder="Enter Email Address"
-                    className="bg-gray-50! h-8! text-xs! rounded-md!"
+                    className="bg-gray-50! h-9! text-xs! rounded-md!"
                   />
                 </Form.Item>
               </Col>
 
               <Col span={12}>
                 <Form.Item label="Phone Number" required>
-                  <Input
-                    value={formData.phoneNumber}
-                    onChange={(e) =>
-                      handleChange("phoneNumber", e.target.value)
-                    }
-                    addonBefore="🇳🇬"
-                    placeholder="Enter Phone Number"
-                    className="bg-gray-50! h-8! text-xs! rounded-md!"
-                  />
+                  <PhoneInput
+                      country={"ng"}
+                      value={formData.phoneNumber}
+                      onChange={(phoneNumber) =>
+                        handleChange("phoneNumber", `+${phoneNumber}`)
+                      }
+                      enableSearch={false}
+                      countryCodeEditable={false}
+                      disableDropdown={false}
+                      enableClickOutside={true}
+                      dropdownStyle={{
+                        maxHeight: "300px",
+                        overflowY: "auto",
+                        zIndex: 9999,
+                      }}
+                      containerStyle={{
+                        width: "100%",
+                      }}
+                      inputStyle={{
+                        width: "100%",
+                        height: "40px",
+                        borderRadius: "8px",
+                        color: "black",
+                        // background: "#F9FAFB",
+                      }}
+                    />
                 </Form.Item>
               </Col>
 
@@ -527,7 +547,7 @@ export default function MultiStepForm() {
                     value={formData.password}
                     onChange={(e) => handleChange("password", e.target.value)}
                     placeholder="Create Password"
-                    className="bg-gray-50! h-8! text-xs! rounded-md!"
+                    className="bg-gray-50! h-9! text-xs! rounded-md!"
                   />
                 </Form.Item>
               </Col>
@@ -540,7 +560,7 @@ export default function MultiStepForm() {
                       handleChange("confirmPassword", e.target.value)
                     }
                     placeholder="Confirm Password"
-                    className="bg-gray-50! h-8! text-xs! rounded-md!"
+                    className="bg-gray-50! h-9! text-xs! rounded-md!"
                   />
                 </Form.Item>
               </Col>
@@ -558,7 +578,7 @@ export default function MultiStepForm() {
                       handleChange("businessName", e.target.value)
                     }
                     placeholder="Enter Business Name"
-                    className="bg-gray-50! h-8! text-xs! rounded-md!"
+                    className="bg-gray-50! h-9! text-xs! rounded-md!"
                   />
                 </Form.Item>
               </Col>
@@ -571,22 +591,42 @@ export default function MultiStepForm() {
                       handleChange("businessEmail", e.target.value)
                     }
                     placeholder="Enter Business Email"
-                    className="bg-gray-50! h-8! text-xs! rounded-md!"
+                    className="bg-gray-50! h-9! text-xs! rounded-md!"
                   />
                 </Form.Item>
               </Col>
 
               <Col span={12}>
                 <Form.Item label="Phone Number" required>
-                  <Input
-                    value={formData.businessPhone}
-                    onChange={(e) =>
-                      handleChange("businessPhone", e.target.value)
-                    }
-                    addonBefore="🇳🇬"
-                    placeholder="Enter Business Phone"
-                    className="bg-gray-50! h-8! text-xs! rounded-md!"
-                  />
+                   <PhoneInput
+                   className="bg-gray-50! text-xs! rounded-md!"
+                      country={"ng"}
+                      value={formData.phoneNumber}
+                      onChange={(phoneNumber) =>
+                        handleChange("phoneNumber", `+${phoneNumber}`)
+                      }
+                      enableSearch={false}
+                      countryCodeEditable={false}
+                      disableDropdown={false}
+                      enableClickOutside={true}
+                      dropdownStyle={{
+                        maxHeight: "300px",
+                        overflowY: "auto",
+                        zIndex: 9999,
+                      }}
+                      containerStyle={{
+                        width: "100%",
+                      }}
+                      inputStyle={{
+                        width: "100%",
+                        height: "40px",
+                        borderRadius: "8px",
+                        color: "black",
+                        // border: "#E2E8F0 !impotant"
+                        // background: "#F9FAFB",
+                      }}
+                      
+                    />
                 </Form.Item>
               </Col>
 
@@ -596,7 +636,7 @@ export default function MultiStepForm() {
                     value={formData.website}
                     onChange={(e) => handleChange("website", e.target.value)}
                     placeholder="www.example.com"
-                    className="bg-gray-50! h-8! text-xs! rounded-md!"
+                    className="bg-gray-50! h-9! text-xs! rounded-md!"
                   />
                 </Form.Item>
               </Col>
@@ -608,7 +648,7 @@ export default function MultiStepForm() {
                     value={formData.category}
                     onChange={(value) => handleChange("category", value)}
                     placeholder="Select category"
-                    className="bg-gray-50! h-8! text-xs! rounded-md!"
+                    className="bg-gray-50! h-9! text-xs! rounded-md!"
                     options={[
                       { value: "real estate", label: "Real Estate" },
                       { value: "retail", label: "Retail" },
@@ -650,7 +690,7 @@ export default function MultiStepForm() {
                     value={formData.businessCountry}
                     onChange={(value) => handleChange("businessCountry", value)}
                     placeholder="Select Country"
-                    className="bg-gray-50! h-8! text-xs! rounded-md!"
+                    className="bg-gray-50! h-9! text-xs! rounded-md!"
                     options={[{ value: "nigeria", label: "Nigeria" }]}
                   />
                 </Form.Item>
@@ -663,7 +703,7 @@ export default function MultiStepForm() {
                     value={formData.businessCity}
                     onChange={(value) => handleChange("businessCity", value)}
                     placeholder="Select City"
-                    className="bg-gray-50! h-8! text-xs! rounded-md!"
+                    className="bg-gray-50! h-9! text-xs! rounded-md!"
                     options={[{ value: "abuja", label: "Abuja" }]}
                   />
                 </Form.Item>
@@ -675,7 +715,7 @@ export default function MultiStepForm() {
                     value={formData.address}
                     onChange={(e) => handleChange("address", e.target.value)}
                     placeholder="Enter address"
-                    className="bg-gray-50! h-8! text-xs!"
+                    className="bg-gray-50! h-9! text-xs!"
                   />
                 </Form.Item>
               </Col>
@@ -686,7 +726,7 @@ export default function MultiStepForm() {
                     value={formData.postalCode}
                     onChange={(e) => handleChange("postalCode", e.target.value)}
                     placeholder="Postal code"
-                    className="bg-gray-50! h-8! text-xs!"
+                    className="bg-gray-50! h-9! text-xs!"
                   />
                 </Form.Item>
               </Col>

@@ -70,7 +70,7 @@ export default function RootLayout({ children }) {
 
   const navLinks = [
     "/",
-    "/pricing",
+    // "/pricing",
     "/support",
     "/who-we-are",
     "/list-your-business",

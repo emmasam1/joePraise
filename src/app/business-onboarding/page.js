@@ -118,10 +118,18 @@ export default function MultiStepForm() {
     logo: null,
     banner: null,
     documents: [],
+
     businessCert: null,
+    businessCertType: "CAC",
+
     businessLicense: null,
+    businessLicenseType: "ID_CARD",
+
     taxCertificate: null,
+    taxCertificateType: "UTILITY_BILL",
+
     proofOfAddress: null,
+    proofOfAddressType: "UTILITY_BILL",
   });
 
   const countries = useMemo(() => Country.getAllCountries(), []);
@@ -344,6 +352,35 @@ if (formData.password !== formData.confirmPassword) {
         formData.taxCertificate,
         formData.proofOfAddress,
       ].filter(Boolean);
+
+
+      const selectedDocTypes = [];
+
+        if (formData.businessCert)
+          selectedDocTypes.push(formData.businessCertType);
+
+        if (formData.businessLicense)
+          selectedDocTypes.push(formData.businessLicenseType);
+
+        if (formData.taxCertificate)
+          selectedDocTypes.push(formData.taxCertificateType);
+
+        if (formData.proofOfAddress)
+          selectedDocTypes.push(formData.proofOfAddressType);
+
+        if (!selectedDocTypes.includes("CAC")) {
+          message.error(
+            "A CAC document is required."
+          );
+          return;
+        }
+
+        if (!selectedDocTypes.includes("ID_CARD")) {
+          message.error(
+            "A valid ID Card document is required."
+          );
+          return;
+        }
 
       const operatingHours =
         hoursType === "always"
@@ -1179,6 +1216,23 @@ if (formData.password !== formData.confirmPassword) {
                     }
                     className="mb-2"
                   >
+                    <Form.Item
+                      label={<span className="text-[10px]">Document Type</span>}
+                      className="mb-2"
+                    >
+                      <Select
+                        size="small"
+                        value={formData.businessCertType}
+                        onChange={(value) =>
+                          handleChange("businessCertType", value)
+                        }
+                        options={[
+                          { value: "CAC", label: "CAC Certificate" },
+                          { value: "ID_CARD", label: "ID Card" },
+                          { value: "UTILITY_BILL", label: "Utility Bill" },
+                        ]}
+                      />
+                    </Form.Item>
                     <Dragger
                       showUploadList={false}
                       beforeUpload={(file) => {
@@ -1208,6 +1262,23 @@ if (formData.password !== formData.confirmPassword) {
                     }
                     className="mb-2"
                   >
+                      <Form.Item
+                        label={<span className="text-[10px]">Document Type</span>}
+                        className="mb-2"
+                      >
+                        <Select
+                          size="small"
+                          value={formData.businessLicenseType}
+                          onChange={(value) =>
+                            handleChange("businessLicenseType", value)
+                          }
+                          options={[
+                            { value: "CAC", label: "CAC Certificate" },
+                            { value: "ID_CARD", label: "ID Card" },
+                            { value: "UTILITY_BILL", label: "Utility Bill" },
+                          ]}
+                        />
+                      </Form.Item>
                     <Dragger
                       showUploadList={false}
                       beforeUpload={(file) => {
@@ -1239,6 +1310,25 @@ if (formData.password !== formData.confirmPassword) {
                     }
                     className="mb-2"
                   >
+
+                    <Form.Item
+                        label={<span className="text-[10px]">Document Type</span>}
+                        className="mb-2"
+                      >
+                        <Select
+                          size="small"
+                          value={formData.taxCertificateType}
+                          onChange={(value) =>
+                            handleChange("taxCertificateType", value)
+                          }
+                          options={[
+                            { value: "CAC", label: "CAC Certificate" },
+                            { value: "ID_CARD", label: "ID Card" },
+                            { value: "UTILITY_BILL", label: "Utility Bill" },
+                          ]}
+                        />
+                      </Form.Item>
+
                     <Dragger
                       showUploadList={false}
                       beforeUpload={(file) => {
@@ -1268,6 +1358,25 @@ if (formData.password !== formData.confirmPassword) {
                     }
                     className="mb-2"
                   >
+
+                    <Form.Item
+                      label={<span className="text-[10px]">Document Type</span>}
+                      className="mb-2"
+                    >
+                      <Select
+                        size="small"
+                        value={formData.proofOfAddressType}
+                        onChange={(value) =>
+                          handleChange("proofOfAddressType", value)
+                        }
+                        options={[
+                          { value: "CAC", label: "CAC Certificate" },
+                          { value: "ID_CARD", label: "ID Card" },
+                          { value: "UTILITY_BILL", label: "Utility Bill" },
+                        ]}
+                      />
+                    </Form.Item>
+
                     <Dragger
                       showUploadList={false}
                       beforeUpload={(file) => {

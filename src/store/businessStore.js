@@ -77,7 +77,7 @@ export const useBusinessStore = create((set, get) => ({
       appendIfPresent(payload, "facebook", formData.facebook);
       appendIfPresent(payload, "mapLink", formData.mapLink);
       appendIfPresent(payload, "direction", formData.direction);
-      appendIfPresent(payload, "docType", formData.docType || "CAC");
+     // appendIfPresent(payload, "docType", formData.docType || "CAC");
 
       if (Array.isArray(formData.operatingHours)) {
         payload.append(
@@ -96,19 +96,53 @@ export const useBusinessStore = create((set, get) => ({
       }
 
       // VERIFICATION DOCUMENTS
-      const documents =
-        formData.documents?.length > 0
-          ? formData.documents
-          : [
-              formData.businessCert,
-              formData.businessLicense,
-              formData.taxCertificate,
-              formData.proofOfAddress,
-            ].filter(Boolean);
+      // const documents =
+      //   formData.documents?.length > 0
+      //     ? formData.documents
+      //     : [
+      //         formData.businessCert,
+      //         formData.businessLicense,
+      //         formData.taxCertificate,
+      //         formData.proofOfAddress,
+      //       ].filter(Boolean);
 
-      documents.forEach((doc) => {
-        payload.append("documents", normalizeFile(doc));
-      });
+      const documentEntries = [
+          {
+            file: formData.businessCert,
+            type: formData.businessCertType,
+          },
+          {
+            file: formData.businessLicense,
+            type: formData.businessLicenseType,
+          },
+          {
+            file: formData.taxCertificate,
+            type: formData.taxCertificateType,
+          },
+          {
+            file: formData.proofOfAddress,
+            type: formData.proofOfAddressType,
+          },
+        ].filter((doc) => doc.file);
+
+        const docTypes = [];
+
+      // documentEntries.forEach((doc) => {
+      //   payload.append("documents", normalizeFile(doc));
+      // });
+       documentEntries.forEach((doc) => {
+            payload.append(
+              "documents",
+              normalizeFile(doc.file)
+            );
+
+            docTypes.push(doc.type);
+          });
+
+          payload.append(
+            "docTypes",
+            JSON.stringify(docTypes)
+          );
 
       const response = await api.post("/business/onboard", payload, {
         headers: {

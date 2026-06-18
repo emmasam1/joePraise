@@ -64,6 +64,7 @@ export default function MultiStepForm() {
   const [businessLicense, setBusinessLicense] = useState(null);
   const [taxCertificate, setTaxCertificate] = useState(null);
   const [proofOfAddress, setProofOfAddress] = useState(null);
+  const [isMapReady, setIsMapReady] = useState(false);
 
   // Pull both actions from your business store
   const { onboardBusiness, registerInitialUser, onboardingLoading } = useBusinessStore();
@@ -144,15 +145,24 @@ const [coords, setCoords] = useState([9.0578, 7.4951]);
 
 // ... inside your Location Step JSX ...
 <div className="w-full h-40 rounded-lg overflow-hidden border border-gray-200 relative z-0">
-  <MapContainer
-    key={`${formData.businessCountry}-${formData.businessCity}`} // This forces a re-render
-    center={coords}
-    zoom={13}
-    style={{ height: "100%", width: "100%" }}
-  >
-    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-    <ChangeView center={coords} />
-  </MapContainer>
+ <MapContainer
+  key={`${formData.businessCountry}-${formData.businessCity}`}
+  center={selectedCityCoords}
+  zoom={13}
+  style={{ height: "100%", width: "100%" }}
+  whenReady={() => {
+    setIsMapReady(true);
+    console.log("Map is ready");
+  }}
+>
+  {/* 3. ONLY render these when isMapReady is true */}
+  {isMapReady && (
+    <>
+      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+      <MapController center={selectedCityCoords} />
+    </>
+  )}
+</MapContainer>
 </div>
 
 
@@ -244,6 +254,10 @@ if (formData.password !== formData.confirmPassword) {
       message.error("Please select a business category");
       return false;
     }
+    if (!hasValue(formData.description)) {
+      message.error("Please enter at least 20 characters");
+      return false;
+    }
 
     return true;
   };
@@ -281,11 +295,28 @@ if (formData.password !== formData.confirmPassword) {
     return true;
   };
 
+  const validateVerificationStep = () => {
+    if (!formData.businessCert) {
+      message.error("Please upload your Business Registration Certificate");
+      return false;
+    }
+    if (!formData.taxCertificate) {
+      message.error("Please upload your Tax Certificate");
+      return false;
+    }
+    if (!formData.proofOfAddress) {
+      message.error("Please upload Proof of Address");
+      return false;
+    }
+    return true;
+  };
+
   const validateCurrentStep = () => {
     if (!isAuthenticated && current === 0) return validateAccountStep();
     if (current === businessInfoStep) return validateBusinessInfoStep();
     if (current === locationStep) return validateLocationStep();
     if (current === brandingStep) return validateBrandingStep();
+    if (current === verificationStep) return validateVerificationStep();
     return true;
   };
 
@@ -319,10 +350,11 @@ if (formData.password !== formData.confirmPassword) {
   };
 
   const handleSubmit = async () => {
+    // 1. Existing step navigation guard
     if (current !== verificationStep) return;
 
     try {
-      // Validate configuration states relative to Auth scope status
+      // 2. Validate Registration Steps (existing)
       if (!isAuthenticated && !validateAccountStep()) {
         setCurrent(0);
         return;
@@ -338,6 +370,14 @@ if (formData.password !== formData.confirmPassword) {
         return;
       }
 
+      // 3. ADD THIS: Validate mandatory verification documents
+      // Note: We use !formData.field to check if the file object is missing/null
+      if (!formData.businessCert || !formData.taxCertificate || !formData.proofOfAddress) {
+        message.error("Please ensure all mandatory documents are uploaded.");
+        return; // Halt submission
+      }
+
+      // 4. Proceed to prepare data
       const documents = [
         formData.businessCert,
         formData.businessLicense,
@@ -355,6 +395,7 @@ if (formData.password !== formData.confirmPassword) {
               closed: false,
             }));
 
+      // 5. Submit
       const response = await onboardBusiness(
         {
           ...formData,
@@ -371,6 +412,7 @@ if (formData.password !== formData.confirmPassword) {
       return response;
     } catch (error) {
       console.log("Submission Error:", error);
+      message.error("An error occurred during submission. Please try again.");
     }
   };
 
@@ -593,8 +635,9 @@ if (formData.password !== formData.confirmPassword) {
               </Col>
 
               <Col span={12}>
-                <Form.Item label="Phone Number" required>
+                <Form.Item label="Phone Number" required >
                   <PhoneInput
+                  className="bg-gray-50! h-9! text-xs! rounded-md!"
                     country={"gb"}
                     value={formData.phoneNumber}
                     onChange={(phoneNumber) =>
@@ -608,7 +651,7 @@ if (formData.password !== formData.confirmPassword) {
                     }}
                     buttonStyle={{
                       background: "#f9fafb",
-                      border: "1px solid #d9d9d9",
+                      border: "1px solid #d9d9d9 !important",
                       borderRight: "none",
                       borderRadius: "6px 0 0 6px",
                       height: "36px",
@@ -753,7 +796,7 @@ if (formData.password !== formData.confirmPassword) {
                 <Form.Item label="Phone Number" required>
                    <PhoneInput
                    className="bg-gray-50! text-xs! rounded-md!"
-                      country={"ng"}
+                      country={"gb"}
                       value={formData.businessPhone}
                       onChange={(phone) =>
                         handleChange("businessPhone", `+${phone}`)
@@ -821,6 +864,7 @@ if (formData.password !== formData.confirmPassword) {
                 <Form.Item label="Business Description">
                   <TextArea
                     value={formData.description}
+                    rules={[{ min: 20, message: 'Please enter at least 20 characters' }]}
                     onChange={(e) =>
                       handleChange("description", e.target.value)
                     }
@@ -919,31 +963,35 @@ if (formData.password !== formData.confirmPassword) {
               </Col>
 
               <Col span={24}>
-                <div className="text-xs font-medium mb-1">
+                {/* <div className="text-xs font-medium mb-1">
                   Map Location (Optional)
-                </div>
-                <div className="text-[10px] text-gray-400 mb-2">
+                </div> */}
+                {/* <div className="text-[10px] text-gray-400 mb-2">
                   Add your exact location
-                </div>
+                </div> */}
 
 
 
 
 
 <Col span={24}>
-  <div className="text-xs font-medium mb-1">Map Location (Optional)</div>
+  <div className="text-xs font-medium mb-1">Map Location</div>
   <div className="text-[10px] text-gray-400 mb-2">Add your exact location</div>
 
   <div className="w-full h-40 rounded-lg overflow-hidden border border-gray-200 relative z-0">
-    <MapContainer
-      key={`${formData.businessCountry}-${formData.businessCity}`}
-      center={selectedCityCoords}
-      zoom={13}
-      style={{ height: "100%", width: "100%" }}
-    >
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-      <MapController center={selectedCityCoords} />
-    </MapContainer>
+
+<MapContainer
+  center={selectedCityCoords}
+  zoom={13}
+  style={{ height: "100%", width: "100%" }}
+  whenReady={(map) => {
+    // This event fires when the map is fully initialized
+    console.log("Map is ready");
+  }}
+>
+  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+  <MapController center={selectedCityCoords} />
+</MapContainer>
   </div>
 </Col>
               </Col>
@@ -1203,7 +1251,7 @@ if (formData.password !== formData.confirmPassword) {
                   <Form.Item
                     label={
                       <span className="text-[10px] font-bold">
-                        Business Licence (Optional)
+                        Business Licence (optional)
                       </span>
                     }
                     className="mb-2"
@@ -1263,7 +1311,7 @@ if (formData.password !== formData.confirmPassword) {
                   <Form.Item
                     label={
                       <span className="text-[10px] font-bold">
-                        Proof of Address (Optional)
+                        Proof of Address
                       </span>
                     }
                     className="mb-2"

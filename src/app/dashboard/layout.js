@@ -56,11 +56,11 @@ export default function DashboardLayout({ children }) {
       href: "/dashboard/products",
     },
     { label: "Customers", icon: <UserOutlined />, href: "/dashboard/customer" },
-    {
-      label: "Subscription",
-      icon: <CreditCardOutlined />,
-      href: "/dashboard/subscription",
-    },
+    // {
+    //   label: "Subscription",
+    //   icon: <CreditCardOutlined />,
+    //   href: "/dashboard/subscription",
+    // },
     { label: "Analytics", icon: <BarChartOutlined />, href: "/dashboard/analytics" },
   ];
 

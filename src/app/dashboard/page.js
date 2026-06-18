@@ -10,6 +10,7 @@ import {
 } from "@ant-design/icons";
 import { Button } from "antd"
 import { useAuthStore } from "@/store/authStore";
+import CustomModal from "@/components/CustomModal";
 
 
 export default function DashboardPage() {
@@ -39,6 +40,36 @@ export default function DashboardPage() {
       over: "100",
     },
   ];
+
+ if (user?.business?.verificationStatus === "pending") {
+  return (
+    // 'fixed' makes it cover everything regardless of parent elements
+    // 'z-50' ensures it sits on top of sidebars and headers
+    // 'bg-white/95' or 'bg-white' creates the solid overlay effect
+    <div className="fixed inset-0 z-[10] flex items-center justify-center bg-[#ffffff10]">
+      <CustomModal isOpen={true} size="max-w-md" showClose={false}>
+        <div className="flex flex-col items-center justify-center py-6 text-center ">
+          {/* Icon Container */}
+          <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6">
+            <img src="/images/mail.png" alt="Pending" className="w-full" />
+          </div>
+
+          {/* Text Content */}
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            Verification Pending
+          </h2>
+          <p className="text-gray-500 text-sm leading-relaxed px-4">
+            Your business verification is under review. 
+            <br />
+            You will receive an email once approval is completed.
+          </p>
+
+          <p className="text-gray-500 mt-5 text-sm"> longer than expedcted? <span className="text-[#15BE87]">Contact Support</span> </p>
+        </div>
+      </CustomModal>
+    </div>
+  );
+}
 
   return (
     <div className="space-y-6">

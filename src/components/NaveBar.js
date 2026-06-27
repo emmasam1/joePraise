@@ -23,6 +23,14 @@ const NaveBar = () => {
   // Get Auth State
   const { isAuthenticated, user, logout } = useAuthStore();
 
+  const dashboardRoutes = {
+  admin: "/admin-dashboard",
+  business: "/dashboard",
+  user: "/customer-dashboard",
+};
+
+const dashboardLink = dashboardRoutes[user?.role] || "/customer-dashboard";
+
   const handleLogout = () => {
     logout();
     router.push("/");
@@ -49,12 +57,22 @@ const NaveBar = () => {
       disabled: true,
     },
     { type: 'divider' },
+    // {
+    //   key: 'dashboard',
+    //   label: <Link href={user?.role === 'admin' ? '/admin-dashboard' : '/dashboard'}>My Dashboard</Link>,
+    //   icon: <AppstoreOutlined />,
+    //   // Only show dashboard link if they aren't a basic 'user'
+    //   disabled: user?.role === 'user'
+    // },
     {
-      key: 'dashboard',
-      label: <Link href={user?.role === 'admin' ? '/admin' : '/dashboard'}>My Dashboard</Link>,
+      key: "dashboard",
+      label: (
+        <Link href={dashboardLink}>
+          My Dashboard
+        </Link>
+      ),
       icon: <AppstoreOutlined />,
-      // Only show dashboard link if they aren't a basic 'user'
-      disabled: user?.role === 'user' 
+      disabled: user?.role === 'usert'
     },
     {
       key: 'profile',

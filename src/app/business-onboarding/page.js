@@ -797,7 +797,7 @@ if (formData.password !== formData.confirmPassword) {
     />
   </Form.Item>
 </Col>
-            </Row>
+    </Row>
           )}
 
           {/* BUSINESS INFORMATION STEP */}

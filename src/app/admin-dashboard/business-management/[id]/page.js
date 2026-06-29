@@ -22,7 +22,7 @@ export default function BusinessProfilePage() {
 
   // Connect directly to your Zustand global state store
   const { fetchBusiness, verifyBusiness, selectedBusiness,reviewBusinessDocument, loading } = useBusinessStore();
-   const { dashboard } = useAdminDashboardStore();
+   const { dashboard, getDashboard, dashboardLoading } = useAdminDashboardStore();
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -32,6 +32,10 @@ export default function BusinessProfilePage() {
       });
     }
   }, [id, fetchBusiness]);
+
+    useEffect(() => {
+     getDashboard
+    }, [getDashboard]);
 
   // Fixed payloader mapping targeting lowercased enum values expected by your controller
   const handleStatusUpdate = async (statusValue) => {
@@ -112,6 +116,14 @@ const handleDocumentReview = async (documentId, status) => {
 
 
   if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#F8FAFC]">
+        <Spin size="large" tip="Loading Business Profile..." />
+      </div>
+    );
+  }
+
+    if (dashboardLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#F8FAFC]">
         <Spin size="large" tip="Loading Business Profile..." />

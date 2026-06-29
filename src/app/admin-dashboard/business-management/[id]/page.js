@@ -14,6 +14,7 @@ import {
 } from "@ant-design/icons";
 
 import { RiArrowLeftLine } from "react-icons/ri";
+import { useAdminDashboardStore } from "@/store/adminDashboardStore";
 
 export default function BusinessProfilePage() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function BusinessProfilePage() {
 
   // Connect directly to your Zustand global state store
   const { fetchBusiness, verifyBusiness, selectedBusiness,reviewBusinessDocument, loading } = useBusinessStore();
+   const { dashboard } = useAdminDashboardStore();
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -954,9 +956,9 @@ const handleDocumentReview = async (documentId, status) => {
             )}
 
             <div className="relative flex items-center gap-3 pt-2 mt-2 border-t border-gray-50">
-              <Avatar src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop" size={24} />
+              <Avatar src={dashboard.admin.avatar.url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop"} size={24} />
               <p className="text-[11px] font-bold text-slate-800">
-                Review assigned to: <span className="text-gray-500 font-medium">Admin User</span>
+                Review assigned to: <span className="text-gray-500 font-medium">{dashboard?.admin?.name}{" - "}{dashboard?.admin?.name}</span>
               </p>
               <span className="ml-auto text-[10px] text-gray-400 font-medium">1 day ago</span>
             </div>

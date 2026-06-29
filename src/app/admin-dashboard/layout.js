@@ -257,13 +257,13 @@ export default function DashboardLayout({ children }) {
             </Badge>
 
             <div className="flex items-center gap-3 p-1.5 pr-4 rounded-full border border-gray-50 bg-white shadow-sm">
-              <Avatar src={dashboard?.admin.avatar.url || "https://i.pravatar.cc/150?u=michelle"} size={36} />
+              <Avatar src={dashboard?.admin?.avatar?.url || "https://i.pravatar.cc/150?u=michelle"} size={36} />
               <div className="flex flex-col text-right">
                 <span className="text-[11px] font-bold text-gray-900 leading-tight">
-                 {dashboard.admin.name}
+                 {dashboard?.admin?.name}
                 </span>
                 <span className="text-[9px] text-gray-400">
-                  {dashboard.admin.role}
+                  {dashboard?.admin?.role}
                 </span>
               </div>
             </div>

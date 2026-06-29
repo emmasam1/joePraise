@@ -34,7 +34,7 @@ export default function BusinessProfilePage() {
   }, [id, fetchBusiness]);
 
     useEffect(() => {
-     getDashboard
+     getDashboard()
     }, [getDashboard]);
 
   // Fixed payloader mapping targeting lowercased enum values expected by your controller
@@ -968,9 +968,9 @@ const handleDocumentReview = async (documentId, status) => {
             )}
 
             <div className="relative flex items-center gap-3 pt-2 mt-2 border-t border-gray-50">
-              <Avatar src={dashboard.admin.avatar.url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop"} size={24} />
+              <Avatar src={dashboard?.admin?.avatar?.url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop"} size={24} />
               <p className="text-[11px] font-bold text-slate-800">
-                Review assigned to: <span className="text-gray-500 font-medium">{dashboard?.admin?.name}{" - "}{dashboard?.admin?.name}</span>
+                Review assigned to: <span className="text-gray-500 font-medium">{dashboard?.admin?.name}{" - "}{dashboard?.admin?.role}</span>
               </p>
               <span className="ml-auto text-[10px] text-gray-400 font-medium">1 day ago</span>
             </div>

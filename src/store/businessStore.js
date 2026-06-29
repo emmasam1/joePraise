@@ -77,7 +77,6 @@ export const useBusinessStore = create((set, get) => ({
       appendIfPresent(payload, "facebook", formData.facebook);
       appendIfPresent(payload, "mapLink", formData.mapLink);
       appendIfPresent(payload, "direction", formData.direction);
-     // appendIfPresent(payload, "docType", formData.docType || "CAC");
 
       if (Array.isArray(formData.operatingHours)) {
         payload.append(
@@ -94,17 +93,6 @@ export const useBusinessStore = create((set, get) => ({
       if (formData.banner) {
         payload.append("banner", normalizeFile(formData.banner));
       }
-
-      // VERIFICATION DOCUMENTS
-      // const documents =
-      //   formData.documents?.length > 0
-      //     ? formData.documents
-      //     : [
-      //         formData.businessCert,
-      //         formData.businessLicense,
-      //         formData.taxCertificate,
-      //         formData.proofOfAddress,
-      //       ].filter(Boolean);
 
       const documentEntries = [
           {
@@ -127,9 +115,6 @@ export const useBusinessStore = create((set, get) => ({
 
         const docTypes = [];
 
-      // documentEntries.forEach((doc) => {
-      //   payload.append("documents", normalizeFile(doc));
-      // });
        documentEntries.forEach((doc) => {
             payload.append(
               "documents",
@@ -220,35 +205,91 @@ export const useBusinessStore = create((set, get) => ({
     }
   },
 
-  verifyBusiness: async (id, payload) => {
-    try {
-      const res = await api.patch(`/admin/${id}/verify`, payload);
+reviewBusinessDocument: async (businessId, documentId, payload) => {
+  try {
+    const res = await api.patch(
+      `/admin/${businessId}/documents/${documentId}/review`,
+      payload,
+    );
 
-      if (res.data.success) {
-        message.success(res.data.message);
+    if (res.data.success) {
+      message.success(res.data.message);
 
-        if (get().selectedBusiness) {
-          set({
-            selectedBusiness: {
-              ...get().selectedBusiness,
-              verificationStatus: res.data.business.verificationStatus,
-              verificationStage: res.data.business.verificationStage,
-              verifiedAt: res.data.business.verifiedAt,
-              rejectionReason: res.data.business.rejectionReason,
-            },
-          });
-        }
+      const current = get().selectedBusiness;
 
-        await get().fetchBusiness(id);
-        await get().fetchBusinesses();
+      if (current) {
+        set({
+          selectedBusiness: {
+            ...current,
+            verificationStatus:
+              res.data.business?.verificationStatus ||
+              current.verificationStatus,
+            verificationStage:
+              res.data.business?.verificationStage ||
+              current.verificationStage,
+            documents: res.data.business?.documents || current.documents,
+            documentReviewSummary:
+              res.data.business?.documentReviewSummary ||
+              current.documentReviewSummary,
+            timeline: res.data.business?.timeline || current.timeline,
+          },
+        });
       }
 
-      return res.data;
-    } catch (error) {
-      message.error(
-        error?.response?.data?.message || "Verification failed"
-      );
-      throw error;
+      await get().fetchBusiness(businessId);
+      await get().fetchBusinesses();
     }
-  },
+
+    return res.data;
+  } catch (error) {
+    message.error(
+      error?.response?.data?.message || "Document review failed",
+    );
+    throw error;
+  }
+},
+
+verifyBusiness: async (id, payload) => {
+  try {
+    const res = await api.patch(`/admin/${id}/verify`, payload);
+
+    if (res.data.success) {
+      message.success(res.data.message);
+
+      const current = get().selectedBusiness;
+
+      if (current) {
+        set({
+          selectedBusiness: {
+            ...current,
+            verificationStatus:
+              res.data.business?.verificationStatus ||
+              current.verificationStatus,
+            verificationStage:
+              res.data.business?.verificationStage ||
+              current.verificationStage,
+            verifiedAt: res.data.business?.verifiedAt,
+            rejectionReason: res.data.business?.rejectionReason,
+            documents: res.data.business?.documents || current.documents,
+            documentReviewSummary:
+              res.data.business?.documentReviewSummary ||
+              current.documentReviewSummary,
+            timeline: res.data.business?.timeline || current.timeline,
+          },
+        });
+      }
+
+      await get().fetchBusiness(id);
+      await get().fetchBusinesses();
+    }
+
+    return res.data;
+  } catch (error) {
+    message.error(
+      error?.response?.data?.message || "Verification failed",
+    );
+    throw error;
+  }
+},
+
 }));

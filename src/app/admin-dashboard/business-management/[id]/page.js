@@ -1,7 +1,7 @@
 
 "use client";
 import React, { useEffect, useState } from "react";
-import { Button, Input, Badge, Avatar, Spin, message } from "antd";
+import { Button, Input, Badge, Avatar, Spin, message, Dropdown } from "antd";
 import { useRouter, useParams } from "next/navigation";
 import { useBusinessStore } from "@/store/businessStore";
 
@@ -20,7 +20,7 @@ export default function BusinessProfilePage() {
   const { id } = useParams();
 
   // Connect directly to your Zustand global state store
-  const { fetchBusiness, verifyBusiness, selectedBusiness, loading } = useBusinessStore();
+  const { fetchBusiness, verifyBusiness, selectedBusiness,reviewBusinessDocument, loading } = useBusinessStore();
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -44,6 +44,70 @@ export default function BusinessProfilePage() {
       setSubmitting(false);
     }
   };
+
+const getDocumentLabel = (docType) => {
+  if (docType === "CAC") return "Business License";
+  if (docType === "ID_CARD") return "ID Proof (Owner)";
+  if (docType === "UTILITY_BILL") return "Utility Document";
+  return "Verification Document";
+};
+
+const getDocumentName = (doc) => {
+  const url = doc.url || doc.documentUrl;
+  if (!url) return "attachment.pdf";
+
+  return url.substring(url.lastIndexOf("/") + 1).split("?")[0];
+};
+
+const getDocumentStatusClass = (status) => {
+  if (status === "approved" || status === "verified") {
+    return "bg-[#E6FFFA] text-[#0D9488]";
+  }
+
+  if (status === "rejected" || status === "declined") {
+    return "bg-red-50 text-red-600";
+  }
+
+  return "bg-blue-50 text-blue-600";
+};
+
+const getDocumentStatusLabel = (status) => {
+  if (status === "approved" || status === "verified") return "Verified";
+  if (status === "rejected" || status === "declined") return "Declined";
+  return "Pending";
+};
+
+const handleDocumentReview = async (documentId, status) => {
+  if (!documentId) {
+    message.error("Document ID is missing.");
+    return;
+  }
+
+  setSubmitting(true);
+
+  try {
+    let rejectionReason;
+
+    if (status === "rejected") {
+      rejectionReason = window.prompt("Why is this document rejected?");
+
+      if (!rejectionReason || !rejectionReason.trim()) {
+        message.warning("Please provide a rejection reason.");
+        return;
+      }
+    }
+
+    await reviewBusinessDocument(id, documentId, {
+      status,
+      rejectionReason,
+    });
+  } catch (error) {
+    console.error("Failed to review document:", error);
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   if (loading) {
     return (
@@ -74,6 +138,18 @@ export default function BusinessProfilePage() {
     }
     return "Mon - Sun: 7:00 AM - 9:00 PM";
   };
+
+      const isUnderReview =
+      business.verificationStage === "under_review";
+
+    const isDecision =
+      business.verificationStage === "decision";
+
+    const isApproved =
+      business.verificationStatus === "approved";
+
+    const isRejected =
+      business.verificationStatus === "rejected";
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen p-8 font-sans antialiased">
@@ -170,58 +246,205 @@ export default function BusinessProfilePage() {
             </span>
           </div>
         </div>
-
-        {/* Verification Status Progress Card Checklist */}
+      {/* Verification Status Progress Card Checklist */}
         <div className="w-full md:w-72 bg-white rounded-xl p-5 border border-gray-200 shrink-0">
           <div className="flex justify-between items-center mb-5 pb-3 border-b border-gray-50">
-            <h3 className="font-bold text-slate-900 text-xs tracking-wide uppercase">Verification Status</h3>
-            <div className="flex items-center gap-1.5 text-[#E27C3E] text-xs font-bold bg-[#FFF7E6] px-2 py-1 rounded-md">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#E27C3E]" />
-              <span className="capitalize text-[11px]">{business.verificationStatus === "approved" ? "Approved" : business.verificationStatus === "rejected" ? "Rejected" : "Pending Review" }</span>
-              {/* <span className="capitalize text-[11px]">{business.verificationStatus === 'not_started' ? 'Pending Review' : (business.verificationStatus || "Pending Review")}</span> */}
+            <h3 className="font-bold text-slate-900 text-xs tracking-wide uppercase">
+              Verification Status
+            </h3>
+
+            <div
+              className={`flex items-center gap-1.5 text-xs font-bold px-2 py-1 rounded-md ${
+                isApproved
+                  ? "bg-emerald-50 text-emerald-600"
+                  : isRejected
+                  ? "bg-red-50 text-red-600"
+                  : "bg-[#FFF7E6] text-[#E27C3E]"
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  isApproved
+                    ? "bg-emerald-500"
+                    : isRejected
+                    ? "bg-red-500"
+                    : "bg-[#E27C3E]"
+                }`}
+              />
+
+              <span className="capitalize text-[11px]">
+                {isApproved
+                  ? "Approved"
+                  : isRejected
+                  ? "Rejected"
+                  : "Pending Review"}
+              </span>
             </div>
           </div>
 
           <div className="relative pl-6 space-y-5 before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gray-100">
-            {/* Step 1 */}
+
+            {/* STEP 1 - SUBMITTED */}
             <div className="relative flex items-start justify-between">
               <div className="absolute -left-[23px] top-0.5 bg-white rounded-full p-0.5">
                 <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center">
-                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4"><path d="M20 6L9 17L4 12" /></svg>
+                  <svg
+                    width="8"
+                    height="8"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="4"
+                  >
+                    <path d="M20 6L9 17L4 12" />
+                  </svg>
                 </div>
               </div>
+
               <div>
-                <p className="text-xs font-semibold text-slate-800 leading-none">Submitted</p>
-                <p className="text-[10px] text-gray-400 mt-1">2 days ago</p>
+                <p className="text-xs font-semibold text-slate-800 leading-none">
+                  Submitted
+                </p>
+
+                <p className="text-[10px] text-gray-400 mt-1">
+                  {business.createdAt
+                    ? new Date(business.createdAt).toLocaleDateString()
+                    : "Completed"}
+                </p>
               </div>
             </div>
 
-            {/* Step 2 */}
+            {/* STEP 2 - UNDER REVIEW */}
             <div className="relative flex items-start justify-between">
               <div className="absolute -left-[23px] top-0.5 bg-white rounded-full p-0.5">
-                <div className={`w-3.5 h-3.5 rounded-full ${business.verificationStage === 'under_review' ? 'border-2 border-orange-500 bg-white' : 'bg-orange-500'} flex items-center justify-center`}>
-                  {business.verificationStage !== 'under_review' && <span className="w-1 h-1 rounded-full bg-white" />}
-                </div>
+                {isUnderReview ? (
+                  // Currently reviewing
+                  <div className="w-3.5 h-3.5 rounded-full border-2 border-orange-500 bg-white" />
+                ) : isDecision || isApproved || isRejected ? (
+                  // Review completed
+                  <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center">
+                    <svg
+                      width="8"
+                      height="8"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="4"
+                    >
+                      <path d="M20 6L9 17L4 12" />
+                    </svg>
+                  </div>
+                ) : (
+                  // Not started yet
+                  <div className="w-3.5 h-3.5 rounded-full bg-gray-200" />
+                )}
               </div>
+
               <div>
-                <p className="text-xs font-semibold text-slate-800 leading-none">Under Review</p>
-                <p className="text-[10px] text-orange-500 font-medium mt-1">In Progress</p>
+                <p
+                  className={`text-xs font-semibold leading-none ${
+                    isUnderReview
+                      ? "text-orange-500"
+                      : isDecision || isApproved || isRejected
+                      ? "text-slate-800"
+                      : "text-gray-400"
+                  }`}
+                >
+                  Under Review
+                </p>
+
+                <p
+                  className={`text-[10px] mt-1 ${
+                    isUnderReview
+                      ? "text-orange-500 font-medium"
+                      : isDecision || isApproved || isRejected
+                      ? "text-gray-400"
+                      : "text-gray-400"
+                  }`}
+                >
+                  {isUnderReview
+                    ? "In Progress"
+                    : isDecision || isApproved || isRejected
+                    ? "Completed"
+                    : "Pending"}
+                </p>
               </div>
             </div>
 
-            {/* Step 3 */}
+            {/* STEP 3 - DECISION */}
             <div className="relative flex items-start justify-between">
               <div className="absolute -left-[23px] top-0.5 bg-white rounded-full p-0.5">
-                <div className="w-3.5 h-3.5 rounded-full bg-gray-200 flex items-center justify-center" />
+                {isApproved ? (
+                  <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center">
+                    <svg
+                      width="8"
+                      height="8"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="4"
+                    >
+                      <path d="M20 6L9 17L4 12" />
+                    </svg>
+                  </div>
+                ) : isRejected ? (
+                  <div className="w-3.5 h-3.5 rounded-full bg-red-500 flex items-center justify-center">
+                    <svg
+                      width="8"
+                      height="8"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="4"
+                    >
+                      <path d="M18 6L6 18M6 6L18 18" />
+                    </svg>
+                  </div>
+                ) : isDecision ? (
+                  <div className="w-3.5 h-3.5 rounded-full border-2 border-orange-500 bg-white" />
+                ) : (
+                  <div className="w-3.5 h-3.5 rounded-full bg-gray-200" />
+                )}
               </div>
+
               <div>
-                <p className="text-xs font-semibold text-gray-400 leading-none">Decision</p>
-                <p className="text-[10px] text-gray-400 mt-1">Pending</p>
+                <p
+                  className={`text-xs font-semibold leading-none ${
+                    isApproved
+                      ? "text-emerald-600"
+                      : isRejected
+                      ? "text-red-600"
+                      : isDecision
+                      ? "text-orange-500"
+                      : "text-gray-400"
+                  }`}
+                >
+                  Decision
+                </p>
+
+                <p
+                  className={`text-[10px] mt-1 ${
+                    isApproved
+                      ? "text-emerald-600"
+                      : isRejected
+                      ? "text-red-600"
+                      : isDecision
+                      ? "text-orange-500"
+                      : "text-gray-400"
+                  }`}
+                >
+                  {isApproved
+                    ? "Approved"
+                    : isRejected
+                    ? "Rejected"
+                    : isDecision
+                    ? "Pending Decision"
+                    : "Pending"}
+                </p>
               </div>
             </div>
           </div>
         </div>
-
       </div>
 
       {/* Grid Layout Framework Mapping blocks exactly */}
@@ -346,7 +569,7 @@ export default function BusinessProfilePage() {
           </div>
 
           {/* Verification Documents Block */}
-          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex-1">
+          {/* <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex-1">
             <h2 className="text-sm font-bold text-slate-900 mb-5 tracking-wide uppercase">Verification Documents</h2>
             <div className="space-y-4">
               {business.documents && business.documents.length > 0 ? (
@@ -401,7 +624,168 @@ export default function BusinessProfilePage() {
                 </>
               )}
             </div>
-          </div>
+          </div> */}
+
+    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex-1">
+      <h2 className="text-sm font-bold text-slate-900 mb-5 tracking-wide uppercase">
+        Verification Documents
+      </h2>
+
+      <div className="space-y-4">
+        {business.documents && business.documents.length > 0 ? (
+          business.documents.map((doc, idx) => {
+            const documentId = doc.id || doc._id;
+            const documentUrl = doc.url || doc.documentUrl;
+            const label = getDocumentLabel(doc.documentType || doc.docType);
+            const docName = getDocumentName(doc);
+            const isFinalDecision = business.verificationStage === "decision";
+
+            return (
+              <div
+                key={documentId || idx}
+                className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <FileTextOutlined className="text-gray-400 text-lg shrink-0" />
+
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-800 leading-tight">
+                      {label}
+                    </p>
+                    <span className="text-[10px] text-gray-400 truncate block max-w-[160px] font-normal mt-0.5">
+                      {docName}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`text-[9px] font-bold px-2 py-0.5 rounded ${getDocumentStatusClass(
+                      doc.status,
+                    )}`}
+                  >
+                    {getDocumentStatusLabel(doc.status)}
+                  </span>
+
+                  <Dropdown
+                    trigger={["click"]}
+                    disabled={submitting || isFinalDecision}
+                    menu={{
+                      items: [
+                        {
+                          key: "approved",
+                          label: "Approve document",
+                          disabled: doc.status === "approved",
+                        },
+                        {
+                          key: "rejected",
+                          label: "Reject document",
+                          danger: true,
+                          disabled: doc.status === "rejected",
+                        },
+                        {
+                          key: "pending",
+                          label: "Mark pending",
+                          disabled: doc.status === "pending",
+                        },
+                      ],
+                      onClick: ({ key }) => handleDocumentReview(documentId, key),
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className="text-[10px] px-2 py-1 rounded border border-gray-200 hover:bg-slate-50 text-slate-600 font-bold disabled:opacity-50"
+                      disabled={submitting || isFinalDecision}
+                    >
+                      Review
+                    </button>
+                  </Dropdown>
+
+                  {documentUrl && (
+                    <a
+                      href={documentUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-gray-400 hover:text-slate-600 flex items-center justify-center"
+                    >
+                      <UploadOutlined className="rotate-180 transform" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <>
+            {[
+              {
+                label: "Business License",
+                name: "License_biekitchen.pdf",
+                status: "Verified",
+                badgeClass: "bg-[#E6FFFA] text-[#0D9488]",
+              },
+              {
+                label: "Tax Certificate",
+                name: "Tax_biekitchen.pdf",
+                status: "Verified",
+                badgeClass: "bg-[#E6FFFA] text-[#0D9488]",
+              },
+              {
+                label: "ID Proof (Owner)",
+                name: "biebele_id.pdf",
+                status: "Declined",
+                badgeClass: "bg-[#FFF1F0] text-[#F5222D]",
+              },
+              {
+                label: "Business Registration",
+                name: "business_reg.pdf",
+                status: "Under Review",
+                badgeClass: "bg-[#E6F7FF] text-[#0050B3]",
+              },
+            ].map((staticDoc, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between p-1.5"
+              >
+                <div className="flex items-center gap-3">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#94A3B8"
+                    strokeWidth="2"
+                  >
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                  </svg>
+
+                  <div>
+                    <p className="text-xs font-bold text-slate-800 leading-tight">
+                      {staticDoc.label}
+                    </p>
+                    <p className="text-[10px] text-gray-400 font-normal mt-0.5">
+                      {staticDoc.name}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <span
+                    className={`text-[10px] font-bold px-2.5 py-0.5 rounded ${staticDoc.badgeClass}`}
+                  >
+                    {staticDoc.status}
+                  </span>
+                  <UploadOutlined className="text-gray-400 rotate-180 transform cursor-pointer" />
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+    </div>
+
+          
         </div>
 
         {/* Right Side: Customer Reviews Block layout */}

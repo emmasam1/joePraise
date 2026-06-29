@@ -72,6 +72,8 @@ export const useAuthStore = create(
         Cookies.remove('token');
         Cookies.remove('role');
         Cookies.remove('user');
+
+        localStorage.removeItem("admin-dashboard");
         
         set({ 
           user: null, 

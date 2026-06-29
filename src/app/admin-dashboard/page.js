@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import { Button, Avatar } from "antd";
 import {
   UserOutlined,
@@ -19,32 +19,72 @@ import {
   AreaChart,
   Area,
 } from "recharts";
+import { useAuthStore } from "@/store/authStore";
+import { useAdminDashboardStore } from "@/store/adminDashboardStore";
+
 
 const Page = () => {
-  const statsCard = [
-    {
-      id: 1,
-      title: "Total Businesses",
-      value: "1,234",
-    },
-    {
-      id: 2,
-      title: "Total Revenue",
-      value: "₦18,223",
-    },
-    {
-      id: 3,
-      title: "Pending Verification",
-      value: "1,234",
-    },
-    {
-      id: 4,
-      title: "Trust Customers",
-      value: "92",
-    },
-  ];
+  const user = useAuthStore((state) => state.user);
+
+const {
+  dashboard,
+  dashboardLoading,
+  getDashboard,
+} = useAdminDashboardStore();
+
+useEffect(() => {
+  getDashboard();
+}, []);
+
+
+  // const statsCard = [
+  //   {
+  //     id: 1,
+  //     title: "Total Businesses",
+  //     value: "1,234",
+  //   },
+  //   {
+  //     id: 2,
+  //     title: "Total Revenue",
+  //     value: "₦18,223",
+  //   },
+  //   {
+  //     id: 3,
+  //     title: "Pending Verification",
+  //     value: "1,234",
+  //   },
+  //   {
+  //     id: 4,
+  //     title: "Trust Customers",
+  //     value: "92",
+  //   },
+  // ];
 
   // Data for the main Order Trends Area Chart
+  
+  const statsCard = [
+  {
+    id: 1,
+    title: "Total Businesses",
+    value: dashboard?.overview?.totalBusinesses || 0,
+  },
+  {
+    id: 2,
+    title: "Total Revenue",
+    value: `₦${dashboard?.finance?.revenue || 0}`,
+  },
+  {
+    id: 3,
+    title: "Pending Verification",
+    value: dashboard?.businesses?.pending || 0,
+  },
+  {
+    id: 4,
+    title: "Trusted Customers",
+    value: dashboard?.customers?.verified || 0,
+  },
+];
+  
   const orderTrendsData = [
     { name: "Mon", Orders: 1800 },
     { name: "Tue", Orders: 2100 },
@@ -66,30 +106,62 @@ const Page = () => {
   ];
 
   // Data for the Business Growth Bar Chart
-  const barChartData = [
-    { name: "Jan", Growth: 23000 },
-    { name: "Feb", Growth: 31000 },
-    { name: "Mar", Growth: 55000 },
-    { name: "Apr", Growth: 70000 },
-    { name: "May", Growth: 83000 },
-    { name: "Jun", Growth: 96000 },
-  ];
+  // const barChartData = [
+  //   { name: "Jan", Growth: 23000 },
+  //   { name: "Feb", Growth: 31000 },
+  //   { name: "Mar", Growth: 55000 },
+  //   { name: "Apr", Growth: 70000 },
+  //   { name: "May", Growth: 83000 },
+  //   { name: "Jun", Growth: 96000 },
+  // ];
+
+  const monthNames = [
+  "",
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+const barChartData =
+  dashboard?.charts?.businessGrowth?.map((item) => ({
+    name: monthNames[item._id.month],
+    Growth: item.total,
+  })) || [];
 
   // Verification List Mock Data
-  const pendingBusinesses = [
-    { id: 1, name: "Benson Cake Limited", tags: "Cake, Small Chops, Kits and Materials", status: "Pending" },
-    { id: 2, name: "Benson Cake Limited", tags: "Cake, Small Chops, Kits and Materials", status: "Pending" },
-    { id: 3, name: "Benson Cake Limited", tags: "Cake, Small Chops, Kits and Materials", status: "Pending" },
-    { id: 4, name: "Benson Cake Limited", tags: "Cake, Small Chops, Kits and Materials", status: "Pending" },
-  ];
+  // const pendingBusinesses = [
+  //   { id: 1, name: "Benson Cake Limited", tags: "Cake, Small Chops, Kits and Materials", status: "Pending" },
+  //   { id: 2, name: "Benson Cake Limited", tags: "Cake, Small Chops, Kits and Materials", status: "Pending" },
+  //   { id: 3, name: "Benson Cake Limited", tags: "Cake, Small Chops, Kits and Materials", status: "Pending" },
+  //   { id: 4, name: "Benson Cake Limited", tags: "Cake, Small Chops, Kits and Materials", status: "Pending" },
+  // ];
+  const pendingBusinesses = dashboard?.pendingVerificationQueue || [];
 
   // Recent Orders List Mock Data
-  const recentOrders = [
-    { id: 1, title: "Glory", description: "Cake, Small Chops, Kits and Materials", location: "Bie's Kitchen", time: "31/08/15 - 4:00pm" },
-    { id: 2, title: "Glory", description: "Cake, Small Chops, Kits and Materials", location: "Bie's Kitchen", time: "31/08/15 - 4:00pm" },
-    { id: 3, title: "Glory", description: "Cake, Small Chops, Kits and Materials", location: "Bie's Kitchen", time: "31/08/15 - 4:00pm" },
-    { id: 4, title: "Glory", description: "Cake, Small Chops, Kits and Materials", location: "Bie's Kitchen", time: "31/08/15 - 4:00pm" },
-  ];
+  // const recentOrders = [
+  //   { id: 1, title: "Glory", description: "Cake, Small Chops, Kits and Materials", location: "Bie's Kitchen", time: "31/08/15 - 4:00pm" },
+  //   { id: 2, title: "Glory", description: "Cake, Small Chops, Kits and Materials", location: "Bie's Kitchen", time: "31/08/15 - 4:00pm" },
+  //   { id: 3, title: "Glory", description: "Cake, Small Chops, Kits and Materials", location: "Bie's Kitchen", time: "31/08/15 - 4:00pm" },
+  //   { id: 4, title: "Glory", description: "Cake, Small Chops, Kits and Materials", location: "Bie's Kitchen", time: "31/08/15 - 4:00pm" },
+  // ];
+  const recentOrders = dashboard?.recentOrders || [];
+
+  if (dashboardLoading) {
+  return (
+    <div className="flex justify-center items-center h-screen">
+      Loading dashboard...
+    </div>
+  );
+}
 
   return (
     <div className="space-y-6 font-sans bg-[#F4F7FE] p-6 min-h-screen pb-12">
@@ -163,7 +235,8 @@ const Page = () => {
               </div>
               <div>
                 <p className="text-sm font-bold text-gray-900 flex items-center gap-1">
-                  <span className="text-[#10B981]">👥</span> 3.2k
+                  {/* <span className="text-[#10B981]">👥</span> 3.2k */}
+                  {dashboard?.overview?.totalUsers || 0}
                   <span className="text-xs font-medium text-gray-400 ml-1">Active Users</span>
                 </p>
               </div>
@@ -174,7 +247,8 @@ const Page = () => {
               </div>
               <div>
                 <p className="text-sm font-bold text-gray-900 flex items-center gap-1">
-                  <span className="text-[#060853]">👥</span> 1.6k
+                  {/* <span className="text-[#060853]">👥</span> 1.6k */}
+                  {dashboard?.customers?.verified || 0}
                   <span className="text-xs font-medium text-gray-400 ml-1">New Signups</span>
                 </p>
               </div>
@@ -255,16 +329,16 @@ const Page = () => {
           </div>
           <div className="divide-y divide-gray-50">
             {pendingBusinesses.map((biz) => (
-              <div key={biz.id} className="flex items-center justify-between py-3.5">
+              <div key={biz._id} className="flex items-center justify-between py-3.5">
                 <div className="flex items-center gap-3">
-                  <Avatar size={44} src="/images/cake-logo.png" icon={<UserOutlined />} className="border border-gray-100" />
+                  <Avatar size={44} src={biz.logo?.url} icon={<UserOutlined />} className="border border-gray-100" />
                   <div>
-                    <h4 className="text-sm font-bold text-gray-900">{biz.name}</h4>
-                    <p className="text-xs text-gray-400 truncate max-w-[240px] sm:max-w-xs">{biz.tags}</p>
+                    <h4 className="text-sm font-bold text-gray-900">{biz.businessName}</h4>
+                    <p className="text-xs text-gray-400 truncate max-w-[240px] sm:max-w-xs">{biz.category}</p>
                   </div>
                 </div>
                 <span className="text-xs font-bold text-orange-500 bg-orange-50/60 px-2.5 py-1 rounded-md">
-                  {biz.status}
+                  {biz.verificationStatus}
                 </span>
               </div>
             ))}
@@ -285,13 +359,13 @@ const Page = () => {
                 <div className="flex items-center gap-3">
                   <div className="w-5 h-5 bg-gray-50 rounded border border-gray-200 flex items-center justify-center text-[10px]">📈</div>
                   <div>
-                    <h4 className="text-sm font-bold text-gray-900">{order.title}</h4>
-                    <p className="text-xs text-gray-400">{order.description}</p>
+                    <h4 className="text-sm font-bold text-gray-900">{order.action?.replaceAll("_", " ")}</h4>
+                    <p className="text-xs text-gray-400">{order.admin?.name || "No Recent Order"}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <h4 className="text-xs font-bold text-gray-900">{order.location}</h4>
-                  <p className="text-[10px] text-gray-400 font-medium">{order.time}</p>
+                  <h4 className="text-xs font-bold text-gray-900">{order.location || "No location"}</h4>
+                  <p className="text-[10px] text-gray-400 font-medium">{new Date(order.createdAt).toLocaleString()}</p>
                 </div>
               </div>
             ))}

@@ -23,12 +23,7 @@ export default function DashboardLayout({ children }) {
   
     const logout = useAuthStore((state) => state.logout);
 
-    const {
-      dashboard,
-      dashboardLoading,
-      getDashboard,
-      
-    } = useAdminDashboardStore();
+    const { dashboard } = useAdminDashboardStore();
 
   
   

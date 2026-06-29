@@ -71,7 +71,7 @@ useEffect(() => {
   {
     id: 2,
     title: "Total Revenue",
-    value: `₦${dashboard?.finance?.revenue || 0}`,
+    value: `$${dashboard?.finance?.revenue || 0}`,
   },
   {
     id: 3,

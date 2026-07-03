@@ -114,6 +114,7 @@ const handleDocumentReview = async (documentId, status) => {
   }
 };
 
+  const reviewBy = dashboard?.pendingVerificationQueue || [];
 
   if (loading) {
     return (
@@ -164,6 +165,8 @@ const handleDocumentReview = async (documentId, status) => {
 
     const isRejected =
       business.verificationStatus === "rejected";
+
+    const reviewer = business?.reviewBy;
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen p-8 font-sans antialiased">
@@ -583,62 +586,6 @@ const handleDocumentReview = async (documentId, status) => {
           </div>
 
           {/* Verification Documents Block */}
-          {/* <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex-1">
-            <h2 className="text-sm font-bold text-slate-900 mb-5 tracking-wide uppercase">Verification Documents</h2>
-            <div className="space-y-4">
-              {business.documents && business.documents.length > 0 ? (
-                business.documents.map((doc, idx) => {
-                 // console.log("Documents: ",doc)
-                  const label = doc.documentType === 'CAC' ? 'Business License' : doc.documentType === 'ID_CARD' ? 'ID Proof (Owner)' : 'Utility Document';
-                  const docName = doc.url ? doc.url.substring(doc.url.lastIndexOf('/') + 1).split('?')[0] : "attachment.pdf";
-                  return (
-                    <div key={doc.id || idx} className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <FileTextOutlined className="text-gray-400 text-lg shrink-0" />
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold text-slate-800 leading-tight">{label}</p>
-                          <span className="text-[10px] text-gray-400 truncate block max-w-[160px] font-normal mt-0.5">{docName}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded ${doc.status === 'approved' || doc.status === 'verified' ? 'bg-[#E6FFFA] text-[#0D9488]' : doc.status === 'rejected' || doc.status === 'declined' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
-                          {doc.status === 'approved' || doc.status === 'verified' ? 'Verified' : doc.status === 'rejected' || doc.status === 'declined' ? 'Declined' : 'Under Review'}
-                        </span>
-                        <a href={doc.url} target="_blank" rel="noreferrer" className="text-gray-400 hover:text-slate-600 flex items-center justify-center">
-                          <UploadOutlined className="rotate-180 transform" />
-                        </a>
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <>
-                  {[
-                    { label: "Business License", name: "License_biekitchen.pdf", status: "Verified", badgeClass: "bg-[#E6FFFA] text-[#0D9488]" },
-                    { label: "Tax Certificate", name: "Tax_biekitchen.pdf", status: "Verified", badgeClass: "bg-[#E6FFFA] text-[#0D9488]" },
-                    { label: "ID Proof (Owner)", name: "biebele_id.pdf", status: "Declined", badgeClass: "bg-[#FFF1F0] text-[#F5222D]" },
-                    { label: "Business Registration", name: "business_reg.pdf", status: "Under Review", badgeClass: "bg-[#E6F7FF] text-[#0050B3]" }
-                  ].map((staticDoc, index) => (
-                    <div key={index} className="flex items-center justify-between p-1.5">
-                      <div className="flex items-center gap-3">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        <div>
-                          <p className="text-xs font-bold text-slate-800 leading-tight">{staticDoc.label}</p>
-                          <p className="text-[10px] text-gray-400 font-normal mt-0.5">{staticDoc.name}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded ${staticDoc.badgeClass}`}>
-                          {staticDoc.status}
-                        </span>
-                        <UploadOutlined className="text-gray-400 rotate-180 transform cursor-pointer" />
-                      </div>
-                    </div>
-                  ))}
-                </>
-              )}
-            </div>
-          </div> */}
 
     <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex-1">
       <h2 className="text-sm font-bold text-slate-900 mb-5 tracking-wide uppercase">
@@ -967,14 +914,33 @@ const handleDocumentReview = async (documentId, status) => {
               </>
             )}
 
-            <div className="relative flex items-center gap-3 pt-2 mt-2 border-t border-gray-50">
-              <Avatar src={dashboard?.admin?.avatar?.url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150&auto=format&fit=crop"} size={24} />
-              <p className="text-[11px] font-bold text-slate-800">
-                Review assigned to: <span className="text-gray-500 font-medium">{dashboard?.admin?.name}{" - "}{dashboard?.admin?.role}</span>
-              </p>
-              <span className="ml-auto text-[10px] text-gray-400 font-medium">1 day ago</span>
+            <div className="flex items-center gap-3 pt-2 mt-2 border-t border-gray-50">
+              <Avatar
+                size={24}
+                src={
+                  reviewer?.avatar?.url ||
+                  "https://ui-avatars.com/api/?name=Not+Assigned"
+                }
+              />
+
+              <div>
+                <p className="text-[11px] font-bold text-slate-800">
+                  {reviewer?.full_name || reviewer?.name || "Not yet assigned"}
+                </p>
+
+                <p className="text-[10px] text-gray-500">
+                  {reviewer ? "Final Approving Admin" : "Awaiting final review"}
+                </p>
+              </div>
+
+              <span className="ml-auto text-[10px] text-gray-400">
+                {business?.verifiedAt
+                  ? new Date(business.verifiedAt).toLocaleDateString()
+                  : ""}
+              </span>
             </div>
           </div>
+
         </div>
 
       </div>

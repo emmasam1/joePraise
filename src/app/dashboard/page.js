@@ -43,9 +43,6 @@ export default function DashboardPage() {
 
  if (user?.business?.verificationStatus === "pending") {
   return (
-    // 'fixed' makes it cover everything regardless of parent elements
-    // 'z-50' ensures it sits on top of sidebars and headers
-    // 'bg-white/95' or 'bg-white' creates the solid overlay effect
     <div className="fixed inset-0 z-[10] flex items-center justify-center bg-[#ffffff10]">
       <CustomModal isOpen={true} size="max-w-md" showClose={false}>
         <div className="flex flex-col items-center justify-center py-6 text-center ">

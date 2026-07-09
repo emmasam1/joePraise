@@ -866,7 +866,7 @@ const handleDocumentReview = async (documentId, status) => {
               business.timeline.map((item, index) => (
                 <div key={index} className="relative flex items-start justify-between">
                   <div className="absolute -left-[19px] top-1 bg-white rounded-full p-0.5">
-                    <div className={`w-2.5 h-2.5 rounded-full ${index === 0 ? 'bg-[#060853]' : 'bg-orange-500'}`} />
+                    <div className={`w-2.5 h-2.5 rounded-full ${index === 0 ? 'bg-[#060853]' : 'bg-emerald-500'}`} />
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-slate-800 leading-tight">{item.title}</h4>

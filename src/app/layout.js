@@ -74,6 +74,7 @@ export default function RootLayout({ children }) {
     "/support",
     "/who-we-are",
     "/list-your-business",
+    "/directory"
   ];
 
   const showNavAndFooter = navLinks.includes(pathname);

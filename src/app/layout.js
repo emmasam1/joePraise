@@ -70,29 +70,40 @@ export default function RootLayout({ children }) {
 
   const navLinks = [
     "/",
-    // "/pricing",
     "/support",
     "/who-we-are",
     "/list-your-business",
-    "/directory"
+    "/directory",
   ];
 
-  const showNavAndFooter = navLinks.includes(pathname);
+  const footerLinks = [
+    "/",
+    "/support",
+    "/who-we-are",
+    "/list-your-business",
+  ];
+
+  const showNavbar = navLinks.includes(pathname);
+  const showFooter = footerLinks.includes(pathname);
 
   return (
-    <html lang="en" className="h-full antialiased">
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
       <body className="min-h-full flex flex-col">
-        
-        {/* Initialize auth on page load/refresh */}
+
+        {/* Initialize auth */}
         <AuthInitializer />
 
-        {showNavAndFooter && <NaveBar />}
+        {showNavbar && <NaveBar />}
 
         <main className="grow">
           {children}
         </main>
 
-        {showNavAndFooter && <Footer />}
+        {showFooter && <Footer />}
+
       </body>
     </html>
   );

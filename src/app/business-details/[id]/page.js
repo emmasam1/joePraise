@@ -1,12 +1,10 @@
-
+import BusinessActions from "@/components/BuisnessAction";
 import BusinessTabs from "@/components/BusinessTabs";
 import {
   BadgeCheck,
   Check,
   Clock3,
-  Heart,
   MapPin,
-  MessageCircle,
   Navigation,
   Phone,
   Search,
@@ -15,7 +13,6 @@ import {
   Star,
   Zap,
 } from "lucide-react";
-
 
 // Replace this with your real API request when ready.
 async function getBusiness(id) {
@@ -63,63 +60,6 @@ async function getBusiness(id) {
       { day: "Friday", hours: "8am - 6pm", isOpen: true },
       { day: "Saturday", hours: "8am - 6pm", isOpen: true },
       { day: "Sunday", hours: "Closed", isOpen: false },
-    ],
-
-    services: [
-      {
-        id: "1",
-        name: "Professional Web Design",
-        description:
-          "Pre-configured lighting sets designed to create specific moods using smart-glass technology.",
-        price: 100,
-        image:
-          "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600",
-      },
-      {
-        id: "2",
-        name: "Eco-Friendly Residential Cleaning",
-        description:
-          "Pre-configured lighting sets designed to create specific moods using smart-glass technology.",
-        price: 100,
-        image:
-          "https://images.unsplash.com/photo-1484101403633-562f891dc89a?w=600",
-      },
-      {
-        id: "3",
-        name: "Personal Fitness Training",
-        description:
-          "Pre-configured lighting sets designed to create specific moods using smart-glass technology.",
-        price: 100,
-        image:
-          "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600",
-      },
-      {
-        id: "4",
-        name: "Gourmet Catering Services",
-        description:
-          "Pre-configured lighting sets designed to create specific moods using smart-glass technology.",
-        price: 100,
-        image:
-          "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=600",
-      },
-      {
-        id: "5",
-        name: "App & Web Development",
-        description:
-          "Pre-configured lighting sets designed to create specific moods using smart-glass technology.",
-        price: 100,
-        image:
-          "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600",
-      },
-      {
-        id: "6",
-        name: "Cybersecurity & Cloud Consulting",
-        description:
-          "Pre-configured lighting sets designed to create specific moods using smart-glass technology.",
-        price: 100,
-        image:
-          "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=600",
-      },
     ],
 
     ratingBreakdown: {
@@ -185,18 +125,17 @@ function Stars({ rating }) {
   );
 }
 
-export default async function DirectoryDetails({ params }) {
-//   import { useState } from "react";
-//   import { motion } from "framer-motion";
+export default async function DirectoryDetails({ params, isOpen }) {
+  //   import { useState } from "react";
+  //   import { motion } from "framer-motion";
 
   const { id } = await params;
   const business = await getBusiness(id);
-
+ 
   const totalRatings = Object.values(business.ratingBreakdown).reduce(
     (total, count) => total + count,
     0,
   );
-
 
   return (
     <main className="min-h-screen bg-[#fcfcfc] text-zinc-800">
@@ -263,17 +202,8 @@ export default async function DirectoryDetails({ params }) {
               </button>
             </article>
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              <button className="inline-flex items-center gap-2 rounded bg-[#10105e] px-4 py-3 text-sm font-medium text-white">
-                <Share2 size={17} />
-                Share Business
-              </button>
 
-              <button className="inline-flex items-center gap-2 rounded border border-[#10105e] px-4 py-3 text-sm font-medium text-[#10105e]">
-                <MessageCircle size={17} />
-                Message
-              </button>
-            </div>
+            <BusinessActions/>
           </div>
 
           <aside>
@@ -409,42 +339,6 @@ export default async function DirectoryDetails({ params }) {
 
         <section className="mt-14">
           <BusinessTabs />
-          {/* <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <h2 className="text-3xl font-bold">Services & Products</h2>
-
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {business.services.map((service) => (
-              <article
-                key={service.id}
-                className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4"
-              >
-                <div className="flex gap-4">
-                  <img
-                    src={service.image}
-                    alt={service.name}
-                    className="h-28 w-36 rounded object-cover"
-                  />
-
-                  <div>
-                    <p className="text-sm font-bold">{service.name}</p>
-                    <p className="mt-2 line-clamp-4 text-xs leading-5 text-zinc-600">
-                      {service.description}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between">
-                  <Heart size={23} className="text-zinc-600" />
-                  <span className="text-xl font-bold">${service.price}</span>
-                  <button className="rounded bg-[#10105e] px-3 py-2 text-xs font-semibold text-white">
-                    Book Now
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div> */}
         </section>
 
         <section className="mt-16">
@@ -517,6 +411,8 @@ export default async function DirectoryDetails({ params }) {
           </div>
         </section>
       </div>
+
+   
     </main>
   );
 }

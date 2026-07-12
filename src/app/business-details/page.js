@@ -286,7 +286,7 @@ function DirectoryContent() {
                   <p className="text-xs text-gray-400 leading-relaxed font-medium mb-4">
                     {item.description}{" "}
                     <Link
-                      href={`/directory/${item.id}`}
+                      href={`/business-details/${item.id}`}
                       className="text-[#10B981] font-black ml-1 hover:underline"
                     >
                       Read More

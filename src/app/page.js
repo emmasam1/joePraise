@@ -504,7 +504,7 @@ const LandingPage = () => {
                   ) : (
                     item.category
                   )}
-                   <Link href={`/directory/${item.id}`} className="text-[#00D094] font-bold cursor-pointer ml-1">
+                   <Link href={`/business-details/${item.id}`} className="text-[#00D094] font-bold cursor-pointer ml-1">
                         Veiw Buisness
                       </Link>
                 </p>
@@ -612,7 +612,7 @@ const LandingPage = () => {
                   ) : (
                     item.category
                   )}
-                  <Link href={`/directory/${item.id}`} className="text-[#00D094] font-bold cursor-pointer ml-1">
+                  <Link href={`/business-details/${item.id}`} className="text-[#00D094] font-bold cursor-pointer ml-1">
                         Veiw Buisness
                       </Link>
                 </p>

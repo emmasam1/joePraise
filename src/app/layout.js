@@ -73,7 +73,7 @@ export default function RootLayout({ children }) {
     "/support",
     "/who-we-are",
     "/list-your-business",
-    "/directory",
+    "/business-details",
   ];
 
   const footerLinks = [

@@ -3,11 +3,90 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Heart } from "lucide-react";
+import { Button, Form, Input, Select, message } from "antd";
+import CustomModal from "./CustomModal";
+
 
 export default function BusinessTabs() {
   const tabs = ["Services", "Products", "Digital Products"];
 
   const [activeTab, setActiveTab] = useState("Services");
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState(null);
+  const [addingToCart, setAddingToCart] = useState(false);
+
+  const [form] = Form.useForm();
+
+  const { TextArea } = Input;
+
+  const openBookingModal = (service) => {
+    setSelectedService(service);
+
+    form.setFieldsValue({
+      serviceId: service.id,
+      serviceType: undefined,
+      instruction: "",
+    });
+
+    setIsBookingOpen(true);
+  };
+
+  const closeBookingModal = () => {
+    form.resetFields();
+    setSelectedService(null);
+    setIsBookingOpen(false);
+  };
+
+  const handleServiceChange = (serviceId) => {
+    const service = data.Services.find((item) => item.id === serviceId);
+
+    setSelectedService(service);
+
+    form.setFieldsValue({
+      serviceType: undefined,
+    });
+  };
+
+  const handleBookingSubmit = async (values) => {
+    setAddingToCart(true);
+
+    try {
+      const service = data.Services.find(
+        (item) => item.id === values.serviceId
+      );
+
+      const bookingPayload = {
+        serviceId: service.id,
+        serviceName: service.name,
+        price: service.price,
+        serviceType: values.serviceType,
+        instruction: values.instruction,
+        quantity: 1,
+      };
+
+      // Add your API request here:
+      //
+      // await fetch("/api/cart/add-service", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify(bookingPayload),
+      // });
+
+      console.log("Booking payload:", bookingPayload);
+
+      message.success("Service added to cart");
+      closeBookingModal();
+    } catch (error) {
+      message.error("Unable to add service to cart");
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  const handleAddToCart = (item) => {
+    console.log("Cart item:", item);
+    message.success(`${item.name} added to cart`);
+  };
 
 
   const data = {
@@ -44,7 +123,7 @@ export default function BusinessTabs() {
         price: 250,
         image:
           "https://images.unsplash.com/photo-1505797149-43b0069ec26b?w=600",
-        button: "Buy Now",
+        button: "Add To Cart",
       },
       {
         id: "4",
@@ -54,7 +133,7 @@ export default function BusinessTabs() {
         price: 500,
         image:
           "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=600",
-        button: "Buy Now",
+        button: "Add To Cart",
       },
     ],
 
@@ -68,7 +147,7 @@ export default function BusinessTabs() {
         price: 50,
         image:
           "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600",
-        button: "Download",
+        button: "Add To Cart",
       },
       {
         id: "6",
@@ -78,7 +157,7 @@ export default function BusinessTabs() {
         price: 30,
         image:
           "https://images.unsplash.com/photo-1558655146-d09347e92766?w=600",
-        button: "Download",
+        button: "Add To Cart",
       },
     ],
   };
@@ -180,7 +259,15 @@ export default function BusinessTabs() {
               </span>
 
 
-              <button className="rounded bg-[#10105e] px-3 py-2 text-xs font-semibold text-white">
+              <button
+              onClick={() => {
+                    if (item.button === "Book Now") {
+                      openBookingModal(item);
+                    } else {
+                      handleAddToCart(item);
+                    }
+                  }}
+              className="rounded bg-[#10105e] px-3 py-2 text-xs font-semibold text-white">
                 {item.button}
               </button>
 
@@ -192,6 +279,128 @@ export default function BusinessTabs() {
         ))}
 
       </div>
+
+       {/* This is added below your existing tab/card layout */}
+      <CustomModal
+        isOpen={isBookingOpen}
+        onClose={closeBookingModal}
+        title={
+          <h2 className="pr-8 text-3xl font-bold text-zinc-800 sm:text-2xl">
+            Book a Service
+          </h2>
+        }
+        size="max-w-lg"
+      >
+        {selectedService && (
+          <div className="px-2 pb-2 pt-5 sm:px-2">
+            <img
+              src={selectedService.image}
+              alt={selectedService.name}
+              className="h-[200px] w-full object-cover sm:h-[300px]"
+            />
+
+            <Form
+              form={form}
+              layout="vertical"
+              requiredMark={false}
+              onFinish={handleBookingSubmit}
+              className="mt-10"
+            >
+              <Form.Item
+                label={
+                  <span className="text-sm font-semibold text-zinc-900 mt-2">
+                    Select Service
+                  </span>
+                }
+                name="serviceId"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please select a service",
+                  },
+                ]}
+                className="mb-7"
+              >
+                <Select
+                  size="large"
+                  onChange={handleServiceChange}
+                  className="h-[40px]"
+                  options={data.Services.map((service) => ({
+                    value: service.id,
+                    label: `${service.name} - $${service.price}`,
+                  }))}
+                />
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <span className="text-sm font-semibold text-zinc-900">
+                    Type of Service
+                  </span>
+                }
+                name="serviceType"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please select the type of service",
+                  },
+                ]}
+                className="mb-7"
+              >
+                <Select
+                  size="large"
+                  placeholder="Select type of service"
+                  className="h-[40px]"
+                  options={[
+                    {
+                      value: "Virtual Consultation",
+                      label: "Virtual Consultation",
+                    },
+                    {
+                      value: "Physical Consultation",
+                      label: "Physical Consultation",
+                    },
+                    {
+                      value: "Residential Service",
+                      label: "Residential Service",
+                    },
+                    {
+                      value: "Commercial Service",
+                      label: "Commercial Service",
+                    },
+                  ]}
+                />
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <span className="text-sm font-semibold text-zinc-900">
+                    Add Instruction
+                  </span>
+                }
+                name="instruction"
+                className="mb-9"
+              >
+                <TextArea
+                  rows={7}
+                  maxLength={1000}
+                  showCount
+                  placeholder="Write a brief of what you want"
+                  className="resize-none rounded-lg border-zinc-300 p-4 text-base shadow-none placeholder:text-zinc-300"
+                />
+              </Form.Item>
+
+              <Button
+                htmlType="submit"
+                loading={addingToCart}
+                className="h-10! w-full bg-[#060853]! text-lg font-semibold text-white! shadow-none hover:!border-[#0b084d] hover:!bg-[#0b084d]"
+              >
+                Add To Cart
+              </Button>
+            </Form>
+          </div>
+        )}
+      </CustomModal>
 
     </section>
   );

@@ -2132,12 +2132,14 @@ const ProductManagementPage = () => {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         size="max-w-md" 
-        title={`Product ID: #${isSelected?._id?.$oid?.slice(-4) || isSelected?._id?.slice(-4) || "0045"}`}
+        // title={`Product ID: #${isSelected?._id?.$oid?.slice(-4) || isSelected?._id?.slice(-4) || "0045"}`}
+        title={`Product ID: #${isSelected?.physicalProduct.sku  || "0045"}`}
       >
         <div className="h-72 w-full relative overflow-hidden rounded-lg">
-          {isSelected?.images?.[0]?.url || isSelected?.images?.[0] ? (
+          {/* {isSelected?.images?.[0]?.url || isSelected?.images?.[0] ? ( */}
+          {isSelected?.images?.[0]?.url ? (
             <Image 
-              src={isSelected?.images?.[0]?.url || isSelected?.images?.[0]} 
+              src={isSelected?.images?.[0]?.url || "/images/no-image.png"}
               alt={isSelected?.title || "Product Image"} 
               fill 
               className="object-cover" 

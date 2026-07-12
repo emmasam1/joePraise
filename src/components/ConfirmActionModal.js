@@ -1,9 +1,6 @@
 "use client";
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiX, FiAlertCircle } from "react-icons/fi";
-import { IoMdCloseCircle } from "react-icons/io";
-import { RiDeleteBin6Line } from "react-icons/ri";
 
 const page = ({
   isOpen,

@@ -239,13 +239,6 @@ const handleDocumentReview = async (documentId, status) => {
         <div className="flex-1 flex flex-col justify-between">
           <div>
             <h2 className="text-xl font-bold text-slate-900">{business.businessName || "Bie's Kitchen"}</h2>
-            {/* <div className="flex items-center gap-2 text-gray-500 text-xs font-medium mt-1">
-              <span>{business.category ? (business.category.charAt(0).toUpperCase() + business.category.slice(1)) : "Food & Beverage"}</span>
-              <span className="text-gray-300">•</span>
-              <span>Restaurant & Cafe</span>
-              <span className="text-gray-300">•</span>
-              <span>Established 2018</span>
-            </div> */}
             <div className="flex items-center gap-2 text-gray-500 text-xs font-medium mt-1 flex-wrap">
               {Array.isArray(business.category) && business.category.length > 0 ? (
                 business.category.map((cat, index) => (
@@ -262,7 +255,7 @@ const handleDocumentReview = async (documentId, status) => {
               <span className="text-gray-300">•</span>
               <span>Established 2018</span>
             </div>
-            
+
             <p className="text-gray-500 text-xs leading-relaxed max-w-3xl mt-2 font-normal">
               {business.description || "Bie's Kitchen is an authentic local dishes and homemade food products crafted by Chef Bie, specializing in traditional flavors, culinary artistry, and, in some contexts, homemade goods like Leche Flan and Biko"}
             </p>

@@ -2127,22 +2127,21 @@ const ProductManagementPage = () => {
         </AnimatePresence>
       </div>
 
-      {/* VIEW MODAL */}
+     {/* VIEW MODAL */}
       <CustomModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         size="max-w-md" 
-        // title={`Product ID: #${isSelected?._id?.$oid?.slice(-4) || isSelected?._id?.slice(-4) || "0045"}`}
-        title={`Product ID: #${isSelected?.physicalProduct.sku  || "0045"}`}
+        title={`Product ID: #${isSelected?.physicalProduct?.sku || "0045"}`}
       >
-        <div className="h-72 w-full relative overflow-hidden rounded-lg">
-          {/* {isSelected?.images?.[0]?.url || isSelected?.images?.[0] ? ( */}
+        <div className="h-72 w-full relative overflow-hidden rounded-lg bg-gray-100">
           {isSelected?.images?.[0]?.url ? (
             <Image 
-              src={isSelected?.images?.[0]?.url || "/images/no-image.png"}
+              src={isSelected.images[0].url}
               alt={isSelected?.title || "Product Image"} 
               fill 
               className="object-cover" 
+              unoptimized // temporary safety net — remove once remotePatterns is confirmed working
             />
           ) : (
             <div className="flex items-center justify-center h-full bg-gray-200 text-sm text-gray-500">No Image</div>

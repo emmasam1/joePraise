@@ -8,6 +8,7 @@ import {
   HistoryOutlined,
   FireOutlined,
 } from "@ant-design/icons";
+import Link from "next/link";
 
 import Image from "next/image";
 import { useListingStore } from "@/store/listingStore";
@@ -498,13 +499,14 @@ const LandingPage = () => {
                   {item.category?.length > 98 ? (
                     <>
                       {item.category.slice(0, 98)}...
-                      <span className="text-[#00D094] font-bold cursor-pointer ml-1">
-                        Read More
-                      </span>
+                     
                     </>
                   ) : (
                     item.category
                   )}
+                   <Link href={`/business-details/${item.id}`} className="text-[#00D094] font-bold cursor-pointer ml-1">
+                        Veiw Buisness
+                      </Link>
                 </p>
               </div>
 
@@ -605,13 +607,14 @@ const LandingPage = () => {
                   {item.category?.length > 98 ? (
                     <>
                       {item.category.slice(0, 98)}...
-                      <span className="text-[#00D094] font-bold cursor-pointer ml-1">
-                        Read More
-                      </span>
+                      
                     </>
                   ) : (
                     item.category
                   )}
+                  <Link href={`/business-details/${item.id}`} className="text-[#00D094] font-bold cursor-pointer ml-1">
+                        Veiw Buisness
+                      </Link>
                 </p>
               </div>
 

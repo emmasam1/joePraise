@@ -78,6 +78,7 @@ export const useListingStore = create((set, get) => ({
   getAllservices: async () => {
     try {
       const res = await api.get("/services");
+      console.log(res)
       set({
         services: res.data.services || [],
       });

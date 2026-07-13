@@ -13,6 +13,7 @@ import {
   Star,
   Zap,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // const API_BASE = `${process.env.NEXT_PUBLIC_API_URL}/api`;
 
@@ -71,6 +72,7 @@ function Stars({ rating }) {
 
 export default async function DirectoryDetails({ params }) {
   const { id } = await params;
+   const router = useRouter();
 
   const [profileData, reviewsData] = await Promise.all([
     getBusinessProfile(id),
@@ -93,6 +95,14 @@ export default async function DirectoryDetails({ params }) {
   return (
     <main className="min-h-screen bg-[#fcfcfc] text-zinc-800">
       <div className="mx-auto max-w-7xl px-4 py-10 md:px-8">
+         {/* NEW: Back button */}
+        <button
+          onClick={() => router.push("/business-details")}
+          className="mb-6 inline-flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-[#060853] transition-colors"
+        >
+          <ArrowLeftOutlined /> Back to Home
+        </button>
+
         <section className="grid gap-8 lg:grid-cols-[1.3fr_0.9fr]">
           <div>
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center">

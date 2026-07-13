@@ -14,7 +14,7 @@ import {
   ArrowLeft,
   Zap,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 // const API_BASE = `${process.env.NEXT_PUBLIC_API_URL}/api`;
 
@@ -97,12 +97,13 @@ export default async function DirectoryDetails({ params }) {
     <main className="min-h-screen bg-[#fcfcfc] text-zinc-800">
       <div className="mx-auto max-w-7xl px-4 py-10 md:px-8">
          {/* NEW: Back button */}
-        <button
-          onClick={() => router.push("/business-details")}
-          className="mb-6 inline-flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-[#060853] transition-colors"
-        >
-          <ArrowLeft /> Back to Home
-        </button>
+          <Link
+            href="/business-details"
+            className="mb-6 inline-flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-[#060853] transition-colors"
+          >
+            <ArrowLeft size={16} />
+            Back to Directory
+          </Link>
 
         <section className="grid gap-8 lg:grid-cols-[1.3fr_0.9fr]">
           <div>

@@ -351,13 +351,13 @@ export const useBusinessStore = create((set, get) => ({
   // NEW: PUBLIC DISCOVERY STATE (Landing / Category / Profile pages)
   // ============================================================
   publicCategories: [],
-  publicCategoriesLoading: false,
+  publicCategoriesLoading: true,   // was false
 
   newListings: [],
-  newListingsLoading: false,
+  newListingsLoading: true,
 
   popularListings: [],
-  popularListingsLoading: false,
+  popularListingsLoading: true,    // was false
 
   searchResults: [],
   searchLoading: false,
@@ -371,6 +371,7 @@ export const useBusinessStore = create((set, get) => ({
   publicListings: { services: [], physicalProducts: [], digitalProducts: [] },
   publicRatingBreakdown: null,
   publicProfileLoading: false,
+
 
   // STEP 1: Register Initial Personal Details (Unauthenticated Guest Flow)
   registerInitialUser: async (accountData, router) => {

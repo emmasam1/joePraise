@@ -73,7 +73,6 @@ function Stars({ rating }) {
 
 export default async function DirectoryDetails({ params }) {
   const { id } = await params;
-   const router = useRouter();
 
   const [profileData, reviewsData] = await Promise.all([
     getBusinessProfile(id),

@@ -1062,13 +1062,23 @@ const LandingPage = () => {
                   {cat.name}
                 </span>
 
-                <div className="w-20 h-20 rounded-full bg-[#F5E6E6] flex items-center justify-center transition-transform group-hover:scale-110 overflow-hidden">
-                  {cat?.icon.url ? (
-                    <Image src={cat?.icon.url} alt={cat.name} width={40} height={40} unoptimized />
-                  ) : (
+                <div className="w-20 h-20 rounded-full bg-[#F5E6E6] p-1 overflow-hidden transition-transform group-hover:scale-110">
+                {cat?.icon?.url ? (
+                  <div className="relative w-full h-full rounded-full overflow-hidden">
+                    <Image
+                      src={cat.icon.url}
+                      alt={cat.name}
+                      fill
+                      className="object-cover rounded-full"
+                      unoptimized
+                    />
+                  </div>
+                ) : (
+                  <div className="w-full h-full rounded-full flex items-center justify-center">
                     <span className="text-[#800000] text-2xl">•</span>
-                  )}
-                </div>
+                  </div>
+                )}
+              </div>
               </div>
             ))
           )}

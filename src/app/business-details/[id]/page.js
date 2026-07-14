@@ -16,30 +16,14 @@ import {
   Zap,
 } from "lucide-react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL
 
-// async function getBusinessProfile(id) {
-//   const response = await fetch(`${API_BASE}/business/${id}/profile`, {
-//     cache: "no-store",
-//   });
-
-//   if (!response.ok) {
-//     throw new Error("Business not found");
-//   }
-
-//   return response.json();
-// }
-
-async function getBusinessProfile(slug, businessId) {
-  const response = await fetch(
-    `${API_BASE}/business/${slug}/${businessId}/profile`,
-    {
-      cache: "no-store",
-    }
-  );
+async function getBusinessProfile(id) {
+  const response = await fetch(`${API_BASE}/business/${id}/profile`, {
+    cache: "no-store",
+  });
 
   if (!response.ok) {
     throw new Error("Business not found");
@@ -47,6 +31,21 @@ async function getBusinessProfile(slug, businessId) {
 
   return response.json();
 }
+
+// async function getBusinessProfile(slug, businessId) {
+//   const response = await fetch(
+//     `${API_BASE}/business/${slug}/${businessId}/profile`,
+//     {
+//       cache: "no-store",
+//     }
+//   );
+
+//   if (!response.ok) {
+//     throw new Error("Business not found");
+//   }
+
+//   return response.json();
+// }
 
 async function getBusinessReviews(id) {
   try {
@@ -88,20 +87,12 @@ function Stars({ rating }) {
 }
 
 export default async function DirectoryDetails({ params }) {
-  const { slug, id } = await params;
+  const { id } = await params;
 
-const [profileData, reviewsData] = await Promise.all([
-  getBusinessProfile(slug, id),
-  getBusinessReviews(id),
-]);
-
-if (profileData.canonicalUrl) {
-  const currentUrl = `/business/${slug}/${id}`;
-
-  if (profileData.canonicalUrl !== currentUrl) {
-    redirect(profileData.canonicalUrl);
-  }
-}
+  const [profileData, reviewsData] = await Promise.all([
+    getBusinessProfile(id),
+    getBusinessReviews(id),
+  ]);
 
   const business = profileData.business;
   const listings = profileData.listings || { services: [], physicalProducts: [], digitalProducts: [] };
@@ -184,7 +175,7 @@ if (profileData.canonicalUrl) {
               <p className="mt-4 leading-7 text-zinc-700">{business.description || "No description provided yet."}</p>
             </article>
 
-            <BusinessActions businessId={business._id} businessName={business.businessName} slug={business.slug} canonicalUrl={canonicalUrl} />
+            <BusinessActions businessId={business._id} businessName={business.businessName} />
           </div>
 
           <aside>
@@ -406,12 +397,21 @@ if (profileData.canonicalUrl) {
 
 
 // export default async function DirectoryDetails({ params }) {
-//   const { id } = await params;
 
-//   const [profileData, reviewsData] = await Promise.all([
-//     getBusinessProfile(id),
-//     getBusinessReviews(id),
-//   ]);
+//   const { slug, id } = await params;
+
+// const [profileData, reviewsData] = await Promise.all([
+//   getBusinessProfile(slug, id),
+//   getBusinessReviews(id),
+// ]);
+
+// if (profileData.canonicalUrl) {
+//   const currentUrl = `/business/${slug}/${id}`;
+
+//   if (profileData.canonicalUrl !== currentUrl) {
+//     redirect(profileData.canonicalUrl);
+//   }
+// }
 
 //   const business = profileData.business;
 //   const listings = profileData.listings || { services: [], physicalProducts: [], digitalProducts: [] };
@@ -494,7 +494,7 @@ if (profileData.canonicalUrl) {
 //               <p className="mt-4 leading-7 text-zinc-700">{business.description || "No description provided yet."}</p>
 //             </article>
 
-//             <BusinessActions businessId={business._id} businessName={business.businessName} />
+//             <BusinessActions businessId={business._id} businessName={business.businessName} slug={business.slug} canonicalUrl={canonicalUrl} />
 //           </div>
 
 //           <aside>

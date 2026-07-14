@@ -16,7 +16,6 @@ import Image from "next/image";
 const { TextArea } = Input;
 
 export default function BusinessActions({
-  canonicalUrl,
   businessId,
   customerEmail = "",
   businessName = "Aurora Design Studio",
@@ -28,13 +27,13 @@ export default function BusinessActions({
   const [form] = Form.useForm();
   
 
-  // const businessUrl =
-  //   typeof window !== "undefined" ? window.location.href : "";
+  const businessUrl =
+    typeof window !== "undefined" ? window.location.href : "";
 
-   const businessUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}${canonicalUrl}`
-      : "";
+  //  const businessUrl =
+  //   typeof window !== "undefined"
+  //     ? `${window.location.origin}${canonicalUrl}`
+  //     : "";
 
 
   const closeMessageModal = () => {

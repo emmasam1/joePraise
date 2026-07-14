@@ -606,32 +606,33 @@ export const useBusinessStore = create((set, get) => ({
     }
   },
 
-  fetchPublicBusinessProfile_2: async (slug, businessId) => {
-    set({ publicProfileLoading: true, publicBusinessProfile: null });
+//   fetchPublicBusinessProfile_2: async (slug, businessId) => {
+//     set({ publicProfileLoading: true, publicBusinessProfile: null });
 
-    try {
-      const res = await api.get(`/business/${slug}/${businessId}/profile`);
+//     try {
+//       const res = await api.get(`/business/${slug}/${businessId}/profile`);
 
-      if (res.data.success) {
-        set({
-          publicBusinessProfile: res.data.business,
-          publicListings: res.data.listings || { services: [], physicalProducts: [], digitalProducts: [] },
-          publicRatingBreakdown: res.data.ratingBreakdown || null,
-        });
-      }
+//       if (res.data.success) {
+//         set({
+//           publicBusinessProfile: res.data.business,
+//           publicListings: res.data.listings || { services: [], physicalProducts: [], digitalProducts: [] },
+//           publicRatingBreakdown: res.data.ratingBreakdown || null,
+//         });
+//       }
 
-      return res.data;
-    } catch (error) {
-      message.error(
-        error?.response?.data?.message || "Failed to load business profile"
-      );
-      throw error;
-    } finally {
-      set({ publicProfileLoading: false });
-    }
-},
+//       return res.data;
+//     } catch (error) {
+//       message.error(
+//         error?.response?.data?.message || "Failed to load business profile"
+//       );
+//       throw error;
+//     } finally {
+//       set({ publicProfileLoading: false });
+//     }
+// },
 
   // ADMIN / MANAGEMENT UTILITIES
+  
   fetchBusinesses: async (params = {}) => {
     set({ loading: true });
     try {

@@ -30,6 +30,12 @@ export default function BusinessActions({
   const businessUrl =
     typeof window !== "undefined" ? window.location.href : "";
 
+  //  const businessUrl =
+  //   typeof window !== "undefined"
+  //     ? `${window.location.origin}${canonicalUrl}`
+  //     : "";
+
+
   const closeMessageModal = () => {
     form.resetFields();
     setIsMessageOpen(false);

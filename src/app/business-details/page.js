@@ -372,6 +372,12 @@ function DirectoryContent() {
                       >
                         Read More
                       </Link>
+                      {/* <Link
+                        href={`/business/${item.slug}/${item._id}`}
+                        className="text-[#10B981] font-black ml-1 hover:underline"
+                      >
+                        Read More
+                    </Link> */}
                     </p>
                   </div>
 
@@ -388,6 +394,7 @@ function DirectoryContent() {
                     </div>
                     <Link
                       href={`/business-details/${item._id}`}
+                      //href={`/business/${item.slug}/${item._id}`}
                       className="bg-[#10B981] text-white px-5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs hover:opacity-95 transition-all"
                     >
                       View Business

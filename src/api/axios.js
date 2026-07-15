@@ -11,26 +11,47 @@ const api = axios.create({
 });
 
 // Attach token automatically
-api.interceptors.request.use(
-  (config) => {
-    const token = useAuthStore.getState().token;
+// api.interceptors.request.use(
+//   (config) => {
+//     const token = useAuthStore.getState().token;
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+//     if (token) {
+//       config.headers.Authorization = `Bearer ${token}`;
+//     }
+
+//     console.log("📡 API Request:", {
+//       url: config.url,
+//       method: config.method,
+//     });
+
+//     return config;
+//   },
+//   (error) => {
+//     console.error("❌ Request Error:", error);
+//     return Promise.reject(error);
+//   }
+// );
+
+  api.interceptors.request.use(
+    (config) => {
+      const { token, isAuthenticated } = useAuthStore.getState();
+
+      if (token && isAuthenticated) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+
+      console.log("📡 API Request:", {
+        url: config.url,
+        method: config.method,
+      });
+
+      return config;
+    },
+    (error) => {
+      console.error("❌ Request Error:", error);
+      return Promise.reject(error);
     }
-
-    console.log("📡 API Request:", {
-      url: config.url,
-      method: config.method,
-    });
-
-    return config;
-  },
-  (error) => {
-    console.error("❌ Request Error:", error);
-    return Promise.reject(error);
-  }
-);
+  );
 
 // Handle responses + token refresh
 api.interceptors.response.use(

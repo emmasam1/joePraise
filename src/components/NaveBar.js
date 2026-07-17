@@ -15,7 +15,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 
-const NaveBar = () => {
+const NaveBar = ({showCart}) => {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -155,6 +155,16 @@ const dashboardLink = dashboardRoutes[user?.role] || "/customer-dashboard";
           ) : (
             /* SHOW LOGIN/REGISTER WHEN NOT AUTHENTICATED */
             <>
+            {showCart && (
+          <Link 
+            href="/checkout" 
+            className="relative"
+            // className="flex items-center gap-1.5 bg-[#060853] text-white px-4 py-2 rounded-full hover:bg-[#0c107c] transition-all text-xs font-bold shadow-sm"
+          >
+            <div className="absolute bg-[#060853] -top-1 w-4 text-xs flex justify-center items-center rounded-full -right-2">0</div>
+            <img src="/images/cart.png" className="w-7"/>
+          </Link>
+        )}
               <Link href="/business-registration">
                 <Button className="h-12 px-8! border-[#060853]! text-[#060853]! font-bold rounded-xl hover:bg-gray-50">
                   Register

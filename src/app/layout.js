@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Geist, Geist_Mono } from "next/font/google";
@@ -21,6 +20,7 @@ const geistMono = Geist_Mono({
 export default function RootLayout({ children }) {
   const pathname = usePathname();
 
+  // Define links using normal string matches or simple regex checks
   const navLinks = [
     "/",
     "/support",
@@ -36,7 +36,19 @@ export default function RootLayout({ children }) {
     "/list-your-business",
   ];
 
-  const showNavbar = navLinks.includes(pathname);
+  // Helper to check if pathname is an exact match OR if it starts with dynamic nested segments
+  const shouldShowNavbar = () => {
+    // Check strict array match
+    if (navLinks.includes(pathname)) return true;
+    
+    // Explicitly handle any sub-route of /business-details/ like /business-details/1234
+    if (pathname.startsWith("/business-details/")) return true;
+    
+    return false;
+  };
+
+  const showCart = pathname.startsWith("/business-details/") && pathname !== "/business-details";
+  const showNavbar = shouldShowNavbar();
   const showFooter = footerLinks.includes(pathname);
 
   return (
@@ -49,7 +61,7 @@ export default function RootLayout({ children }) {
         {/* Initialize auth */}
         <AuthInitializer />
 
-        {showNavbar && <NaveBar />}
+        {showNavbar && <NaveBar showCart={showCart} />}
 
         <main className="grow">
           {children}

@@ -41,7 +41,7 @@ const CustomModal = ({
               {showClose && (
                 <button
                   onClick={onClose}
-                  className="p-1 rounded-full hover:bg-gray-100 transition-colors text-gray-500"
+                  className="p-1 rounded-full z-10 hover:bg-gray-100 transition-colors text-gray-500"
                 >
                   <FiX size={20} />
                 </button>

@@ -9,41 +9,53 @@ import {
   CheckCircleOutlined,
   LockOutlined,
 } from "@ant-design/icons";
-import { Input, Radio, Button, Select } from "antd";
+import { Input, Radio, Select, Checkbox } from "antd";
 import Loader from "../../components/Loader";
 import { Country, City } from "country-state-city";
+import Link from "next/link";
+
+// We import your CustomModal, but we'll build a fallback just in case this component is broken
+import CustomModal from "@/components/CustomModal";
 
 const CheckoutPage = () => {
-  // Manage 3 distinct wizard steps: 1 = Order Review, 2 = Account, 3 = Payment
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(true);
+
+  // Controls modal visibility
+  const [paymentMethod, setPaymentMethod] = useState(false);
+  const [isLoginMode, setIsLoginMode] = useState(false);
+
+  const [selectedMethod, setSelectedMethod] = useState("online");
+  const [useWallet, setUseWallet] = useState(false);
+
   const countries = useMemo(() => Country.getAllCountries(), []);
 
   const [formData, setFormData] = useState({
-    // Step 1: Order Review / Contact Info & Delivery
     fullName: "",
     phoneNumber: "",
     street: "",
     postalCode: "",
     city: "",
     state: "",
-    // Step 2: Account details
     email: "",
     password: "",
-    country: "", // State key for country selector
-    accountCity: "", // Separate state key for account-level city selector
-    // Step 3: Payment details
+    country: "",
+    accountCity: "",
     cardNumber: "",
     cardExpiry: "",
     cardCvv: "",
+    expiry: "",
+    cvc: "",
   });
 
-  // Dynamically load cities only when a country is selected to avoid runtime empty calls
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    alert("Processing payment of $3459.90...");
+  };
+
   const cities = useMemo(() => {
     return formData.country ? City.getCitiesOfCountry(formData.country) : [];
   }, [formData.country]);
-
-  //   console.log(cities)
 
   const [value, setValue] = useState("standard");
 
@@ -60,11 +72,35 @@ const CheckoutPage = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleNextStep = (e) => {
-    e.preventDefault();
-    if (currentStep < 3) {
+  // 100% reliable trigger function
+  const triggerNextStep = (e) => {
+    if (e) e.preventDefault();
+    // console.log("triggerNextStep invoked. Current Step:", currentStep);
+
+    if (currentStep === 2) {
+      // Basic validation
+      if (isLoginMode) {
+        if (!formData.email || !formData.password) {
+          alert("Please fill in your Email and Password.");
+          return;
+        }
+      } else {
+        if (!formData.fullName || !formData.email || !formData.password) {
+          alert("Please fill in your Name, Email, and Password.");
+          return;
+        }
+      }
+
+      console.log("Opening Modal...");
+      setPaymentMethod(true);
+    } else if (currentStep < 3) {
       setCurrentStep((prev) => prev + 1);
     }
+  };
+
+  const handleModalCloseAndProceed = () => {
+    setPaymentMethod(false);
+    setCurrentStep(3);
   };
 
   const handlePrevStep = () => {
@@ -84,7 +120,6 @@ const CheckoutPage = () => {
     const timer = setTimeout(() => {
       setLoading(false);
     }, 5000);
-
     return () => clearTimeout(timer);
   }, []);
 
@@ -94,15 +129,12 @@ const CheckoutPage = () => {
 
   return (
     <div className="min-h-screen bg-white font-sans antialiased pb-16">
-      {/* 1. Header Area */}
+      {/* Header Area */}
       <header className="pt-5">
         <div className="px-10 h-20">
-          <div className="flex items-center gap-3">
-            {/* Dark deep blue/indigo icon representing Aurora Design Studio logo */}
-          </div>
           {currentStep === 1 ? (
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-[#060853] rounded-xl flex items-center justify-center text-white shadow-md shadow-indigo-900/10 rotate-45">
+              <div className="w-10 h-10 bg-[#060853] rounded-xl flex items-center justify-center text-white shadow-md rotate-45">
                 <span className="-rotate-45 font-black text-lg tracking-tighter">
                   A
                 </span>
@@ -118,128 +150,114 @@ const CheckoutPage = () => {
                 JoePraisesmarthub
               </span>
             </div>
-          ) : (
-            ""
-          )}
+          ) : null}
         </div>
       </header>
 
       <main className="mt-8">
-        <div className="bg-[#D3D5D433] px-10 p-5 mb-8">
-          <div className="flex items-center justify-between w-full ">
-            {/* Step 1: Order Review */}
-            <button
-              type="button"
-              onClick={() => setCurrentStep(1)}
-              className="flex items-center gap-2 focus:outline-none"
-            >
-              <div
-                className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${
-                  currentStep === 1
-                    ? "bg-[#18C37E]/10 text-[#18C37E] border border-[#18C37E]/30"
-                    : currentStep > 1
-                      ? "bg-[#18C37E] text-white"
-                      : "bg-slate-100 text-slate-400 border border-slate-200"
-                }`}
+        {/* Step Progress Bar */}
+        {(currentStep === 1 || currentStep === 2) && (
+          <div className="bg-[#D3D5D433] px-10 p-5 mb-8">
+            <div className="flex items-center justify-between w-full">
+              <button
+                type="button"
+                onClick={() => setCurrentStep(1)}
+                className="flex items-center gap-2 focus:outline-none"
               >
-                {currentStep > 1 ? <CheckCircleOutlined /> : "1"}
+                <div
+                  className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${
+                    currentStep === 1
+                      ? "bg-[#18C37E]/10 text-[#18C37E] border border-[#18C37E]/30"
+                      : currentStep > 1
+                        ? "bg-[#18C37E] text-white"
+                        : "bg-slate-100 text-slate-400 border"
+                  }`}
+                >
+                  {currentStep > 1 ? <CheckCircleOutlined /> : "1"}
+                </div>
+                <span
+                  className={`text-xs font-bold ${currentStep === 1 ? "text-[#18C37E]" : "text-slate-400"}`}
+                >
+                  Order Review
+                </span>
+              </button>
+
+              <div className="flex-1 h-[2px] mx-3 bg-[#DEE2E0] relative">
+                <div
+                  className={`absolute top-0 left-0 h-full bg-[#18C37E] transition-all duration-500 ${currentStep >= 2 ? "w-full" : "w-0"}`}
+                />
               </div>
-              <span
-                className={`text-xs font-bold transition-colors ${
-                  currentStep === 1 ? "text-[#18C37E]" : "text-slate-400"
-                }`}
-              >
-                Order Review
-              </span>
-            </button>
 
-            {/* Connecting Bar 1 -> 2 */}
-            <div className="flex-1 h-[2px] mx-3 min-w-[20px] bg-[#DEE2E0] relative">
-              <div
-                className={`absolute top-0 left-0 h-full bg-[#18C37E] transition-all duration-500 ${
-                  currentStep >= 2 ? "w-full" : "w-0"
-                }`}
-              />
-            </div>
-
-            {/* Step 2: Account */}
-            <button
-              type="button"
-              onClick={() => currentStep > 1 && setCurrentStep(2)}
-              className="flex items-center gap-2 focus:outline-none"
-              disabled={currentStep < 2}
-            >
-              <div
-                className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${
-                  currentStep === 2
-                    ? "bg-[#18C37E]/10 text-[#18C37E] border border-[#18C37E]/30"
-                    : currentStep > 2
-                      ? "bg-[#18C37E] text-white"
-                      : "bg-slate-100 text-slate-400 border border-slate-200"
-                }`}
+              <button
+                type="button"
+                onClick={() => currentStep > 1 && setCurrentStep(2)}
+                className="flex items-center gap-2 focus:outline-none"
+                disabled={currentStep < 2}
               >
-                {currentStep > 2 ? <CheckCircleOutlined /> : "2"}
+                <div
+                  className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${
+                    currentStep === 2
+                      ? "bg-[#18C37E]/10 text-[#18C37E] border border-[#18C37E]/30"
+                      : currentStep > 2
+                        ? "bg-[#18C37E] text-white"
+                        : "bg-slate-100 text-slate-400 border"
+                  }`}
+                >
+                  {currentStep > 2 ? <CheckCircleOutlined /> : "2"}
+                </div>
+                <span
+                  className={`text-xs font-bold ${currentStep === 2 ? "text-[#18C37E]" : "text-slate-400"}`}
+                >
+                  Account
+                </span>
+              </button>
+
+              <div className="flex-1 h-[2px] mx-3 bg-[#DEE2E0] relative">
+                <div
+                  className={`absolute top-0 left-0 h-full bg-[#18C37E] transition-all duration-500 ${currentStep === 3 ? "w-full" : "w-0"}`}
+                />
               </div>
-              <span
-                className={`text-xs font-bold transition-colors ${
-                  currentStep === 2 ? "text-[#18C37E]" : "text-slate-400"
-                }`}
-              >
-                Account
-              </span>
-            </button>
 
-            {/* Connecting Bar 2 -> 3 */}
-            <div className="flex-1 h-[2px] mx-3 min-w-[20px] bg-[#DEE2E0] relative">
-              <div
-                className={`absolute top-0 left-0 h-full bg-[#18C37E] transition-all duration-500 ${
-                  currentStep === 3 ? "w-full" : "w-0"
-                }`}
-              />
-            </div>
-
-            {/* Step 3: Payment */}
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${
-                  currentStep === 3
-                    ? "bg-[#060853] text-white border border-[#060853]"
-                    : "bg-slate-100 text-slate-400 border border-slate-200"
-                }`}
-              >
-                3
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${
+                    currentStep === 3
+                      ? "bg-[#060853] text-white"
+                      : "bg-slate-100 text-slate-400 border"
+                  }`}
+                >
+                  3
+                </div>
+                <span
+                  className={`text-xs font-bold ${currentStep === 3 ? "text-[#060853]" : "text-slate-400"}`}
+                >
+                  Payment
+                </span>
               </div>
-              <span
-                className={`text-xs font-bold transition-colors ${
-                  currentStep === 3 ? "text-[#060853]" : "text-slate-400"
-                }`}
-              >
-                Payment
-              </span>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* 4. Multi-step Form Panels */}
-        <div>
+        {/* Form Panels */}
+        <div className="px-10">
           {currentStep === 1 && (
             /* ================= STEP 1: ORDER REVIEW ================= */
             <form
-              onSubmit={handleNextStep}
+              onSubmit={triggerNextStep}
               className="space-y-8 animate-fadeIn"
             >
-              <section className="p-8">
+              <section className="py-4">
                 <div className="mb-6">
                   <h2 className="text-xl font-bold text-slate-900">
                     Confirm Your Order
                   </h2>
-                  <p className="text-xs text-slate-400 font-medium mt-1">
+                  <p className="text-xs text-slate-400 mt-1">
                     Contact Information
                   </p>
                 </div>
 
-                <div className="border border-gray-200 rounded-lg p-5">
-                  <div className="flex flex-col gap-2 mb-5">
+                <div className="border border-gray-200 rounded-lg p-5 space-y-4">
+                  <div className="flex flex-col gap-2">
                     <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                       Full Name
                     </label>
@@ -266,16 +284,14 @@ const CheckoutPage = () => {
                   </div>
                 </div>
 
-                <section className="rounded-lg border border-gray-200 p-5 mt-10">
-                  <div className="mb-6">
-                    <h2 className="text-xl font-bold text-slate-900">
-                      Delivery Address
-                    </h2>
-                  </div>
-
+                {/* Delivery Address */}
+                <section className="rounded-lg border border-gray-200 p-5 mt-8">
+                  <h2 className="text-xl font-bold text-slate-900 mb-6">
+                    Delivery Address
+                  </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-2">
-                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      <label className="text-[11px] font-bold text-slate-400 uppercase">
                         Street Address
                       </label>
                       <Input
@@ -285,9 +301,8 @@ const CheckoutPage = () => {
                         onChange={handleInputChange}
                       />
                     </div>
-
                     <div className="flex flex-col gap-2">
-                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      <label className="text-[11px] font-bold text-slate-400 uppercase">
                         Postal Code
                       </label>
                       <Input
@@ -297,9 +312,8 @@ const CheckoutPage = () => {
                         onChange={handleInputChange}
                       />
                     </div>
-
                     <div className="flex flex-col gap-2">
-                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      <label className="text-[11px] font-bold text-slate-400 uppercase">
                         City
                       </label>
                       <Input
@@ -309,9 +323,8 @@ const CheckoutPage = () => {
                         onChange={handleInputChange}
                       />
                     </div>
-
                     <div className="flex flex-col gap-2">
-                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      <label className="text-[11px] font-bold text-slate-400 uppercase">
                         State / Region
                       </label>
                       <Input
@@ -325,42 +338,39 @@ const CheckoutPage = () => {
                 </section>
               </section>
 
-              <div className="bg-[#D3D5D433] py-7 px-10">
+              {/* Delivery Options */}
+              <div className="bg-[#D3D5D433] py-7 px-5 rounded-lg">
                 <h2 className="text-xl font-bold text-slate-900 mb-4">
                   Delivery Options
                 </h2>
-
                 <Radio.Group
                   onChange={onChange}
                   value={value}
                   className="w-full flex flex-col gap-4"
                 >
-                  {/* Standard Delivery Option */}
                   <div
                     onClick={() => setValue("standard")}
-                    className={`flex items-center justify-between cursor-pointer transition-all mb-2`}
+                    className="flex items-center justify-between cursor-pointer"
                   >
                     <Radio
                       value="standard"
                       className="text-sm font-semibold text-slate-700"
                     >
-                      Standard Delivery (3-5 business days) - $5.99
+                      Standard Delivery (3-5 business days)
                     </Radio>
                     <span className="text-sm font-bold text-slate-900">
                       $5.99
                     </span>
                   </div>
-
-                  {/* Express Delivery Option */}
                   <div
                     onClick={() => setValue("express")}
-                    className={`flex items-center justify-between cursor-pointer transition-all`}
+                    className="flex items-center justify-between cursor-pointer"
                   >
                     <Radio
                       value="express"
                       className="text-sm font-semibold text-slate-700"
                     >
-                      Express Delivery (1-2 business days) - $12.99
+                      Express Delivery (1-2 business days)
                     </Radio>
                     <span className="text-sm font-bold text-slate-900">
                       $12.99
@@ -369,303 +379,590 @@ const CheckoutPage = () => {
                 </Radio.Group>
               </div>
 
-              <div className="mt-15 px-10">
-                <h2 className="text-xl font-bold text-slate-900">
-                  Confirm Your Order
-                </h2>
-                <div className="mt-3 border-b border-gray-100 pb-3">
-                  <div className="flex justify-between items-center mb-2">
-                    <p className="text-[#6A7282] text-sm">
-                      Aurora Design Studio
-                    </p>
-                    <p className="text-black font-extrabold">$1,278.00</p>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <p className="text-[#6A7282] text-sm">Ceramic Limited</p>
-                    <p className="text-black font-extrabold">$1,278.00</p>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center mt-4 mb-5">
-                  <p className="text-[#6A7282] font-bold text-sm">Total</p>
-                  <p className="text-black font-extrabold">$58,278.00</p>
-                </div>
-              </div>
-
-              <div className="flex justify-end sm:flex-row gap-4 pt-4 px-10">
-                <Button
-                  htmlType="submit"
-                  className="font-bold flex items-center bg-[#060853]! py-4! rounded-sm! text-white! hover:border-gray-200! hover:text-white!"
+              {/* Actions */}
+              <div className="flex justify-end pt-4">
+                <button
+                  type="submit"
+                  className="flex items-center justify-center gap-2 bg-[#060853] text-white py-2 px-8 rounded-sm transition-colors cursor-pointer"
                 >
                   <img src="/images/payment.png" alt="" className="w-5" />
                   Continue to Account
-                </Button>
+                </button>
               </div>
             </form>
           )}
 
           {currentStep === 2 && (
             /* ================= STEP 2: ACCOUNT ================= */
-            <form
-              onSubmit={handleNextStep}
-              className="space-y-8 animate-fadeIn"
-            >
-              <section className="bg-white p-8">
+            <div className="space-y-8 animate-fadeIn">
+              <section className="bg-white py-4">
                 <div className="mb-6">
                   <h2 className="text-xl font-bold text-slate-900">
-                    Create Your Account
+                    {isLoginMode ? "Welcome Back" : "Create Your Account"}
                   </h2>
                   <p className="text-xs text-slate-400 font-medium mt-1">
-                    Email AddressTo proceed with payment, please create an
-                    account or login if you already have one.
+                    {isLoginMode ? (
+                      <>
+                        Log in to complete your purchase.{" "}
+                        <span
+                          onClick={() => setIsLoginMode(false)}
+                          className="text-[#060853] font-bold cursor-pointer underline"
+                        >
+                          Create new account
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        Create an account or{" "}
+                        <span
+                          onClick={() => setIsLoginMode(true)}
+                          className="text-[#060853] font-bold cursor-pointer underline"
+                        >
+                          login
+                        </span>{" "}
+                        if you already have one.
+                      </>
+                    )}
                   </p>
                 </div>
 
                 <div className="space-y-6 rounded-lg border border-gray-200 p-5">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                        Full Name
-                      </label>
-                      <Input
-                        type="text"
-                        name="fullName"
-                        required
-                        value={formData.fullName}
-                        onChange={handleInputChange}
-                        placeholder="Full Name"
-                      />
+                  {isLoginMode ? (
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[11px] font-bold text-slate-400 uppercase">
+                          Email Address
+                        </label>
+                        <Input
+                          type="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          placeholder="you@example.com"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[11px] font-bold text-slate-400 uppercase">
+                          Password
+                        </label>
+                        <Input
+                          type="password"
+                          name="password"
+                          value={formData.password}
+                          onChange={handleInputChange}
+                          placeholder="*********"
+                        />
+                      </div>
                     </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                        Email Address
-                      </label>
-                      <Input
-                        type="email"
-                        name="email"
-                        required
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        placeholder="you@example.com"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                        Phone Number
-                      </label>
-                      <Input
-                        type="text"
-                        name="phoneNumber"
-                        value={formData.phoneNumber}
-                        onChange={handleInputChange}
-                        placeholder="+44 7700 900077"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                        Country
-                      </label>
-                      <Select
-                        showSearch
-                        size="small"
-                        placeholder="Select Country"
-                        value={formData.country || undefined}
-                        className="h-8! text-xs! rounded-md!"
-                        optionFilterProp="children"
-                        onChange={(value) => {
-                          handleSelectChange("country", value);
-                          handleSelectChange("accountCity", ""); // Reset city selection on country switch
-                        }}
-                        filterOption={(input, option) => {
-                          const text =
-                            typeof option?.children === "string"
-                              ? option.children
-                              : Array.isArray(option?.children)
-                                ? option.children.join(" ")
-                                : "";
-                          return text
-                            .toLowerCase()
-                            .includes(input.toLowerCase());
-                        }}
-                      >
-                        {countries.map((country) => (
-                          <Select.Option
-                            key={country.isoCode}
-                            value={country.isoCode}
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[11px] font-bold text-slate-400 uppercase">
+                            Full Name
+                          </label>
+                          <Input
+                            type="text"
+                            name="fullName"
+                            value={formData.fullName}
+                            onChange={handleInputChange}
+                            placeholder="Full Name"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[11px] font-bold text-slate-400 uppercase">
+                            Email Address
+                          </label>
+                          <Input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            placeholder="you@example.com"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[11px] font-bold text-slate-400 uppercase">
+                            Phone Number
+                          </label>
+                          <Input
+                            type="text"
+                            name="phoneNumber"
+                            value={formData.phoneNumber}
+                            onChange={handleInputChange}
+                            placeholder="+44 7700 900077"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[11px] font-bold text-slate-400 uppercase">
+                            Country
+                          </label>
+                          <Select
+                            showSearch
+                            placeholder="Select Country"
+                            value={formData.country || undefined}
+                            onChange={(val) => {
+                              handleSelectChange("country", val);
+                              handleSelectChange("accountCity", "");
+                            }}
                           >
-                            {country.flag} {country.name}
-                          </Select.Option>
-                        ))}
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      City
-                    </label>
-                    <Select
-                      showSearch
-                      size="small"
-                      placeholder={
-                        formData.country
-                          ? "Select City"
-                          : "Select a country first"
-                      }
-                      disabled={!formData.country}
-                      value={formData.accountCity || undefined}
-                      className="h-8! text-xs! rounded-md!"
-                      optionFilterProp="children"
-                      onChange={(value) => {
-                        handleSelectChange("accountCity", value);
-                      }}
-                      filterOption={(input, option) => {
-                        const text =
-                          typeof option?.children === "string"
-                            ? option.children
-                            : Array.isArray(option?.children)
-                              ? option.children.join(" ")
-                              : "";
-                        return text.toLowerCase().includes(input.toLowerCase());
-                      }}
-                    >
-                      {cities.map((city) => (
-                        <Select.Option
-                          key={`${city.name}-${city.latitude}`}
-                          value={city.name}
-                        >
-                          {city.name}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </div>
+                            {countries.map((c) => (
+                              <Select.Option key={c.isoCode} value={c.isoCode}>
+                                {c.flag} {c.name}
+                              </Select.Option>
+                            ))}
+                          </Select>
+                        </div>
+                      </div>
 
-                  <div className="flex flex-col gap-2">
-                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                        Password
-                      </label>
-                      <Input
-                        type="password"
-                        name="password"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                        placeholder="*********"
-                      />
-                    </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[11px] font-bold text-slate-400 uppercase">
+                          City
+                        </label>
+                        <Select
+                          showSearch
+                          placeholder={
+                            formData.country
+                              ? "Select City"
+                              : "Select a country first"
+                          }
+                          disabled={!formData.country}
+                          value={formData.accountCity || undefined}
+                          onChange={(val) =>
+                            handleSelectChange("accountCity", val)
+                          }
+                        >
+                          {cities.map((city) => (
+                            <Select.Option
+                              key={`${city.name}-${city.latitude}`}
+                              value={city.name}
+                            >
+                              {city.name}
+                            </Select.Option>
+                          ))}
+                        </Select>
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <label className="text-[11px] font-bold text-slate-400 uppercase">
+                          Password
+                        </label>
+                        <Input
+                          type="password"
+                          name="password"
+                          value={formData.password}
+                          onChange={handleInputChange}
+                          placeholder="*********"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
+
+                {!isLoginMode && (
+                  <div className="flex items-center gap-3 mt-5">
+                    <Checkbox />
+                    <p className="text-[#060853] text-sm">
+                      I agree to the{" "}
+                      <Link className="font-bold underline" href="#">
+                        Terms
+                      </Link>{" "}
+                      and{" "}
+                      <Link className="font-bold underline" href="#">
+                        Privacy
+                      </Link>
+                    </p>
+                  </div>
+                )}
               </section>
 
-              <div className="flex flex-col sm:flex-row gap-4 pt-4 px-8">
-                <button
-                  type="submit"
-                  className="flex-1 py-4 bg-[#060853] text-white font-bold rounded-xl shadow-lg shadow-indigo-950/20 hover:bg-[#04053d] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-                >
-                  <UserOutlined className="text-lg" />
-                  <span>Proceed to Payment</span>
-                </button>
+              {/* Standard HTML Action Buttons to avoid any library blocking */}
+              <div className="flex justify-between items-center mt-8">
                 <button
                   type="button"
                   onClick={handlePrevStep}
-                  className="py-4 px-8 border border-slate-200 hover:border-slate-300 bg-white text-slate-600 font-bold rounded-xl transition-all"
+                  className="py-2 px-8 rounded-sm bg-white border border-gray-300 text-black  transition-all flex items-center gap-2 cursor-pointer hover:bg-gray-50"
                 >
-                  Back
+                  <img
+                    src="/images/arrow-left-line.png"
+                    alt=""
+                    className="w-5"
+                  />
+                  Back to Order
+                </button>
+
+                <button
+                  type="button"
+                  onClick={triggerNextStep}
+                  className="flex items-center justify-center gap-2 bg-[#060853] text-white py-2 px-8 rounded-sm transition-colors cursor-pointer"
+                >
+                  <img src="/images/check-box.png" alt="" className="w-5" />
+                  {isLoginMode ? "Login" : "Proceed to Payment"}
                 </button>
               </div>
-            </form>
+            </div>
           )}
 
           {currentStep === 3 && (
-            /* ================= STEP 3: PAYMENT ================= */
-            <form
-              onSubmit={handleCompleteOrder}
-              className="space-y-8 animate-fadeIn"
-            >
-              <section className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
-                <div className="mb-6 flex justify-between items-center">
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-900">
-                      Secure Payment
-                    </h2>
-                    <p className="text-xs text-slate-400 font-medium mt-1">
-                      Safe & encrypted
-                    </p>
-                  </div>
-                  <LockOutlined className="text-emerald-500 text-lg" />
-                </div>
-
-                <div className="space-y-6">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <CreditCardOutlined /> Card Number
-                    </label>
-                    <input
-                      type="text"
-                      name="cardNumber"
-                      required
-                      value={formData.cardNumber}
-                      onChange={handleInputChange}
-                      placeholder="0000 0000 0000 0000"
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#060853]/10 focus:border-[#060853] transition-all"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                        Expiry Date
-                      </label>
-                      <input
-                        type="text"
-                        name="cardExpiry"
-                        required
-                        value={formData.cardExpiry}
-                        onChange={handleInputChange}
-                        placeholder="MM/YY"
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#060853]/10 focus:border-[#060853] transition-all"
-                      />
+            <div className="absolute top-0 left-0 w-full">
+              <div className="grid grid-cols-1 md:grid-cols-2 h-screen">
+                <div className="bg-[#FBFBFB] p-15">
+                  <div className="">
+                    <div className="mb-8 p-5">
+                      <span className="text-sm font-bold text-slate-900 tracking-tight block">
+                        Pay Powder
+                      </span>
+                      <h1 className="text-4xl font-bold text-slate-900 mt-1">
+                        $433
+                      </h1>
                     </div>
 
-                    <div className="flex flex-col gap-2">
-                      <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                        CVV Code
-                      </label>
-                      <input
-                        type="password"
-                        maxLength="3"
-                        name="cardCvv"
-                        required
-                        value={formData.cardCvv}
-                        onChange={handleInputChange}
-                        placeholder="•••"
-                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#060853]/10 focus:border-[#060853] transition-all"
-                      />
+                    {/* Item List */}
+                    <div className="space-y-6 mb-8">
+                      {/* Item 1: Pure Set */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 flex items-center justify-center border border-slate-100">
+                            <span className="text-lg">🏺</span>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-bold text-slate-900">
+                              Pure Set
+                            </h3>
+                            <p className="text-xs text-[#2A2A2A] font-medium">
+                              Qty 1
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-sm font-bold text-slate-900">
+                            $359.00
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Item 2: Ice cream */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-lg bg-slate-100 overflow-hidden flex-shrink-0 flex items-center justify-center border border-slate-100">
+                            <span className="text-lg">🍦</span>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-bold text-slate-900">
+                              Ice cream
+                            </h3>
+                            <p className="text-xs text-[#2A2A2A] font-medium">
+                              Qty 2
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-sm font-bold text-slate-900">
+                            $64.00
+                          </span>
+                          <p className="text-[10px] text-[#2A2A2A] mt-0.5">
+                            $32.00{" "}
+                            <span className="font-normal text-[#2A2A2A]">
+                              each
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Calculations Section */}
+                    <div className="space-y-4 pl-15">
+                      {/* Subtotal */}
+                      <div className="border-t pt-5 border-slate-100 flex justify-between items-center text-sm">
+                        <span className="font-bold text-slate-900">
+                          Subtotal
+                        </span>
+                        <span className="font-bold text-slate-900">
+                          $423.00
+                        </span>
+                      </div>
+
+                      {/* Shipping details matching design */}
+                      <div className="flex justify-between items-start text-xs text-slate-400 pt-2 pb-4">
+                        <div className="max-w-[70%]">
+                          <p className="font-medium text-[#2A2A2A]">Shipping</p>
+                          <p className="text-[11px] text-[#2A2A2A] mt-0.5">
+                            Ground shipping (3-5 business days)
+                          </p>
+                        </div>
+                        <span className="font-medium text-[#2A2A2A]">
+                          $10.00
+                        </span>
+                      </div>
+
+                      {/* Total due footer */}
+                      <div className="border-t border-slate-100 pt-5 flex justify-between items-center">
+                        <span className="text-sm font-bold text-slate-900">
+                          Total Due
+                        </span>
+                        <span className="text-sm font-bold text-slate-900">
+                          $433.00
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </section>
 
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <button
-                  type="submit"
-                  className="flex-1 py-4 bg-[#18C37E] text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 hover:bg-[#15ab6e] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-                >
-                  <CheckCircleOutlined className="text-lg" />
-                  <span>Complete Order & Pay</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handlePrevStep}
-                  className="py-4 px-8 border border-slate-200 hover:border-slate-300 bg-white text-slate-600 font-bold rounded-xl transition-all"
-                >
-                  Back
-                </button>
+                <div className="bg-white p-6 pt-10">
+                  <div className="w-2/3 mx-auto">
+                    <button
+                      type="button"
+                      className="w-full bg-[#060853] text-white py-3 px-4 rounded-sm flex items-center justify-center gap-1.5 transition-colors duration-200 cursor-pointer"
+                    >
+                      {/* Apple Logo SVG */}
+                      <svg
+                        className="w-4 h-4 fill-current mb-0.5"
+                        viewBox="0 0 170 170"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.34.13-9.14-1.92-14.38-6.14-3.51-2.9-7.51-7.7-11.99-14.41-11.19-16.79-16.79-35.31-16.79-55.55 0-12.58 3.27-23.06 9.82-31.42 6.54-8.37 14.83-12.56 24.87-12.56 4.12 0 8.87 1.1 14.25 3.28 5.37 2.19 8.94 3.28 10.71 3.28 1.55 0 5.17-1.12 10.85-3.38 5.69-2.25 10.15-3.29 13.4-3.1 11.83.62 21.03 4.96 27.62 13.04-9.61 5.83-14.29 13.88-14.04 24.16.25 8.12 3.23 14.93 8.94 20.43 5.7 5.5 12.61 8.54 20.73 9.13 1.15 3.03 2.1 6.13 2.85 9.32.74 3.19 1.12 6.16 1.12 8.92 0 3.74-.43 7.84-1.28 12.29zM119.22 28.14c0-7.85-2.73-14.87-8.19-21.07 5.75-.12 11.45 2.19 17.11 6.94 5.25 4.41 8.16 10.19 8.74 17.33-6.12.5-11.53-1.46-16.23-5.88-1.11-1.05-1.43-1.25-1.43-7.32z" />
+                      </svg>
+                      <span className="text-base font-medium tracking-tight">
+                        Pay
+                      </span>
+                    </button>{" "}
+                    {/* "Or pay with card" Divider */}
+                    <div className="flex items-center my-6">
+                      <div className="flex-1 border-t border-[#E2E8F0]"></div>
+                      <span className="px-4 text-[13px] font-semibold text-[#CBD5E1] whitespace-nowrap bg-white">
+                        Or pay with card
+                      </span>
+                      <div className="flex-1 border-t border-[#E2E8F0]"></div>
+                    </div>
+                    {/* Card Form */}
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-bold text-slate-900 mb-3">
+                          Payment details
+                        </label>
+
+                        {/* Card Number Input with integrated Brand Logos */}
+                        <div className="relative">
+                          <input
+                            type="text"
+                            name="cardNumber"
+                            placeholder="1234 2345 7564 4567"
+                            value={formData.cardNumber}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#8A94C0]/40 rounded-lg text-sm text-slate-900 placeholder-slate-300 focus:outline-none focus:border-[#050B54] focus:ring-1 focus:ring-[#050B54] transition-all"
+                            required
+                          />
+                          {/* Card Brand Icons Container */}
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none">
+                            {/* Visa Icon */}
+                            <div className="w-7 h-5 bg-[#1A1F71] rounded flex items-center justify-center">
+                              <span className="text-[7px] text-white font-extrabold italic tracking-tighter">
+                                VISA
+                              </span>
+                            </div>
+                            {/* Mastercard Icon */}
+                            <div className="w-7 h-5 bg-[#3A3A3A] rounded flex items-center justify-center relative overflow-hidden">
+                              <div className="w-3.5 h-3.5 bg-[#EB001B] rounded-full absolute left-1"></div>
+                              <div className="w-3.5 h-3.5 bg-[#F79E1B] rounded-full absolute right-1 opacity-90"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Expiry & CVC Grid */}
+                      <div className="grid grid-cols-2 gap-3.5">
+                        <input
+                          type="text"
+                          name="expiry"
+                          placeholder="MM / YY"
+                          value={formData.expiry}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#8A94C0]/40 rounded-lg text-sm text-slate-900 placeholder-slate-300 focus:outline-none focus:border-[#050B54] focus:ring-1 focus:ring-[#050B54] transition-all"
+                          required
+                        />
+                        <input
+                          type="password"
+                          name="cvc"
+                          placeholder="CVC"
+                          maxLength="4"
+                          value={formData.cvc}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#8A94C0]/40 rounded-lg text-sm text-slate-900 placeholder-slate-300 focus:outline-none focus:border-[#050B54] focus:ring-1 focus:ring-[#050B54] transition-all"
+                          required
+                        />
+                      </div>
+
+                      {/* Complete Payment Button */}
+                      <div className="pt-2">
+                        <button
+                          type="submit"
+                          className="w-full bg-[#060853] text-white py-3 px-4 rounded-sm font-bold text-sm tracking-wide transition-colors duration-200 cursor-pointer"
+                        >
+                          Pay $3459.9
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
               </div>
-            </form>
+            </div>
           )}
         </div>
       </main>
+
+      {/* ================= OPTION A: YOUR CUSTOM IMPORTED MODAL ================= */}
+      {typeof CustomModal !== "undefined" && (
+        <CustomModal
+          size="max-w-md"
+          open={paymentMethod}
+          visible={paymentMethod}
+          isOpen={paymentMethod}
+          show={paymentMethod}
+          onClose={() => setPaymentMethod(false)}
+          footer={null}
+        >
+          <div>
+            {/* Header */}
+            <div className="bg-[#FFF7E8] w-full left-0 mb-6 px-6 py-5  border-b border-[#F3E6C4] absolute top-0">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-[#FFECC2] flex items-center justify-center">
+                  <img
+                    src="/images/mdi-light_credit-card.png"
+                    className="w-5"
+                    alt=""
+                  />
+                </div>
+
+                <div>
+                  <h3 className="font-bold text-[#7B3306]">Payment method</h3>
+
+                  <p className="text-xs text-[#BB4D00] mt-1">
+                    Kindly select your preferred payment method
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Wallet */}
+            <div
+              onClick={() => setSelectedMethod("wallet")}
+              className="flex justify-between items-center cursor-pointer py-4 border-b border-gray-100"
+            >
+              <div className="flex gap-3">
+                <img
+                  src="/images/mdi-light_credit-card_transparent.png"
+                  className="w-5 h-5 mt-1"
+                  alt=""
+                />
+
+                <div>
+                  <h4 className="font-semibold text-black">Wallet</h4>
+
+                  <p className="text-sm text-gray-500">$678</p>
+                </div>
+              </div>
+
+              <div
+                className={`w-5 h-5 rounded border flex items-center justify-center transition ${
+                  selectedMethod === "wallet"
+                    ? "bg-[#060853] border-[#060853]"
+                    : "border-gray-300"
+                }`}
+              >
+                {selectedMethod === "wallet" && (
+                  <span className="text-white text-xs">✓</span>
+                )}
+              </div>
+            </div>
+
+            {/* Online */}
+            <div
+              onClick={() => setSelectedMethod("online")}
+              className="cursor-pointer py-4"
+            >
+              <div className="flex justify-between items-center">
+                <div className="flex gap-3">
+                  <img
+                    src="/images/Globe.png"
+                    className="w-5 h-5 mt-1"
+                    alt=""
+                  />
+
+                  <div>
+                    <h4 className="font-semibold text-black">Pay Online</h4>
+                  </div>
+                </div>
+
+                <div
+                  className={`w-5 h-5 rounded border flex items-center justify-center transition ${
+                    selectedMethod === "online"
+                      ? "bg-[#060853] border-[#060853]"
+                      : "border-gray-300"
+                  }`}
+                >
+                  {selectedMethod === "online" && (
+                    <span className="text-white text-xs">✓</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Only show when online is selected */}
+              {selectedMethod === "online" && (
+                <div className="ml-8">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={useWallet}
+                      onChange={(e) => setUseWallet(e.target.checked)}
+                      className="accent-[#060853]"
+                    />
+
+                    <span className="text-xs text-gray-500">
+                      Use with wallet balance
+                    </span>
+                  </label>
+                </div>
+              )}
+            </div>
+
+            {/* Button */}
+            <button
+              onClick={handleModalCloseAndProceed}
+              className="w-full h-11 bg-[#060853] text-white rounded-md font-semibold mt-6 hover:opacity-90"
+            >
+              Proceed to Payment
+            </button>
+          </div>
+        </CustomModal>
+      )}
+
+      {/* ================= OPTION B: FOOLPROOF INLINE FALLBACK MODAL ================= */}
+      {/* {paymentMethod && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl animate-scaleUp">
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Verify & Proceed to Payment</h3>
+            <p className="text-sm text-slate-500 mb-6">
+              You are about to be redirected to our secure payment gateway. Please verify your details before proceeding.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleModalCloseAndProceed}
+                className="px-5 py-2 bg-[#060853] hover:bg-[#0c107c] text-white rounded-lg text-sm font-semibold cursor-pointer"
+              >
+                Proceed to Pay
+              </button>
+            </div>
+          </div>
+        </div>
+      )} */}
     </div>
   );
 };

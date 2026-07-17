@@ -19,6 +19,7 @@ import {
 import { Pagination, Spin } from "antd";
 import Link from "next/link";
 import { useBusinessStore } from "@/store/businessStore";
+import CompanyLoader from "@/components/Loader";
 
 function DirectoryContent() {
   const searchParams = useSearchParams();
@@ -425,10 +426,11 @@ export default function DirectoryPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center text-xs font-bold text-gray-400">
-          <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
-          <span className="ml-3">Loading Directory...</span>
-        </div>
+        // <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center text-xs font-bold text-gray-400">
+        //   <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} />
+        //   <span className="ml-3">Loading Directory...</span>
+        // </div>
+        <CompanyLoader />
       }
     >
       <DirectoryContent />

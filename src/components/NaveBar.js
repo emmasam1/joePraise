@@ -157,7 +157,7 @@ const dashboardLink = dashboardRoutes[user?.role] || "/customer-dashboard";
             <>
             {showCart && (
           <Link 
-            href="/checkout" 
+            href="/cart"
             className="relative"
             // className="flex items-center gap-1.5 bg-[#060853] text-white px-4 py-2 rounded-full hover:bg-[#0c107c] transition-all text-xs font-bold shadow-sm"
           >

@@ -426,102 +426,58 @@ export default function BusinessTabs({ businessId, services = [], physicalProduc
                   <Heart size={23} className="text-zinc-600 shrink-0" />
                   <span className="text-xl font-bold">{formatPrice(item)}</span>
 
-                  {/* {activeTab === "Services" ? (
-                    isInCart ? (
-                      <Link href="/cart">
-                        <Button className="rounded! bg-white! px-3! py-2! text-xs! font-semibold! text-[#10105e]! border! border-[#10105e]!">
-                          Already Booked · View in Cart
+                  {activeTab === "Services" ? (
+                      isInCart ? (
+                        <div className="flex flex-col items-end gap-1.5">
+                          <Link href="/cart">
+                            <Button className="rounded! bg-white! px-3! py-2! text-xs! font-semibold! text-[#10105e]! border! border-[#10105e]!">
+                              Already Booked · View in Cart
+                            </Button>
+                          </Link>
+                          <button
+                            onClick={() => openBookingModal(item)}
+                            className="text-[11px] font-semibold text-zinc-500 hover:text-[#10105e] underline underline-offset-2 cursor-pointer"
+                          >
+                            Book Another
+                          </button>
+                        </div>
+                      ) : (
+                        <Button
+                          onClick={() => openBookingModal(item)}
+                          className="rounded! bg-[#10105e]! px-3! py-2! text-xs! font-semibold! text-white! border-none!"
+                        >
+                          Book Now
                         </Button>
-                      </Link>
+                      )
+                    ) : isInCart ? (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="small"
+                          onClick={() => handleDecrease(cartItem)}
+                          disabled={isMutating}
+                          icon={<MinusOutlined />}
+                          className="rounded! border-[#10105e]! text-[#10105e]!"
+                        />
+                        <span className="text-sm font-bold min-w-[20px] text-center">
+                          {isMutating ? <LoadingOutlined spin /> : cartItem.quantity}
+                        </span>
+                        <Button
+                          size="small"
+                          onClick={() => handleIncrease(cartItem)}
+                          disabled={isMutating}
+                          icon={<PlusOutlined />}
+                          className="rounded! border-[#10105e]! text-[#10105e]!"
+                        />
+                      </div>
                     ) : (
                       <Button
-                        onClick={() => openBookingModal(item)}
+                        loading={isAdding}
+                        onClick={() => handleAddToCart(item)}
                         className="rounded! bg-[#10105e]! px-3! py-2! text-xs! font-semibold! text-white! border-none!"
                       >
-                        Book Now
+                        Add To Cart
                       </Button>
-                    )
-                  ) : isInCart ? (
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="small"
-                        onClick={() => handleDecrease(cartItem)}
-                        disabled={isMutating}
-                        icon={<MinusOutlined />}
-                        className="rounded! border-[#10105e]! text-[#10105e]!"
-                      />
-                      <span className="text-sm font-bold min-w-[20px] text-center">
-                        {isMutating ? <LoadingOutlined spin /> : cartItem.quantity}
-                      </span>
-                      <Button
-                        size="small"
-                        onClick={() => handleIncrease(cartItem)}
-                        disabled={isMutating}
-                        icon={<PlusOutlined />}
-                        className="rounded! border-[#10105e]! text-[#10105e]!"
-                      />
-                    </div>
-                  ) : (
-                    <Button
-                      loading={isAdding}
-                      onClick={() => handleAddToCart(item)}
-                      className="rounded! bg-[#10105e]! px-3! py-2! text-xs! font-semibold! text-white! border-none!"
-                    >
-                      Add To Cart
-                    </Button>
-                  )} */}
-                  {activeTab === "Services" ? (
-  isInCart ? (
-    <div className="flex flex-col items-end gap-1.5">
-      <Link href="/cart">
-        <Button className="rounded! bg-white! px-3! py-2! text-xs! font-semibold! text-[#10105e]! border! border-[#10105e]!">
-          Already Booked · View in Cart
-        </Button>
-      </Link>
-      <button
-        onClick={() => openBookingModal(item)}
-        className="text-[11px] font-semibold text-zinc-500 hover:text-[#10105e] underline underline-offset-2"
-      >
-        Book Another
-      </button>
-    </div>
-  ) : (
-    <Button
-      onClick={() => openBookingModal(item)}
-      className="rounded! bg-[#10105e]! px-3! py-2! text-xs! font-semibold! text-white! border-none!"
-    >
-      Book Now
-    </Button>
-  )
-) : isInCart ? (
-  <div className="flex items-center gap-2">
-    <Button
-      size="small"
-      onClick={() => handleDecrease(cartItem)}
-      disabled={isMutating}
-      icon={<MinusOutlined />}
-      className="rounded! border-[#10105e]! text-[#10105e]!"
-    />
-    <span className="text-sm font-bold min-w-[20px] text-center">
-      {isMutating ? <LoadingOutlined spin /> : cartItem.quantity}
-    </span>
-    <Button
-      size="small"
-      onClick={() => handleIncrease(cartItem)}
-      disabled={isMutating}
-      icon={<PlusOutlined />}
-      className="rounded! border-[#10105e]! text-[#10105e]!"
-    />
-  </div>
-) : (
-  <Button
-    loading={isAdding}
-    onClick={() => handleAddToCart(item)}
-    className="rounded! bg-[#10105e]! px-3! py-2! text-xs! font-semibold! text-white! border-none!"
-  >
-    Add To Cart
-  </Button>
-)}
+                    )}
                 </div>
               </article>
             );

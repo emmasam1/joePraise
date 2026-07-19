@@ -636,14 +636,5 @@ const SignUpPage = () => {
   );
 };
 
-// Next.js App Router requires searchParams to be wrapped in a Suspense boundary
-export default function Page() {
-  return (
-    // <Suspense fallback={<div className="h-screen w-full flex items-center justify-center">Loading auth page...</div>}>
-     <Suspense fallback={<CompanyLoader />}>
-      <SignUpPage />
-    </Suspense>
-  );
-}
 
-// export default SignUpPage;
+export default SignUpPage;

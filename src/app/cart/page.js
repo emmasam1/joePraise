@@ -1077,7 +1077,7 @@ const CartPage = () => {
 
   const requireAuthThenGo = (destinationBuilder) => {
     if (!isAuthenticated) {
-      router.push(`/login?redirect=${encodeURIComponent("/checkout")}`);
+      router.push(`/login?redirect=${encodeURIComponent("/cart")}`);
       return;
     }
     destinationBuilder();

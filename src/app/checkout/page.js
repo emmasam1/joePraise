@@ -1046,6 +1046,20 @@ const CheckoutPage = () => {
 
   // --- Fetch wallet balance for the payment modal ---
   // NOTE: endpoint assumed as /wallet/me — confirm actual path.
+  // useEffect(() => {
+  //   if (!isAuthenticated) return;
+  //   setWalletLoading(true);
+  //   api
+  //     .get("/wallet/me")
+  //     .then((res) => {
+  //       if (res.data?.success) {
+  //         setWalletBalance(res.data.wallet?.availableBalance ?? 0);
+  //       }
+  //     })
+  //     .catch(() => setWalletBalance(null))
+  //     .finally(() => setWalletLoading(false));
+  // }, [isAuthenticated]);
+
   useEffect(() => {
     if (!isAuthenticated) return;
     setWalletLoading(true);
@@ -1053,7 +1067,7 @@ const CheckoutPage = () => {
       .get("/wallet/me")
       .then((res) => {
         if (res.data?.success) {
-          setWalletBalance(res.data.wallet?.availableBalance ?? 0);
+          setWalletBalance(res.data.data?.availableBalance ?? 0);
         }
       })
       .catch(() => setWalletBalance(null))
@@ -1852,7 +1866,7 @@ const CheckoutPage = () => {
                 </div>
               </div>
 
-              {selectedPaymentMethod === "online" && walletBalance > 0 && (
+              {/* {selectedPaymentMethod === "online" && walletBalance > 0 && (
                 <div className="ml-8">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -1862,6 +1876,24 @@ const CheckoutPage = () => {
                       className="accent-[#060853]"
                     />
                     <span className="text-xs text-gray-500">Use with wallet balance</span>
+                  </label>
+                </div>
+              )} */}
+              {selectedPaymentMethod === "online" && (
+                <div className="ml-8">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={useWalletWithOnline}
+                      disabled={!walletBalance || walletBalance <= 0}
+                      onChange={(e) => setUseWalletWithOnline(e.target.checked)}
+                      className="accent-[#060853]"
+                    />
+                    <span className="text-xs text-gray-500">
+                      {walletBalance > 0
+                        ? `Use with wallet balance ($${walletBalance.toLocaleString()})`
+                        : "No wallet balance available"}
+                    </span>
                   </label>
                 </div>
               )}

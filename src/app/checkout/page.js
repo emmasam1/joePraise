@@ -1187,6 +1187,45 @@ const CheckoutPage = () => {
     };
   };
 
+  // const handleConfirmPayment = async () => {
+  //   setPlacingOrder(true);
+
+  //   const paymentMethod =
+  //     selectedPaymentMethod === "wallet"
+  //       ? "wallet"
+  //       : selectedPaymentMethod === "online" && useWalletWithOnline
+  //         ? "wallet_and_online"
+  //         : "online";
+
+  //   try {
+  //     const res = await api.post("/cart/checkout", {
+  //       selectedItemIds,
+  //       paymentMethod,
+  //       deliveryAddress: buildDeliveryAddressPayload(),
+  //       contactName,
+  //       contactPhone,
+  //     });
+
+  //     if (res.data.success) {
+  //       clearCheckoutSelection();
+
+  //       if (res.data.url) {
+  //         // Stripe path — redirect out to hosted checkout.
+  //         window.location.href = res.data.url;
+  //         return;
+  //       }
+
+  //       // Wallet-only path — synchronous, order already created.
+  //       message.success("Payment successful! Your order has been placed.");
+  //       router.push("/order-success");
+  //     }
+  //   } catch (error) {
+  //     message.error(error?.response?.data?.message || "Checkout failed. Please try again.");
+  //   } finally {
+  //     setPlacingOrder(false);
+  //   }
+  // };
+
   const handleConfirmPayment = async () => {
     setPlacingOrder(true);
 
@@ -1207,15 +1246,14 @@ const CheckoutPage = () => {
       });
 
       if (res.data.success) {
-        clearCheckoutSelection();
-
         if (res.data.url) {
-          // Stripe path — redirect out to hosted checkout.
+          clearCheckoutSelection();
           window.location.href = res.data.url;
           return;
         }
 
-        // Wallet-only path — synchronous, order already created.
+        sessionStorage.setItem("joepraise-last-order", JSON.stringify(res.data.orders));
+        clearCheckoutSelection();
         message.success("Payment successful! Your order has been placed.");
         router.push("/order-success");
       }

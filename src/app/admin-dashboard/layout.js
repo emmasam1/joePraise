@@ -64,45 +64,50 @@ export default function DashboardLayout({ children }) {
 
   // --- MENU ITEMS ---
   const menuItems = [
-    { label: "Overview", icon: <AppstoreOutlined />, href: "/admin-dashboard" },
+    { label: "Overview", icon: "/images/dashboard.png", href: "/admin-dashboard" },
     {
       label: "Business Management",
-      icon: <ShoppingCartOutlined />,
+      icon: "/images/business.png",
       href: "/admin-dashboard/business-management",
     },
     {
       label: "Customer Management",
-      icon: <TagOutlined />,
+      icon: "/images/customer.png",
       href: "/admin-dashboard/customer-management",
     },
     {
+      label: "Product Management",
+      icon: "/images/product.png",
+      href: "/admin-dashboard/product-management",
+    },
+    {
       label: "Order Monitoring",
-      icon: <UserOutlined />,
+      icon: "/images/order.png",
       href: "/admin-dashboard/order-monitoring",
     },
     {
       label: "Verification Center",
-      icon: <CreditCardOutlined />,
+      icon: "/images/verification.png",
       href: "/admin-dashboard/verification-center",
     },
     {
       label: "Trust Score Management",
-      icon: <BarChartOutlined />,
+      icon: "/images/trust.png",
       href: "/admin-dashboard/trust-score-management",
     },
     {
       label: "Payments & Subscription",
-      icon: <BarChartOutlined />,
+      icon: "/images/card.png",
       href: "/admin-dashboard/payments-and-subscription",
     },
     {
       label: "Reports & Analytics",
-      icon: <BarChartOutlined />,
+      icon: "/images/report.png",
       href: "/admin-dashboard/analytics",
     },
     {
       label: "Revenue",
-      icon: <BarChartOutlined />,
+      icon: "/images/revenue.png",
       href: "/admin-dashboard/revenue",
     },
   ];
@@ -111,7 +116,7 @@ export default function DashboardLayout({ children }) {
     {
       label: "Settings",
       icon: <SettingOutlined />,
-      href: "/dashboard/settings",
+      href: "/admin-dashboard/settings",
     },
     { 
      label: "Logout", 
@@ -151,7 +156,7 @@ export default function DashboardLayout({ children }) {
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all
                    ${isActive ? "bg-[#060853] text-white" : "text-gray-500 hover:bg-gray-50"}`}
                   >
-                    <span className="text-lg">{item.icon}</span>
+                    <img className="w-5" src={item.icon} alt={item.label}/>
                     {item.label}
                   </Link>
                 );

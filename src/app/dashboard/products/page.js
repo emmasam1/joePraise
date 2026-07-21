@@ -330,9 +330,9 @@ const ProductManagementPage = () => {
       render: (_, record) => {
         const type = record.pricingType || "fixed";
         if (type === "fixed") {
-          return <span className="text-black">₦{record.price?.toLocaleString() || "0"}</span>;
+          return <span className="text-black">${record.price?.toLocaleString() || "0"}</span>;
         } else if (type === "range") {
-          return <span className="text-black">₦{record.minPrice?.toLocaleString()} - ₦{record.maxPrice?.toLocaleString()}</span>;
+          return <span className="text-black">${record.minPrice?.toLocaleString()} - ${record.maxPrice?.toLocaleString()}</span>;
         } else if (type === "negotiable" || type === "quote") {
           return <span className="text-black">Negotiable</span>;
         }

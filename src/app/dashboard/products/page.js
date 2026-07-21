@@ -1120,7 +1120,7 @@ const ProductManagementPage = () => {
           </div>
         </div>
 
-        {/* <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
             initial="initial"
@@ -1141,50 +1141,6 @@ const ProductManagementPage = () => {
                   size="small"
                   loading={loading}
                 />
-              </div>
-            </div>
-          </motion.div>
-        </AnimatePresence> */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            variants={tabVariants}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="bg-[#f0f5ff] p-8 min-h-screen">
-              <h2 className="text-sm font-bold mb-4 text-[#1e293b]">
-                My Products/Services
-              </h2>
-
-              <div className="bg-white rounded-xl overflow-hidden shadow-sm">
-                {loading ? (
-                  <div className="h-[450px] flex items-center justify-center">
-                    <CompanyLoader />
-                  </div>
-                ) : filteredServices.length === 0 ? (
-                  <div className="h-[450px] flex flex-col items-center justify-center text-gray-500">
-                    <img
-                      src="/images/empty-box.png" // Optional: replace with your empty state image
-                      alt="No products"
-                      className="w-24 h-24 mb-4 opacity-70"
-                    />
-                    <p className="text-base font-medium">
-                      No products or services found.
-                    </p>
-                  </div>
-                ) : (
-                  <Table
-                    columns={columns}
-                    dataSource={filteredServices}
-                    rowKey={(record) => record._id?.$oid || record._id}
-                    pagination={{ pageSize: 10 }}
-                    className="custom-table"
-                    size="small"
-                  />
-                )}
               </div>
             </div>
           </motion.div>

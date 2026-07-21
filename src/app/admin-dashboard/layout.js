@@ -168,22 +168,6 @@ export default function DashboardLayout({ children }) {
             <p className="text-[14px] uppercase font-bold text-black mb-4 px-2 tracking-widest">
               General
             </p>
-            {/* <nav className="space-y-1">
-              {generalItems.map((item) => {
-                const isActive = pathname.startsWith(item.href);
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all
-                      ${isActive ? "bg-[#060853] text-white" : item.color || "text-gray-500 hover:bg-gray-50"}`}
-                  >
-                    <span className="text-lg">{item.icon}</span>
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav> */}
 
             <nav className="space-y-1">
           {generalItems.map((item) => {

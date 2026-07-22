@@ -709,7 +709,7 @@ const CategoryManagement = () => {
           onClick={() => openAddModal(null)}
           className="bg-[#060853]! h-11! px-8! border-none! rounded-md!"
         >
-          {activeType = "listing" ? "Add Business Category" : "Add Listing Category"}
+          {activeType === "listing" ? "Add Business Category" : "Add Listing Category"}
         </Button>
       </div>
 

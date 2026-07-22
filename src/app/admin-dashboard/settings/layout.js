@@ -21,11 +21,11 @@ export default function SettingsLayout({ children }) {
       icon: <PercentageOutlined />,
       label: 'Commission Percentage',
     },
-    {
-      key: '/admin-dashboard/settings/pricing',
-      icon: <DollarCircleOutlined />,
-      label: 'Subscription Pricing',
-    },
+    // {
+    //   key: '/admin-dashboard/settings/pricing',
+    //   icon: <DollarCircleOutlined />,
+    //   label: 'Subscription Pricing',
+    // },
     {
       key: '/admin-dashboard/settings/categories',
       icon: <AppstoreOutlined />,

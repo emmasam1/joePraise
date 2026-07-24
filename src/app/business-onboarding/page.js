@@ -1483,8 +1483,8 @@ if (formData.password !== formData.confirmPassword) {
                           handleChange("proofOfAddressType", value)
                         }
                         options={[
-                          { value: "Business Registration Certificate", label: "Business Registration Certificate" },
-                          { value: "ID_CARD", label: "ID Card" },
+                          { value: "CAC", label: "Business Registration Certificate" },
+                          { value: "ID_CARD", label: "Proof of Identification" },
                           { value: "UTILITY_BILL", label: "Utility Bill" },
                         ]}
                       />

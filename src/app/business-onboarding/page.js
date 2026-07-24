@@ -1340,8 +1340,8 @@ if (formData.password !== formData.confirmPassword) {
                           handleChange("businessCertType", value)
                         }
                         options={[
-                          { value: "CAC", label: "CAC Certificate" },
-                          { value: "ID_CARD", label: "ID Card" },
+                          { value: "CAC", label: "Business Registration Certificate" },
+                          { value: "ID_CARD", label: "Proof of Identification" },
                           { value: "UTILITY_BILL", label: "Utility Bill" },
                         ]}
                       />
@@ -1386,10 +1386,10 @@ if (formData.password !== formData.confirmPassword) {
                             handleChange("businessLicenseType", value)
                           }
                           options={[
-                            { value: "CAC", label: "CAC Certificate" },
-                            { value: "ID_CARD", label: "ID Card" },
-                            { value: "UTILITY_BILL", label: "Utility Bill" },
-                          ]}
+                          { value: "CAC", label: "Business Registration Certificate" },
+                          { value: "ID_CARD", label: "Proof of Identification" },
+                          { value: "UTILITY_BILL", label: "Utility Bill" },
+                        ]}
                         />
                       </Form.Item>
                     <Dragger
@@ -1434,11 +1434,11 @@ if (formData.password !== formData.confirmPassword) {
                           onChange={(value) =>
                             handleChange("taxCertificateType", value)
                           }
-                          options={[
-                            { value: "CAC", label: "CAC Certificate" },
-                            { value: "ID_CARD", label: "ID Card" },
-                            { value: "UTILITY_BILL", label: "Utility Bill" },
-                          ]}
+                         options={[
+                          { value: "CAC", label: "Business Registration Certificate" },
+                          { value: "ID_CARD", label: "Proof of Identification" },
+                          { value: "UTILITY_BILL", label: "Utility Bill" },
+                        ]}
                         />
                       </Form.Item>
 

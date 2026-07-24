@@ -1396,7 +1396,7 @@ const CartPage = () => {
             </div>
 
             <div className="mt-10">
-              <p className="text-black text-sm font-bold mb-2">Special Instructions</p>
+              <p className="text-black text-sm font-bold mb-2">Special Instructions  (Optional)</p>
               <TextArea
                 rows={5}
                 value={globalInstructions}
@@ -1406,7 +1406,7 @@ const CartPage = () => {
               />
             </div>
 
-            <div className="mt-6">
+            {/* <div className="mt-6">
               <p className="text-black text-sm font-bold mb-2">Delivery Address</p>
               <Input
                 placeholder="Enter Address"
@@ -1414,7 +1414,7 @@ const CartPage = () => {
                 onChange={(e) => setGlobalAddress(e.target.value)}
                 className="h-10!"
               />
-            </div>
+            </div> */}
 
             <div className="mt-10 pt-8 border-t border-[#E5E7EB] flex flex-col sm:flex-row justify-between items-center gap-4">
               <Link href="/">

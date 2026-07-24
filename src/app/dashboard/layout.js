@@ -17,6 +17,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
+import CompanyLoader from "@/components/Loader";
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
@@ -83,18 +84,20 @@ export default function DashboardLayout({ children }) {
     },
   ];
 
-      if (authLoading) {
-      return (
-        <div className="h-screen flex items-center justify-center bg-[#F8FAFC]">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-12 h-12 border-4 border-[#060853] border-t-transparent rounded-full animate-spin" />
-            <p className="text-gray-500 font-medium">
-              Loading dashboard...
-            </p>
-          </div>
-        </div>
-      );
-    }
+    //   if (authLoading) {
+    //   return (
+    //     <div className="h-screen flex items-center justify-center bg-[#F8FAFC]">
+    //       <div className="flex flex-col items-center gap-4">
+    //         <div className="w-12 h-12 border-4 border-[#060853] border-t-transparent rounded-full animate-spin" />
+    //         <p className="text-gray-500 font-medium">
+    //           Loading dashboard...
+    //         </p>
+    //       </div>
+    //     </div>
+    //   );
+    // }
+
+    if (authLoading) return <CompanyLoader />
 
   return (
     <div className="flex h-screen w-full bg-[#F8FAFC] overflow-hidden font-sans p-4">

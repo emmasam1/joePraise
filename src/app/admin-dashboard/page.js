@@ -21,6 +21,7 @@ import {
 } from "recharts";
 import { useAuthStore } from "@/store/authStore";
 import { useAdminDashboardStore } from "@/store/adminDashboardStore";
+import CompanyLoader from "@/components/Loader";
 
 
 const Page = () => {
@@ -155,13 +156,16 @@ const barChartData =
   // ];
   const recentOrders = dashboard?.recentOrders || [];
 
-  if (dashboardLoading) {
-  return (
-    <div className="flex justify-center items-center h-screen">
-      Loading dashboard...
-    </div>
-  );
-}
+//   if (dashboardLoading) {
+//   return (
+//     <div className="flex justify-center items-center h-screen">
+//       Loading dashboard...
+//     </div>
+//   );
+// }
+
+if (dashboardLoading) return <CompanyLoader />
+
 
   return (
     <div className="space-y-6 font-sans bg-[#F4F7FE] p-6 min-h-screen pb-12">

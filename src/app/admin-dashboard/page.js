@@ -338,7 +338,7 @@ if (dashboardLoading) return <CompanyLoader />
                   <Avatar size={44} src={biz.logo?.url} icon={<UserOutlined />} className="border border-gray-100" />
                   <div>
                     <h4 className="text-sm font-bold text-gray-900">{biz.businessName}</h4>
-                    <p className="text-xs text-gray-400 truncate max-w-[240px] sm:max-w-xs">{biz.category}</p>
+                    <p className="text-xs text-gray-400 truncate max-w-[240px] sm:max-w-xs">{biz.category.name}</p>
                   </div>
                 </div>
                 <span className="text-xs font-bold text-orange-500 bg-orange-50/60 px-2.5 py-1 rounded-md">

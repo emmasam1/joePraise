@@ -35,7 +35,7 @@ export const useOrderManagementStore = create((set, get) => ({
     try {
       set({ ordersLoading: true, ordersError: null });
 
-      const { data } = await api.get("/management/orders", { params });
+      const { data } = await api.get("/ordermanagement/orders", { params });
 
       if (data.success) {
         set({
@@ -61,7 +61,7 @@ export const useOrderManagementStore = create((set, get) => ({
     try {
       set({ orderLoading: true, orderError: null });
 
-      const { data } = await api.get(`/management/orders/${orderId}`);
+      const { data } = await api.get(`/ordermanagement/orders/${orderId}`);
 
       if (data.success) {
         set({ selectedOrder: data.order, orderLoading: false });
@@ -82,7 +82,7 @@ export const useOrderManagementStore = create((set, get) => ({
       set({ forceCancelling: true, forceCancelError: null });
 
       const { data } = await api.patch(
-        `/management/orders/${orderId}/force-cancel`,
+        `/ordermanagement/orders/${orderId}/force-cancel`,
         { reason },
       );
 
@@ -119,7 +119,7 @@ export const useOrderManagementStore = create((set, get) => ({
         disputeNotFound: false,
       });
 
-      const { data } = await api.get(`/management/orders/${orderId}/dispute`);
+      const { data } = await api.get(`/ordermanagement/orders/${orderId}/dispute`);
 
       if (data.success) {
         set({
@@ -148,7 +148,7 @@ export const useOrderManagementStore = create((set, get) => ({
     try {
       set({ disputeActionLoading: true, disputeActionError: null });
 
-      const { data } = await api.post(`/management/orders/${orderId}/dispute`, {
+      const { data } = await api.post(`/ordermanagement/orders/${orderId}/dispute`, {
         complaint,
       });
 
@@ -172,7 +172,7 @@ export const useOrderManagementStore = create((set, get) => ({
     try {
       set({ disputeActionLoading: true, disputeActionError: null });
 
-      const { data } = await api.patch(`/management/disputes/${disputeId}/refund`);
+      const { data } = await api.patch(`/ordermanagement/disputes/${disputeId}/refund`);
 
       if (data.success) {
         set((state) => ({
@@ -195,7 +195,7 @@ export const useOrderManagementStore = create((set, get) => ({
     try {
       set({ disputeActionLoading: true, disputeActionError: null });
 
-      const { data } = await api.patch(`/management/disputes/${disputeId}/warn`, {
+      const { data } = await api.patch(`/ordermanagement/disputes/${disputeId}/warn`, {
         message,
       });
 
@@ -220,7 +220,7 @@ export const useOrderManagementStore = create((set, get) => ({
     try {
       set({ disputeActionLoading: true, disputeActionError: null });
 
-      const { data } = await api.patch(`/management/disputes/${disputeId}/suspend`, {
+      const { data } = await api.patch(`/ordermanagement/disputes/${disputeId}/suspend`, {
         reason,
       });
 
@@ -245,7 +245,7 @@ export const useOrderManagementStore = create((set, get) => ({
     try {
       set({ disputeActionLoading: true, disputeActionError: null });
 
-      const { data } = await api.post(`/management/disputes/${disputeId}/message`, {
+      const { data } = await api.post(`/ordermanagement/disputes/${disputeId}/message`, {
         message,
         recipient,
       });

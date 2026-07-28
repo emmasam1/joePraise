@@ -267,9 +267,21 @@ import {
   ShoppingCartOutlined
 } from "@ant-design/icons";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import { useCartStore } from "@/store/cartStore";
+
+const CartIcon = ({ itemCount }) => (
+  <Link href="/cart" className="relative flex items-center" aria-label="View cart">
+    <Image src="/images/cart.png" width={28} height={28} alt="Cart" />
+    {itemCount > 0 && (
+      <span className="absolute -top-1.5 -right-2 bg-[#060853] text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+        {itemCount > 9 ? "9+" : itemCount}
+      </span>
+    )}
+  </Link>
+);
 
 const NaveBar = ({ showCart = true }) => {
   const [open, setOpen] = useState(false);
@@ -284,8 +296,10 @@ const NaveBar = ({ showCart = true }) => {
   // whenever auth state flips (login/logout), so the badge count is
   // always accurate without needing to visit /cart first.
   useEffect(() => {
-    fetchCart().catch(() => {});
-  }, [isAuthenticated]);
+    if (showCart || isAuthenticated) {
+      fetchCart().catch(() => {});
+    }
+  }, [fetchCart, isAuthenticated, showCart]);
 
   const cartItemCount = cart?.items?.length || 0;
 
@@ -365,23 +379,19 @@ const NaveBar = ({ showCart = true }) => {
     },
   ];
 
-  const CartIcon = () => (
-    <Link href="/cart" className="relative flex items-center" aria-label="View cart">
-      <img src="/images/cart.png" className="w-7" alt="Cart" />
-      {cartItemCount > 0 && (
-        <span className="absolute -top-1.5 -right-2 bg-[#060853] text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
-          {cartItemCount > 9 ? "9+" : cartItemCount}
-        </span>
-      )}
-    </Link>
-  );
-
   return (
     <section className="w-full bg-white px-6 py-4 md:px-12 border-b border-gray-50 shadow-sm">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         
         <Link href="/" className="flex items-center gap-2 cursor-pointer">
-          <img src="/images/logo_sm.png" alt="Logo" className="h-10 w-auto" />
+          <Image
+            src="/images/logo_sm.png"
+            alt="Joe Praise"
+            width={160}
+            height={40}
+            className="h-10 w-auto"
+            priority
+          />
         </Link>
 
         <nav className="hidden lg:flex items-center gap-10">
@@ -405,7 +415,7 @@ const NaveBar = ({ showCart = true }) => {
 
         <div className="hidden lg:flex items-center gap-4">
           {/* NEW: cart icon now shows regardless of auth state */}
-          {showCart && <CartIcon />}
+          {showCart && <CartIcon itemCount={cartItemCount} />}
 
           {isAuthenticated ? (
             <Dropdown 
@@ -445,7 +455,7 @@ const NaveBar = ({ showCart = true }) => {
         >
           {showCart && (
             <span onClick={(e) => e.stopPropagation()}>
-              <CartIcon />
+              <CartIcon itemCount={cartItemCount} />
             </span>
           )}
           <MenuOutlined />

@@ -24,7 +24,7 @@ const page = () => {
   return (
     <div className="bg-white">
       <section
-        style={{ backgroundImage: "url(/images/wwa.png)" }}
+        style={{ backgroundImage: "url(/images/wwa.webp)" }}
         className="text-white text-center gap-5 flex-col relative w-full h-100 md:h-150  bg-cover bg-center flex items-center justify-center"
       >
         <h2 className="text-4xl font-semibold">Who Are We</h2>
@@ -54,7 +54,7 @@ const page = () => {
 
             <div className="relative aspect-square w-full max-w-137.5 mx-auto overflow-hidden rounded-2xl">
               <Image
-                src="/images/image14.png" // Replace with your image path
+                src="/images/image14.webp"
                 alt="Business professional using phone"
                 fill
                 className="object-cover"
@@ -119,7 +119,7 @@ const page = () => {
 
             <div className="relative aspect-square w-full max-w-137.5 mx-auto overflow-hidden rounded-2xl">
               <Image
-                src="/images/image15.png" // Replace with your image path
+                src="/images/image15.webp"
                 alt="Business professional using phone"
                 fill
                 className="object-cover"

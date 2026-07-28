@@ -624,7 +624,7 @@ const SignUpPage = () => {
 
       <div className="hidden md:block md:w-1/2 h-screen relative">
         <Image
-          src="/images/sign_up.png"
+          src="/images/sign_up.webp"
           alt="Sign Up"
           fill
           className="object-cover"

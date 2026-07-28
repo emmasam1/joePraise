@@ -261,7 +261,7 @@ const LoginPage = () => {
       </div>
 
       <div className="hidden md:block md:w-1/2 h-screen relative">
-        <Image src="/images/sign_up.png" alt="Login Banner" fill className="object-cover" priority />
+        <Image src="/images/sign_up.webp" alt="Login Banner" fill className="object-cover" priority />
         <div className="absolute inset-0 bg-black/5" />
       </div>
     </div>

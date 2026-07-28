@@ -455,7 +455,7 @@ const page = () => {
               <div className="flex gap-4">
                 <div className="w-16 h-16 rounded-full overflow-hidden">
                   <img
-                    src="/images/image15.png"
+                    src="/images/image15.webp"
                     alt="Orama Felix"
                     className="w-full h-full object-cover"
                   />

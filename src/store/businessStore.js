@@ -433,6 +433,8 @@ export const useBusinessStore = create((set, get) => ({
       appendIfPresent(payload, "facebook", formData.facebook);
       appendIfPresent(payload, "mapLink", formData.mapLink);
       appendIfPresent(payload, "direction", formData.direction);
+      appendIfPresent(payload, "taxMethod", formData.taxMethod);
+      appendIfPresent(payload, "taxNumber", formData.taxNumber);
 
       if (Array.isArray(formData.operatingHours)) {
         payload.append(

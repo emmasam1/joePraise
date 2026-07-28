@@ -22,7 +22,7 @@ const page = () => {
     <div className='bg-white'>
       {/* Support / Contact Section */}
       <section
-        style={{ backgroundImage: "url(/images/support.png)" }}
+        style={{ backgroundImage: "url(/images/support.webp)" }}
         className="relative w-full h-100 md:h-150  bg-cover bg-center flex items-center justify-center"
       ></section>
 

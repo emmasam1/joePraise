@@ -198,7 +198,7 @@ const Page = () => {
       </div>
 
       {/* RIGHT IMAGE PANEL */}
-      <div className="hidden md:block md:w-1/2 relative h-full bg-[url('/images/image_1.png')] bg-cover bg-center">
+      <div className="hidden md:block md:w-1/2 relative h-full bg-[url('/images/image_1.webp')] bg-cover bg-center">
         <div className="absolute inset-0 bg-blue-900/20" />
       </div>
 

@@ -72,7 +72,7 @@ const page = () => {
       {/* RIGHT SIDE IMAGE */}
       <div className="hidden md:block md:w-1/2 h-screen relative">
         <Image
-          src="/images/login.png"
+          src="/images/login.webp"
           alt="Sign Up"
           fill
           className="object-cover"

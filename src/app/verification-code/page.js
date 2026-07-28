@@ -432,7 +432,7 @@ const VerificationContent = () => {
 
       <div className="hidden md:block md:w-1/2 h-screen relative">
         <Image
-          src="/images/verifiy-code.png"
+          src="/images/verifiy-code.webp"
           alt="Verification"
           fill
           className="object-cover"

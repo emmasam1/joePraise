@@ -178,7 +178,7 @@ const NewPasswordContent = () => {
       </div>
 
       <div className="hidden md:block md:w-1/2 h-screen relative">
-        <Image src="/images/new-password.png" alt="New Password" fill className="object-cover" priority />
+        <Image src="/images/new-password.webp" alt="New Password" fill className="object-cover" priority />
         <div className="absolute inset-0 bg-black/5" />
       </div>
     </div>

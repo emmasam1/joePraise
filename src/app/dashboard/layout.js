@@ -84,19 +84,6 @@ export default function DashboardLayout({ children }) {
     },
   ];
 
-    //   if (authLoading) {
-    //   return (
-    //     <div className="h-screen flex items-center justify-center bg-[#F8FAFC]">
-    //       <div className="flex flex-col items-center gap-4">
-    //         <div className="w-12 h-12 border-4 border-[#060853] border-t-transparent rounded-full animate-spin" />
-    //         <p className="text-gray-500 font-medium">
-    //           Loading dashboard...
-    //         </p>
-    //       </div>
-    //     </div>
-    //   );
-    // }
-
     if (authLoading) return <CompanyLoader />
 
   return (
@@ -178,22 +165,6 @@ export default function DashboardLayout({ children }) {
               General
             </p>
             <nav className="space-y-1">
-              {/* {generalItems.map((item) => {
-                // ADD THIS LOGIC HERE
-                const isActive = pathname === item.href;
-
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all
-                      ${isActive ? "bg-[#060853] text-white" : "text-gray-500 hover:bg-gray-50"}`}
-                  >
-                    <span className="text-lg">{item.icon}</span>
-                    {item.label}
-                  </Link>
-                );
-              })} */}
 
                {generalItems.map((item) => {
                   const isActive = pathname === item.href;

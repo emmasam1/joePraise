@@ -73,7 +73,6 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex justify-between items-center mt-5">
         <div>
-          {/* <h1 className="text-xl font-bold text-gray-900">Business Dashboard</h1> */}
           <h1 className="text-xl font-bold text-gray-900">
              Welcome back, {user?.name}
           </h1>

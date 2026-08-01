@@ -164,11 +164,11 @@ export default function MultiStepForm() {
     phoneNumber: "",
     password: "",
     confirmPassword: "",
-    referredByCode: "", // Captured for onboarding route links
+    referredByCode: "",
     businessName: "",
     businessEmail: "",
     businessPhone: "",
-    category: [], // NEW: multi-select array instead of a single string
+    category: [],
     address: "",
     postalCode: "",
     businessCountry: "",

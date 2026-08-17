@@ -206,7 +206,20 @@ export default async function DirectoryDetails({ params }) {
                   <span className="text-zinc-200">Client Satisfaction</span>
                   <span>{business.clientSatisfaction}%</span>
                 </div>
+                {business.createdAt && (
+                  <div className="flex justify-between">
+                    <span className="text-zinc-200">Member Since</span>
+                    <span>{new Date(business.createdAt).toLocaleDateString("en-GB", { month: "short", year: "numeric" })}</span>
+                  </div>
+                )}
               </div>
+
+              <details className="mt-6 border-t border-white/15 pt-4 text-xs leading-5 text-zinc-200">
+                <summary className="cursor-pointer font-semibold text-[#24D19B]">What is Trust Score?</summary>
+                <p className="mt-3">
+                  Trust Score is Joe Praise Smart Hub&apos;s proprietary trust indicator that considers business verification, customer experience, profile quality, policy compliance, and other governance measures. The detailed methodology is confidential to protect the integrity of the Platform.
+                </p>
+              </details>
             </div>
           </aside>
         </section>

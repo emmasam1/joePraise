@@ -110,6 +110,11 @@ export default function DashboardLayout({ children }) {
       icon: "/images/revenue.png",
       href: "/admin-dashboard/revenue",
     },
+    {
+      label: "Policy Governance",
+      icon: "/images/file.png",
+      href: "/admin-dashboard/policies",
+    },
   ];
 
   const generalItems = [

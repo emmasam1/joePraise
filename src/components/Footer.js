@@ -1,7 +1,9 @@
 "use client";
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
+import { publicPolicyLinks } from "@/data/policyCatalog";
 
 const Footer = () => {
   const containerVariants = {
@@ -49,16 +51,11 @@ const Footer = () => {
   };
 
   const socialIcons = [
-    <Image src="/images/facebook.png" alt="Facebook" width={50} height={50} />,
-    <Image src="/images/twitter.png" alt="Twitter" width={50} height={50} />,
-    <Image src="/images/youtube.png" alt="Youtube" width={50} height={50} />,
-    <Image src="/images/linkedin.png" alt="Linkedin" width={50} height={50} />,
-    <Image
-      src="/images/instagram.png"
-      alt="Instagram"
-      width={50}
-      height={50}
-    />,
+    { src: "/images/facebook.png", alt: "Facebook" },
+    { src: "/images/twitter.png", alt: "Twitter" },
+    { src: "/images/youtube.png", alt: "YouTube" },
+    { src: "/images/linkedin.png", alt: "LinkedIn" },
+    { src: "/images/instagram.png", alt: "Instagram" },
   ];
 
   return (
@@ -83,7 +80,7 @@ const Footer = () => {
             >
               {socialIcons.map((icon, index) => (
                 <motion.div
-                  key={index}
+                  key={icon.alt}
                   variants={iconVariants}
                   whileHover={{
                     scale: 1.15,
@@ -93,7 +90,7 @@ const Footer = () => {
                   whileTap={{ scale: 0.9 }}
                   className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center cursor-pointer transition-colors text-lg text-white hover:bg-[#00D094] hover:text-[#060853]"
                 >
-                  {icon}
+                  <Image src={icon.src} alt={icon.alt} width={50} height={50} />
                 </motion.div>
               ))}
             </motion.div>
@@ -159,8 +156,17 @@ const Footer = () => {
 
         {/* Bottom Bar */}
 
-        <div className="flex  md:row justify-between items-center text-[#62748E] text-xs">
-          <p>Joe Praise Technologies Website - © 2026 All Rights Reserved</p>
+        <div className="flex flex-col gap-5 border-t border-white/10 pt-8 text-[#A8B3C7] text-xs md:flex-row md:justify-between md:items-center">
+          <div className="space-y-4">
+            <p>Joe Praise Technologies Website - © 2026 All Rights Reserved</p>
+            <nav aria-label="Legal" className="flex flex-wrap gap-x-6 gap-y-3">
+              {publicPolicyLinks.map((policy) => (
+                <Link key={policy.href} className="transition-colors hover:text-[#00D094]" href={policy.href}>
+                  {policy.title}
+                </Link>
+              ))}
+            </nav>
+          </div>
          <Image
             src={"/images/creator.png"}
             alt="Heart"

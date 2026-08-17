@@ -11,6 +11,9 @@ const navLinks = [
   "/who-we-are",
   "/list-your-business",
   "/business-details",
+  "/privacy-policy",
+  "/terms-of-use",
+  "/cookie-policy",
 ];
 
 const footerLinks = [
@@ -18,12 +21,20 @@ const footerLinks = [
   "/support",
   "/who-we-are",
   "/list-your-business",
+  "/privacy-policy",
+  "/terms-of-use",
+  "/cookie-policy",
+  "/policies/reviews",
+  "/policies/acceptable-use",
+  "/policies/community-guidelines",
 ];
 
 export default function SiteChrome({ children }) {
   const pathname = usePathname();
   const showNavbar =
-    navLinks.includes(pathname) || pathname.startsWith("/business-details/");
+    navLinks.includes(pathname) ||
+    pathname.startsWith("/business-details/") ||
+    pathname.startsWith("/policies/");
   const showCart =
     pathname.startsWith("/business-details/") &&
     pathname !== "/business-details";

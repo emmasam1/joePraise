@@ -76,6 +76,11 @@ export default function DashboardLayout({ children }) {
       icon: <QuestionCircleOutlined />,
       href: "/dashboard/support",
     },
+    {
+      label: "Policies & Resources",
+      icon: <CreditCardOutlined />,
+      href: "/dashboard/policies",
+    },
     { 
       label: "Logout", 
       icon: <LogoutOutlined />, 

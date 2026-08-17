@@ -1591,6 +1591,7 @@ import {
   TimePicker,
   message,
   Spin,
+  Checkbox,
 } from "antd";
 import { FiCheck } from "react-icons/fi";
 import "leaflet/dist/leaflet.css";
@@ -1605,6 +1606,8 @@ import {
 import { useBusinessStore } from "@/store/businessStore";
 import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { onboardingPolicyLinks } from "@/data/policyCatalog";
 
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
@@ -1638,6 +1641,40 @@ function MapController({ center }) {
 }
 
 const { TextArea } = Input;
+
+function DraggerContent({ preview, setPreview, label, onClear }) {
+  return (
+    <div className="relative w-full h-28 max-h-28 flex flex-col items-center justify-center py-2 px-1 text-center">
+      {preview ? (
+        <div className="relative w-full h-full flex items-center justify-center p-1 overflow-hidden">
+          <img src={preview} alt={`${label} preview`} className="max-h-20 w-auto max-w-full object-contain rounded-md" />
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              setPreview(null);
+              onClear?.();
+            }}
+            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors cursor-pointer"
+          >
+            <FiX size={12} />
+          </button>
+        </div>
+      ) : (
+        <>
+          <p className="text-gray-500 text-[11px] mb-1 leading-tight">
+            Drag & drop your {label} here <br />
+            <span className="text-[9px] text-gray-400">Max 2mb</span>
+          </p>
+          <p className="text-gray-400 text-[10px] my-0.5">OR</p>
+          <Button size="small" className="text-[11px] h-6 px-2.5 text-[#10b981]! border-[#10b981]! hover:text-[#0f766e]! hover:border-[#0f766e]! pointer-events-none">
+            Browse files
+          </Button>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function MultiStepForm() {
   const [current, setCurrent] = useState(0);
@@ -1771,6 +1808,7 @@ export default function MultiStepForm() {
 
     proofOfAddress: null,
     proofOfAddressType: "UTILITY_BILL",
+    policyAccepted: false,
   });
 
   const countries = useMemo(() => Country.getAllCountries(), []);
@@ -1927,26 +1965,12 @@ export default function MultiStepForm() {
       message.error("Please upload your Business Registration Certificate");
       return false;
     }
-    if (!formData.taxMethod) {
-      message.error("Please select Tax Number or Tax Certificate");
-      return false;
-    }
-    if (
-      formData.taxMethod === "certificate" &&
-      !formData.taxCertificate
-    ) {
-      message.error("Please upload your Tax Certificate");
-      return false;
-    }
-    if (
-      formData.taxMethod === "number" &&
-      !formData.taxNumber.trim()
-    ) {
-      message.error("Please enter your Tax Number");
-      return false;
-    }
     if (!formData.proofOfAddress) {
       message.error("Please upload Proof of Address");
+      return false;
+    }
+    if (!formData.policyAccepted) {
+      message.error("Please read and accept the Platform Agreements");
       return false;
     }
     return true;
@@ -2014,16 +2038,16 @@ export default function MultiStepForm() {
 
       if (
         !formData.businessCert ||
-        !formData.taxMethod ||
-        (formData.taxMethod === "certificate" &&
-          !formData.taxCertificate) ||
-        (formData.taxMethod === "number" &&
-          !formData.taxNumber.trim()) ||
         !formData.proofOfAddress
       ) {
         message.error(
-          "Please provide all mandatory documents and your tax certificate or tax number."
+          "Please provide all mandatory verification documents."
         );
+        return;
+      }
+
+      if (!formData.policyAccepted) {
+        message.error("Please read and accept the Platform Agreements");
         return;
       }
 
@@ -2191,47 +2215,6 @@ export default function MultiStepForm() {
     reader.readAsDataURL(file);
     return false;
   };
-
-  // UPDATED: DraggerContent with restricted heights and object-contain for fitted images
-  const DraggerContent = ({ preview, setPreview, label, onClear }) => (
-    <div className="relative w-full h-28 max-h-28 flex flex-col items-center justify-center py-2 px-1 text-center">
-      {preview ? (
-        <div className="relative w-full h-full flex items-center justify-center p-1 overflow-hidden">
-          <img
-            src={preview}
-            alt="preview"
-            className="max-h-20 w-auto max-w-full object-contain rounded-md"
-          />
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setPreview(null);
-              handleFileChange("logo", null);
-              if (onClear) onClear();
-            }}
-            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors cursor-pointer"
-          >
-            <FiX size={12} />
-          </button>
-        </div>
-      ) : (
-        <>
-          <p className="text-gray-500 text-[11px] mb-1 leading-tight">
-            Drag & drop your {label} here <br />
-            <span className="text-[9px] text-gray-400">Max 2mb</span>
-          </p>
-          <p className="text-gray-400 text-[10px] my-0.5">OR</p>
-          <Button
-            size="small"
-            className="text-[11px] h-6 px-2.5 text-[#10b981]! border-[#10b981]! hover:text-[#0f766e]! hover:border-[#0f766e]! pointer-events-none"
-          >
-            Browse files
-          </Button>
-        </>
-      )}
-    </div>
-  );
 
   return (
     <div className="h-screen w-full flex md:flex-row bg-white text-black overflow-hidden font-sans">
@@ -3061,7 +3044,7 @@ export default function MultiStepForm() {
                   <Form.Item
                     label={
                       <span className="text-[10px] font-bold">
-                        Tax Certificate / Tax Number
+                        Tax Certificate / Tax Number (optional)
                       </span>
                     }
                     className="mb-2"
@@ -3194,6 +3177,35 @@ export default function MultiStepForm() {
                 </Col>
 
                 {/* Submit Button */}
+                <Col span={24}>
+                  <section className="rounded-xl border border-[#D7E2F0] bg-[#F8FAFC] p-5">
+                    <h3 className="text-base font-bold text-[#060853]">Platform Agreements</h3>
+                    <p className="mt-2 text-xs leading-5 text-gray-600">
+                      Before submitting your application, review the Platform Policies that govern business participation on Joe Praise Smart Hub. Each policy opens in a new tab.
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2">
+                      {onboardingPolicyLinks.map((policy) => (
+                        <Link
+                          key={policy.href}
+                          href={policy.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-semibold text-[#087F5B] underline underline-offset-2"
+                        >
+                          {policy.title}
+                        </Link>
+                      ))}
+                    </div>
+                    <Checkbox
+                      checked={formData.policyAccepted}
+                      onChange={(event) => handleChange("policyAccepted", event.target.checked)}
+                      className="mt-5 items-start! text-xs! leading-5!"
+                    >
+                      I confirm that I have read, understood, and agree to the listed Joe Praise Smart Hub Platform Policies, and acknowledge that my Business may be subject to Business Verification and Trust Score assessments in accordance with Platform policies.
+                    </Checkbox>
+                  </section>
+                </Col>
+
                 <div className="mt-4 w-full flex items-center justify-center">
                   <Button
                     type="primary"

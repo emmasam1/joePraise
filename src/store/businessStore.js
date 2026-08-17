@@ -435,6 +435,9 @@ export const useBusinessStore = create((set, get) => ({
       appendIfPresent(payload, "direction", formData.direction);
       appendIfPresent(payload, "taxMethod", formData.taxMethod);
       appendIfPresent(payload, "taxNumber", formData.taxNumber);
+      payload.append("policyAccepted", String(Boolean(formData.policyAccepted)));
+      payload.append("policyAcceptedAt", new Date().toISOString());
+      payload.append("policyVersion", "2026-08");
 
       if (Array.isArray(formData.operatingHours)) {
         payload.append(

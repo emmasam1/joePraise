@@ -164,7 +164,7 @@ const SignUpPage = () => {
 
                   <div className="h-10 border border-[#E2E8F0] rounded-lg bg-gray-50 ">
                     <PhoneInput
-                      country={"ng"}
+                      country={"gb"}
                       value={formData.phone}
                       onChange={(phone) =>
                         handleInputChange("phone", `+${phone}`)

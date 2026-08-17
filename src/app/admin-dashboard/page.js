@@ -36,32 +36,6 @@ const {
 useEffect(() => {
   getDashboard();
 }, [getDashboard]);
-
-
-  // const statsCard = [
-  //   {
-  //     id: 1,
-  //     title: "Total Businesses",
-  //     value: "1,234",
-  //   },
-  //   {
-  //     id: 2,
-  //     title: "Total Revenue",
-  //     value: "₦18,223",
-  //   },
-  //   {
-  //     id: 3,
-  //     title: "Pending Verification",
-  //     value: "1,234",
-  //   },
-  //   {
-  //     id: 4,
-  //     title: "Trust Customers",
-  //     value: "92",
-  //   },
-  // ];
-
-  // Data for the main Order Trends Area Chart
   
   const statsCard = [
   {
@@ -72,7 +46,7 @@ useEffect(() => {
   {
     id: 2,
     title: "Total Revenue",
-    value: `₦${dashboard?.finance?.revenue || 0}`,
+    value: `$${dashboard?.finance?.revenue || 0}`,
   },
   {
     id: 3,
@@ -138,31 +112,9 @@ const barChartData =
     Growth: item.total,
   })) || [];
 
-  // Verification List Mock Data
-  // const pendingBusinesses = [
-  //   { id: 1, name: "Benson Cake Limited", tags: "Cake, Small Chops, Kits and Materials", status: "Pending" },
-  //   { id: 2, name: "Benson Cake Limited", tags: "Cake, Small Chops, Kits and Materials", status: "Pending" },
-  //   { id: 3, name: "Benson Cake Limited", tags: "Cake, Small Chops, Kits and Materials", status: "Pending" },
-  //   { id: 4, name: "Benson Cake Limited", tags: "Cake, Small Chops, Kits and Materials", status: "Pending" },
-  // ];
   const pendingBusinesses = dashboard?.pendingVerificationQueue || [];
 
-  // Recent Orders List Mock Data
-  // const recentOrders = [
-  //   { id: 1, title: "Glory", description: "Cake, Small Chops, Kits and Materials", location: "Bie's Kitchen", time: "31/08/15 - 4:00pm" },
-  //   { id: 2, title: "Glory", description: "Cake, Small Chops, Kits and Materials", location: "Bie's Kitchen", time: "31/08/15 - 4:00pm" },
-  //   { id: 3, title: "Glory", description: "Cake, Small Chops, Kits and Materials", location: "Bie's Kitchen", time: "31/08/15 - 4:00pm" },
-  //   { id: 4, title: "Glory", description: "Cake, Small Chops, Kits and Materials", location: "Bie's Kitchen", time: "31/08/15 - 4:00pm" },
-  // ];
   const recentOrders = dashboard?.recentOrders || [];
-
-//   if (dashboardLoading) {
-//   return (
-//     <div className="flex justify-center items-center h-screen">
-//       Loading dashboard...
-//     </div>
-//   );
-// }
 
 if (dashboardLoading) return <CompanyLoader />
 

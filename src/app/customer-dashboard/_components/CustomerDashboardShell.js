@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Bell,
   Grid2X2,
@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
+import { useCartStore } from "@/store/cartStore";
 
 const menuItems = [
   { label: "Overview", href: "/customer-dashboard", icon: Grid2X2 },
@@ -34,11 +35,30 @@ const generalItems = [
 
 export default function CustomerDashboardShell({ children }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+  const { cart, fetchCart } = useCartStore();
+
+    useEffect(() => {
+      if ( isAuthenticated) {
+        fetchCart().catch(() => {});
+      }
+    }, [fetchCart, isAuthenticated ]);
+  
+    const cartItemCount = cart?.items?.length || 0;
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const displayName = user?.name || "Bie Edward";
   const avatarUrl = user?.avatar?.url;
+
+    const handleLogout = () => {
+    logout();
+    router.push("/");
+  };
 
   const sidebar = (
     <aside className="flex h-full w-64 shrink-0 flex-col rounded-lg border border-gray-100 bg-white">
@@ -84,7 +104,7 @@ export default function CustomerDashboardShell({ children }) {
                 <span>{label}</span>
               </Link>
             ))}
-            <button className="flex h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50">
+            <button onClick={handleLogout} className="flex h-11 w-full cursor-pointer items-center gap-3 rounded-lg px-3 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50">
               <LogOut size={20} strokeWidth={1.6} />
               <span>Logout</span>
             </button>
@@ -130,8 +150,8 @@ export default function CustomerDashboardShell({ children }) {
           </div>
 
           <div className="flex items-center gap-4 sm:gap-6">
-            <NotificationIcon icon={ShoppingCart} count={10} label="Cart" />
-            <NotificationIcon icon={Bell} count={12} label="Notifications" />
+            <NotificationIcon icon={ShoppingCart} count={cartItemCount} label="Cart" href="/cart" />
+            <NotificationIcon icon={Bell} count={0} label="Notifications" href="/notifications" />
             <div className="flex min-w-0 items-center gap-3 rounded-full border border-gray-100 bg-white py-1.5 pl-2 pr-4 shadow-sm">
               <div className="relative h-9 w-9 overflow-hidden rounded-full bg-[#dff7f4]">
                 {avatarUrl ? (
@@ -156,13 +176,31 @@ export default function CustomerDashboardShell({ children }) {
   );
 }
 
-function NotificationIcon({ icon: Icon, count, label }) {
+function NotificationIcon({ icon: Icon, count, label, href }) {
   return (
-    <button type="button" aria-label={label} className="relative text-[#111]">
+    <Link
+      href={href}
+      aria-label={label}
+      className="relative inline-block text-[#111]"
+    >
       <Icon size={27} strokeWidth={1.7} />
-      <span className="absolute -right-2 -top-1 rounded-full bg-[#060853] px-1.5 py-0.5 text-[8px] leading-none text-white">
-        {count}
-      </span>
-    </button>
+
+      {count > 0 && (
+        <span className="absolute -right-2 -top-1 rounded-full bg-[#060853] px-1.5 py-0.5 text-[8px] leading-none text-white">
+          {count}
+        </span>
+      )}
+    </Link>
   );
 }
+
+// function NotificationIcon({ icon: Icon, count, label }) {
+//   return (
+//     <button type="button" aria-label={label} className="relative text-[#111]">
+//       <Icon size={27} strokeWidth={1.7} />
+//       <span className="absolute -right-2 -top-1 rounded-full bg-[#060853] px-1.5 py-0.5 text-[8px] leading-none text-white">
+//         {count}
+//       </span>
+//     </button>
+//   );
+// }

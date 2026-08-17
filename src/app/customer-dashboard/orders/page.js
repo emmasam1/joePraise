@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Dropdown, Table } from "antd";
@@ -15,30 +15,36 @@ import {
   List,
   MoreVertical,
   Search,
+  X,
 } from "lucide-react";
+import { useCustomerOrderStore } from "@/store/customerOrderStore";
 
-const tabs = ["All", "In Progress", "Pending", "Completed", "Cancelled", "Accepted", "Dispute"];
-
-const orders = [
-  { key: "1", id: "#0045", customer: "Joseph Grace", business: "Tech Haven", date: "09/12/2025", amount: "$250", status: "In Progress" },
-  { key: "2", id: "#0067", customer: "Lawrance Josh", business: "Cafe Delight", date: "15/12/2025", amount: "$100", status: "Pending" },
-  { key: "3", id: "#0085", customer: "Adams John", business: "Fashion Hub", date: "19/12/2025", amount: "$50", status: "Completed" },
-  { key: "4", id: "#0045", customer: "Joseph Grace", business: "Home Essentials", date: "09/12/2025", amount: "$250", status: "In Progress" },
-  { key: "5", id: "#0067", customer: "Lawrance Josh", business: "Auto Works", date: "15/12/2025", amount: "$100", status: "Accepted" },
-  { key: "6", id: "#0085", customer: "Adams John", business: "Lydia Tech Hub", date: "19/12/2025", amount: "$50", status: "Completed" },
-  { key: "7", id: "#0045", customer: "Joseph Grace", business: "Bie Kitchen", date: "09/12/2025", amount: "$250", status: "In Progress" },
-  { key: "8", id: "#0067", customer: "Lawrance Josh", business: "Yola Firm", date: "15/12/2025", amount: "$100", status: "Accepted" },
-  { key: "9", id: "#0085", customer: "Adams John", business: "Peterty Bakery", date: "19/12/2025", amount: "$50", status: "Completed" },
-  { key: "10", id: "#0085", customer: "Adams John", business: "Love Catering", date: "19/12/2025", amount: "$50", status: "Accepted" },
+const tabs = [
+  { label: "All", status: "all" },
+  { label: "In Progress", status: "in_progress" },
+  { label: "Pending", status: "pending" },
+  { label: "Completed", status: "completed" },
+  { label: "Cancelled", status: "cancelled" },
+  { label: "Accepted", status: "accepted" },
+  { label: "Dispute", status: "dispute" },
 ];
 
-const stats = [
-  { title: "Total Orders", value: 100, icon: "/images/cube.png" },
-  { title: "Accepted Orders", value: 24, icon: "/images/green_cube.png" },
-  { title: "In Progress", value: 8, icon: "/images/cube.png" },
-  { title: "Pending Orders", value: 12, icon: "/images/yellow_cube.png" },
-  { title: "Completed Orders", value: 56, icon: "/images/cube.png" },
+const statCards = [
+  { key: "totalOrders", title: "Total Orders", icon: "/images/cube.png" },
+  { key: "acceptedOrders", title: "Accepted Orders", icon: "/images/green_cube.png" },
+  { key: "inProgressOrders", title: "In Progress", icon: "/images/cube.png" },
+  { key: "pendingOrders", title: "Pending Orders", icon: "/images/yellow_cube.png" },
+  { key: "completedOrders", title: "Completed Orders", icon: "/images/cube.png" },
 ];
+
+const statusLabels = {
+  pending: "Pending",
+  accepted: "Accepted",
+  in_progress: "In Progress",
+  partially_completed: "In Progress",
+  completed: "Completed",
+  cancelled: "Cancelled",
+};
 
 const statusStyles = {
   "In Progress": "text-[#218cff]",
@@ -49,6 +55,34 @@ const statusStyles = {
   Dispute: "text-[#9a54dc]",
 };
 
+const formatDate = (value) =>
+  value
+    ? new Date(value).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+    : "—";
+
+const formatShort = (value) =>
+  value
+    ? new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : null;
+
+const formatAmount = (value) => `$${Number(value || 0).toLocaleString()}`;
+
+const businessName = (order) =>
+  order.business?.businessName ||
+  (order.businesses?.length > 1 ? "Multiple Vendors" : "—");
+
+const productName = (order) => {
+  const first = order.items?.[0]?.title || "—";
+  return order.items?.length > 1 ? `${first} +${order.items.length - 1} more` : first;
+};
+
+const orderStatusLabel = (order) =>
+  order.hasActiveDispute ? "Dispute" : statusLabels[order.orderStatus] || order.orderStatus;
+
 const columns = [
   {
     title: "",
@@ -58,19 +92,39 @@ const columns = [
   },
   {
     title: "Order ID",
-    dataIndex: "id",
-    key: "id",
+    dataIndex: "orderNumber",
+    key: "orderNumber",
     render: (value) => <span className="font-bold text-[#242424]">{value}</span>,
   },
-  { title: "Customer Name", dataIndex: "customer", key: "customer" },
-  { title: "Business Name", dataIndex: "business", key: "business" },
-  { title: "Delivery Date", dataIndex: "date", key: "date" },
-  { title: "Amount", dataIndex: "amount", key: "amount" },
+  {
+    title: "Product/Service",
+    key: "product",
+    render: (_, record) => productName(record),
+  },
+  {
+    title: "Business Name",
+    key: "business",
+    render: (_, record) => businessName(record),
+  },
+  {
+    title: "Order Date",
+    dataIndex: "createdAt",
+    key: "createdAt",
+    render: (value) => formatDate(value),
+  },
+  {
+    title: "Amount",
+    dataIndex: "totalOriginalPrice",
+    key: "totalOriginalPrice",
+    render: (value) => formatAmount(value),
+  },
   {
     title: "Status",
-    dataIndex: "status",
     key: "status",
-    render: (value) => <span className={statusStyles[value]}>{value}</span>,
+    render: (_, record) => {
+      const label = orderStatusLabel(record);
+      return <span className={statusStyles[label]}>{label}</span>;
+    },
   },
   {
     title: "",
@@ -85,7 +139,7 @@ const columns = [
             {
               key: "view",
               label: (
-                <Link href={`/customer-dashboard/orders/${record.key}`} className="block min-w-28 text-xs">
+                <Link href={`/customer-dashboard/orders/${record._id}`} className="block min-w-28 text-xs">
                   View more
                 </Link>
               ),
@@ -93,7 +147,7 @@ const columns = [
           ],
         }}
       >
-        <button type="button" aria-label={`Actions for ${record.id}`} className="flex h-8 w-8 items-center justify-center">
+        <button type="button" aria-label={`Actions for ${record.orderNumber}`} className="flex h-8 w-8 items-center justify-center">
           <MoreVertical size={17} />
         </button>
       </Dropdown>
@@ -102,32 +156,44 @@ const columns = [
 ];
 
 export default function CustomerOrdersPage() {
-  const [activeTab, setActiveTab] = useState("All");
+  const { orders, stats, pagination, ordersLoading, ordersError, getOrders } = useCustomerOrderStore();
+
+  const [activeTab, setActiveTab] = useState("all");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const pageSize = 10;
-  const hasOrders = orders.length > 0;
+  const [dateRange, setDateRange] = useState({ startDate: "", endDate: "" });
 
-  const filteredOrders = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    return orders.filter((order) => {
-      const matchesTab = activeTab === "All" || order.status === activeTab;
-      const matchesSearch =
-        !query ||
-        [order.id, order.customer, order.business, order.status].some((value) =>
-          value.toLowerCase().includes(query),
-        );
-      return matchesTab && matchesSearch;
-    });
-  }, [activeTab, search]);
+  // Debounce search so we don't fire a request on every keystroke.
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      getOrders({
+        status: activeTab,
+        search,
+        page,
+        limit: 10,
+        startDate: dateRange.startDate || undefined,
+        endDate: dateRange.endDate || undefined,
+      });
+    }, 350);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, search, page, dateRange]);
 
-  const pageCount = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
-  const visibleOrders = filteredOrders.slice((page - 1) * pageSize, page * pageSize);
-
-  const selectTab = (tab) => {
-    setActiveTab(tab);
+  const selectTab = (status) => {
+    setActiveTab(status);
     setPage(1);
   };
+
+  const applyDateRange = (range) => {
+    setDateRange(range);
+    setPage(1);
+  };
+
+  const hasOrders = (stats?.totalOrders || 0) > 0;
+  const pageCount = pagination?.totalPages || 1;
+  const total = pagination?.total || 0;
+  const first = total === 0 ? 0 : (page - 1) * 10 + 1;
+  const last = Math.min(page * 10, total);
 
   return (
     <div className="space-y-6">
@@ -136,26 +202,23 @@ export default function CustomerOrdersPage() {
           <h1 className="text-2xl font-bold text-black">Orders</h1>
           <p className="mt-1 text-sm text-[#303036]">Keep track of your orders</p>
         </div>
-        <button
-          type="button"
-          className="flex h-12 min-w-[315px] items-center justify-between rounded-lg border border-[#060853] bg-white px-4 text-sm text-[#27272d]"
-        >
-          <span className="flex items-center gap-3">
-            <CalendarDays size={20} />
-            May 1, 2026 - Jun 22, 2026
-          </span>
-          <ChevronDown size={18} />
-        </button>
+        <DateRangeFilter value={dateRange} onApply={applyDateRange} />
       </div>
 
+      {ordersError && (
+        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{ordersError}</p>
+      )}
+
       <section className="grid grid-cols-1 gap-4 rounded-xl bg-[#E2EDFC] p-4 sm:grid-cols-2 xl:grid-cols-5">
-        {stats.map((item) => (
-          <article key={item.title} className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
+        {statCards.map((item) => (
+          <article key={item.key} className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm">
             <div className="flex items-center gap-2 border-b border-[#e1e4e9] pb-2">
               <Image src={item.icon} alt="" width={20} height={20} className="h-5 w-5 object-contain" />
               <h2 className="text-xs font-semibold text-[#57575b]">{item.title}</h2>
             </div>
-            <p className="mt-2 text-[30px] font-semibold leading-none text-black">{hasOrders ? item.value : 0}</p>
+            <p className="mt-2 text-[30px] font-semibold leading-none text-black">
+              {ordersLoading ? "…" : stats?.[item.key] ?? 0}
+            </p>
           </article>
         ))}
       </section>
@@ -165,13 +228,13 @@ export default function CustomerOrdersPage() {
           {tabs.map((tab) => (
             <button
               type="button"
-              key={tab}
-              onClick={() => selectTab(tab)}
+              key={tab.status}
+              onClick={() => selectTab(tab.status)}
               className={`shrink-0 rounded-full px-5 py-2 text-xs transition-colors ${
-                activeTab === tab ? "bg-[#060853] text-white" : "text-[#202027] hover:bg-white/60"
+                activeTab === tab.status ? "bg-[#060853] text-white" : "text-[#202027] hover:bg-white/60"
               }`}
             >
-              {tab}
+              {tab.label}
             </button>
           ))}
         </div>
@@ -185,7 +248,7 @@ export default function CustomerOrdersPage() {
                 setSearch(event.target.value);
                 setPage(1);
               }}
-              placeholder="Search"
+              placeholder="Search by order ID"
               className="min-w-0 flex-1 bg-transparent text-xs outline-none"
             />
           </label>
@@ -195,17 +258,115 @@ export default function CustomerOrdersPage() {
         </div>
       </div>
 
-      {hasOrders ? (
+      {hasOrders || ordersLoading ? (
         <OrderTable
-          data={visibleOrders}
+          data={orders}
+          loading={ordersLoading}
           page={page}
           pageCount={pageCount}
-          total={filteredOrders.length}
-          pageSize={pageSize}
+          total={total}
+          first={first}
+          last={last}
           onPageChange={setPage}
         />
       ) : (
         <EmptyOrders />
+      )}
+    </div>
+  );
+}
+
+function DateRangeFilter({ value, onApply }) {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const containerRef = useRef(null);
+
+  useEffect(() => setDraft(value), [value]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const label =
+    value.startDate && value.endDate
+      ? `${formatShort(value.startDate)} - ${formatShort(value.endDate)}`
+      : "All dates";
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="flex h-12 min-w-[315px] items-center justify-between rounded-lg border border-[#060853] bg-white px-4 text-sm text-[#27272d]"
+      >
+        <span className="flex items-center gap-3">
+          <CalendarDays size={20} />
+          {label}
+        </span>
+        <ChevronDown size={18} className={open ? "rotate-180 transition-transform" : "transition-transform"} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-14 z-20 w-[300px] rounded-lg border border-gray-200 bg-white p-4 shadow-lg">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-[#27272d]">Filter by date</p>
+            <button type="button" aria-label="Close" onClick={() => setOpen(false)}>
+              <X size={16} />
+            </button>
+          </div>
+          <div className="mt-3 space-y-3">
+            <label className="block text-xs text-[#606066]">
+              From
+              <input
+                type="date"
+                value={draft.startDate}
+                max={draft.endDate || undefined}
+                onChange={(event) => setDraft((prev) => ({ ...prev, startDate: event.target.value }))}
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="block text-xs text-[#606066]">
+              To
+              <input
+                type="date"
+                value={draft.endDate}
+                min={draft.startDate || undefined}
+                onChange={(event) => setDraft((prev) => ({ ...prev, endDate: event.target.value }))}
+                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              />
+            </label>
+          </div>
+          <div className="mt-4 flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                const cleared = { startDate: "", endDate: "" };
+                setDraft(cleared);
+                onApply(cleared);
+                setOpen(false);
+              }}
+              className="text-xs font-semibold text-[#606066]"
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onApply(draft);
+                setOpen(false);
+              }}
+              className="rounded-lg bg-[#060853] px-4 py-2 text-xs font-medium text-white"
+            >
+              Apply
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -223,10 +384,7 @@ function ViewButton({ label, children }) {
   );
 }
 
-function OrderTable({ data, page, pageCount, total, pageSize, onPageChange }) {
-  const first = total === 0 ? 0 : (page - 1) * pageSize + 1;
-  const last = Math.min(page * pageSize, total);
-
+function OrderTable({ data, loading, page, pageCount, total, first, last, onPageChange }) {
   return (
     <section className="rounded-xl bg-[#E2EDFC] p-5 sm:p-7">
       <h2 className="mb-7 text-base font-semibold text-[#24242a]">Order Summary</h2>
@@ -234,6 +392,8 @@ function OrderTable({ data, page, pageCount, total, pageSize, onPageChange }) {
         <Table
           columns={columns}
           dataSource={data}
+          rowKey="_id"
+          loading={loading}
           pagination={false}
           className="custom-table min-w-[950px]"
           size="small"
@@ -251,16 +411,18 @@ function OrderTable({ data, page, pageCount, total, pageSize, onPageChange }) {
           >
             <ChevronLeft size={17} />
           </PageButton>
-          {[1, 2, 3, 4].filter((number) => number <= pageCount).map((number) => (
-            <PageButton key={number} active={page === number} onClick={() => onPageChange(number)}>
-              {number}
-            </PageButton>
-          ))}
+          {Array.from({ length: pageCount }, (_, i) => i + 1)
+            .filter((number) => number <= 4)
+            .map((number) => (
+              <PageButton key={number} active={page === number} onClick={() => onPageChange(number)}>
+                {number}
+              </PageButton>
+            ))}
           {pageCount > 5 && <PageButton disabled>•••</PageButton>}
           {pageCount > 4 && <PageButton onClick={() => onPageChange(pageCount)}>{pageCount}</PageButton>}
           <PageButton
             label="Next page"
-            disabled={page === pageCount}
+            disabled={page === pageCount || pageCount === 0}
             onClick={() => onPageChange(Math.min(pageCount, page + 1))}
           >
             <ChevronRight size={17} />

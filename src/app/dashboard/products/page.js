@@ -343,7 +343,7 @@ const ProductManagementPage = () => {
       title: "EARNINGS",
       dataIndex: "earnings",
       key: "earnings",
-      render: (text) => <span className="font-semibold text-black capitalize">{text || "₦0"}</span>,
+      render: (text) => <span className="font-semibold text-black capitalize">{text || "$0"}</span>,
     },
     {
   title: "STATUS",
@@ -788,7 +788,7 @@ const ProductManagementPage = () => {
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">Price</label>
                 <Input 
-                  prefix="₦" 
+                  prefix="$" 
                   value={formData.price}
                   onChange={(e) => handleInputChange("price", e.target.value)}
                   placeholder="0.00" 
@@ -802,7 +802,7 @@ const ProductManagementPage = () => {
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">From (Min Price)</label>
                   <Input 
-                    prefix="₦" 
+                    prefix="$" 
                     value={formData.minPrice}
                     onChange={(e) => handleInputChange("minPrice", e.target.value)}
                     placeholder="0.00" 
@@ -813,7 +813,7 @@ const ProductManagementPage = () => {
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">To (Max Price)</label>
                   <Input 
-                    prefix="₦" 
+                    prefix="$" 
                     value={formData.maxPrice}
                     onChange={(e) => handleInputChange("maxPrice", e.target.value)}
                     placeholder="0.00" 

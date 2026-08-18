@@ -78,6 +78,51 @@ export const useListingStore = create((set, get) => ({
     }
   },
 
+  updateService: async (listingId, formData) => {
+    set({ loading: true });
+
+    try {
+      const payload = new FormData();
+      const fileKeys = ["images", "digitalFiles"];
+
+      Object.entries(formData).forEach(([key, value]) => {
+        if (fileKeys.includes(key)) return;
+
+        if (value !== undefined && value !== null && value !== "") {
+          payload.append(key, value);
+        }
+      });
+
+      formData.images?.forEach((image) => {
+        payload.append("images", image.originFileObj || image);
+      });
+
+      formData.digitalFiles?.forEach((file) => {
+        payload.append("digitalFiles", file.originFileObj || file);
+      });
+
+      // console.log("📝 Updating listing:", {
+      //   listingId,
+      //   endpoint: `/services/${listingId}`,
+      //   method: "PATCH",
+      // });
+
+      const res = await api.patch(`/services/${listingId}`, payload, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      message.success(res.data.message || "Listing updated successfully");
+      return res.data;
+    } catch (error) {
+      message.error(
+        error?.response?.data?.message || "Failed to update listing",
+      );
+      throw error;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
   // NEW: fetch listing categories (type=listing) for the product/service form.
   fetchListingCategories: async () => {
     try {
@@ -113,7 +158,7 @@ export const useListingStore = create((set, get) => ({
   getAllservices: async () => {
     try {
       const res = await api.get("/services");
-      console.log(res)
+      // console.log(res)
       set({
         services: res.data.services || [],
       });

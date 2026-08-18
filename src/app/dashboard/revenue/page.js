@@ -298,7 +298,7 @@ const page = () => {
         </div>
 
         <div className="h-87.5 w-full">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
             <LineChart data={chartDataMap[activeTab]}>
               <CartesianGrid
                 vertical={false}

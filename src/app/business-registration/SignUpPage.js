@@ -1,7 +1,7 @@
 
 
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -11,8 +11,9 @@ import {
   EyeOutlined,
   EyeInvisibleOutlined,
 } from "@ant-design/icons";
-import { Button, Input, Select, Row, Col, message } from "antd";
+import { Button, Checkbox, Input, Select, Row, Col, message } from "antd";
 import api from "@/api/axios";
+import PolicyModal from "@/components/PolicyModal";
 
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
@@ -31,13 +32,11 @@ const SignUpPage = () => {
     confirmPassword: "",
   });
   const [loading, setLoading] = useState(false);
+  const [policyAccepted, setPolicyAccepted] = useState(false);
+  const [selectedPolicy, setSelectedPolicy] = useState(null);
 
-  const [referredByCode, setReferredByCode] = useState("");
-
-  useEffect(() => {
-    const ref = searchParams.get("ref") || searchParams.get("referralCode");
-    if (ref) setReferredByCode(ref);
-  }, [searchParams]);
+  const referredByCode =
+    searchParams.get("ref") || searchParams.get("referralCode") || "";
 
   const validations = {
     length: formData.password.length >= 8,
@@ -50,6 +49,11 @@ const SignUpPage = () => {
   };
 
   const handleGoogleSignup = () => {
+    if (!policyAccepted) {
+      message.error("Please read and accept the Terms & Conditions and Privacy Policy");
+      return;
+    }
+
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL.replace("/v1", "");
     // NEW: bundle both referral code and redirect intent into the state param
     const statePayload = { ...(referredByCode ? { ref: referredByCode } : {}), ...(redirectTo ? { redirect: redirectTo } : {}) };
@@ -79,6 +83,9 @@ const SignUpPage = () => {
       !validations.case
     ) {
       return message.error("Password requirements not met");
+    }
+    if (!policyAccepted) {
+      return message.error("Please read and accept the Terms & Conditions and Privacy Policy");
     }
 
     setLoading(true);
@@ -265,6 +272,31 @@ const SignUpPage = () => {
               </Col>
             </Row>
 
+            <div className="mt-4 w-full rounded-lg border border-[#D7E2F0] bg-[#F8FAFC] p-3">
+              <Checkbox
+                checked={policyAccepted}
+                onChange={(event) => setPolicyAccepted(event.target.checked)}
+                className="items-start! text-xs! leading-5!"
+              >
+                I have read and agree to the{" "}
+                <button
+                  type="button"
+                  onClick={() => setSelectedPolicy({ title: "Terms & Conditions", href: "/terms-of-use" })}
+                  className="font-semibold text-[#087F5B] underline underline-offset-2"
+                >
+                  Terms & Conditions
+                </button>{" "}
+                and{" "}
+                <button
+                  type="button"
+                  onClick={() => setSelectedPolicy({ title: "Privacy Policy", href: "/privacy-policy" })}
+                  className="font-semibold text-[#087F5B] underline underline-offset-2"
+                >
+                  Privacy Policy
+                </button>.
+              </Checkbox>
+            </div>
+
             <div className="flex flex-col justify-center items-center mt-auto">
               <Button
                 htmlType="submit"
@@ -312,6 +344,8 @@ const SignUpPage = () => {
         />
         <div className="absolute inset-0 bg-black/5" />
       </div>
+
+      <PolicyModal policy={selectedPolicy} onClose={() => setSelectedPolicy(null)} />
     </div>
   );
 };

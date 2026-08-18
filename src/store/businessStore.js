@@ -159,8 +159,13 @@ export const useBusinessStore = create((set, get) => ({
           authStore.setLoginSuccess(user, accessToken, refreshToken);
         }
 
+        // Ensure the dashboard receives the newly linked business and its
+        // verification state before navigating away from onboarding.
+        await useAuthStore.getState().getMe();
+
         message.success(response.data.message || "Business onboarded successfully");
-        router.push("/dashboard");
+        router.replace("/dashboard");
+        router.refresh();
       }
 
       return response.data;

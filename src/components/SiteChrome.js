@@ -1,5 +1,6 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import AuthInitializer from "@/components/AuthInitializer";
 import Footer from "@/components/Footer";
@@ -29,16 +30,32 @@ const footerLinks = [
   "/policies/community-guidelines",
 ];
 
+const subscribeToLocation = (callback) => {
+  window.addEventListener("popstate", callback);
+  return () => window.removeEventListener("popstate", callback);
+};
+
+const getEmbeddedSnapshot = () =>
+  new URLSearchParams(window.location.search).get("embedded") === "1";
+
+const getServerEmbeddedSnapshot = () => false;
+
 export default function SiteChrome({ children }) {
   const pathname = usePathname();
+  const isEmbeddedPolicy = useSyncExternalStore(
+    subscribeToLocation,
+    getEmbeddedSnapshot,
+    getServerEmbeddedSnapshot,
+  );
   const showNavbar =
-    navLinks.includes(pathname) ||
-    pathname.startsWith("/business-details/") ||
-    pathname.startsWith("/policies/");
+    !isEmbeddedPolicy &&
+    (navLinks.includes(pathname) ||
+      pathname.startsWith("/business-details/") ||
+      pathname.startsWith("/policies/"));
   const showCart =
     pathname.startsWith("/business-details/") &&
     pathname !== "/business-details";
-  const showFooter = footerLinks.includes(pathname);
+  const showFooter = !isEmbeddedPolicy && footerLinks.includes(pathname);
 
   return (
     <>

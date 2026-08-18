@@ -102,6 +102,15 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import Cookies from 'js-cookie';
 import api from '@/api/axios';
 
+const serverStorage = {
+  getItem: () => null,
+  setItem: () => undefined,
+  removeItem: () => undefined,
+};
+
+const getStorage = () =>
+  typeof window === "undefined" ? serverStorage : window.localStorage;
+
 export const useAuthStore = create(
   persist(
     (set) => ({
@@ -128,7 +137,7 @@ export const useAuthStore = create(
         // now-stale guest identity and refresh the cart so the UI reflects
         // the merged result immediately.
         if (typeof window !== "undefined") {
-          localStorage.removeItem("joepraise-guest-id");
+          window.localStorage.removeItem("joepraise-guest-id");
         }
 
         import("@/store/cartStore").then(({ useCartStore }) => {
@@ -182,7 +191,9 @@ export const useAuthStore = create(
         Cookies.remove('role');
         Cookies.remove('user');
 
-        localStorage.removeItem("admin-dashboard");
+        if (typeof window !== "undefined") {
+          window.localStorage.removeItem("admin-dashboard");
+        }
         
         set({ 
           user: null, 
@@ -199,7 +210,7 @@ export const useAuthStore = create(
     }),
     {
       name: 'joepraise-auth-storage',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(getStorage),
     }
   )
 );

@@ -171,7 +171,7 @@ if (dashboardLoading) return <CompanyLoader />
             </div>
 
             <div className="h-56 w-full text-[10px] font-medium text-gray-400">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
                 <LineChart data={lineChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
                   <XAxis dataKey="name" tickLine={false} axisLine={false} stroke="#9CA3AF" className="font-semibold text-xs" />
@@ -225,7 +225,7 @@ if (dashboardLoading) return <CompanyLoader />
             </div>
 
             <div className="h-64 w-full mt-6 text-[10px] font-medium text-gray-400">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
                 <BarChart data={barChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
                   <XAxis dataKey="name" tickLine={false} axisLine={false} stroke="#9CA3AF" className="font-semibold text-xs" />
@@ -256,7 +256,7 @@ if (dashboardLoading) return <CompanyLoader />
         </div>
 
         <div className="h-56 w-full text-[10px] font-medium text-gray-400">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
             <AreaChart data={orderTrendsData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="orderGrad" x1="0" y1="0" x2="0" y2="1">

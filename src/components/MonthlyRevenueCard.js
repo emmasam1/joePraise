@@ -17,7 +17,7 @@ const MonthlyRevenueCard = () => {
 
       <div className="flex items-center gap-10">
         <div className="h-62.5 w-full max-w-62.5 relative">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
             <PieChart>
               <Pie
                 data={donutData}

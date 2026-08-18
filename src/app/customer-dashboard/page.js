@@ -194,7 +194,7 @@ function PopulatedDashboard({ spendingTrend, orderStatusTrend, recentOrders }) {
         title="Total Spending Trends"
         legend={<><span className="h-2 w-2 rounded-full bg-[#060853]" /> Last 6 months</>}
       >
-        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
           <AreaChart data={spendingTrend} margin={{ top: 15, right: 15, left: -10, bottom: 0 }}>
             <defs>
               <linearGradient id="spendingFill" x1="0" y1="0" x2="0" y2="1">
@@ -222,7 +222,7 @@ function PopulatedDashboard({ spendingTrend, orderStatusTrend, recentOrders }) {
           </>
         }
       >
-        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
           <BarChart data={orderStatusTrend} margin={{ top: 20, right: 15, left: -10, bottom: 0 }} barGap={12}>
             <CartesianGrid vertical={false} stroke="#eef0f5" />
             <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: "#66668b", fontSize: 13, fontWeight: 600 }} dy={13} />

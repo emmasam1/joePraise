@@ -30,8 +30,8 @@ import {
 import { useBusinessStore } from "@/store/businessStore";
 import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { onboardingPolicyLinks } from "@/data/policyCatalog";
+import PolicyModal from "@/components/PolicyModal";
 
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
@@ -115,6 +115,7 @@ export default function MultiStepForm() {
   const [taxCertificate, setTaxCertificate] = useState(null);
   const [proofOfAddress, setProofOfAddress] = useState(null);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [selectedPolicy, setSelectedPolicy] = useState(null);
 
   // NEW: category dropdown data + loading state
   const [categories, setCategories] = useState([]);
@@ -530,10 +531,6 @@ export default function MultiStepForm() {
         },
         router
       );
-
-      if (response?.success && !response?.requiresVerification) {
-        message.success("Business onboarding successful");
-      }
 
       return response;
     } catch (error) {
@@ -1605,19 +1602,18 @@ export default function MultiStepForm() {
                   <section className="rounded-xl border border-[#D7E2F0] bg-[#F8FAFC] p-5">
                     <h3 className="text-base font-bold text-[#060853]">Platform Agreements</h3>
                     <p className="mt-2 text-xs leading-5 text-gray-600">
-                      Before submitting your application, review the Platform Policies that govern business participation on Joe Praise Smart Hub. Each policy opens in a new tab.
+                      Before submitting your application, review the Platform Policies that govern business participation on Joe Praise Smart Hub. Each policy opens here without leaving this form.
                     </p>
                     <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2">
                       {onboardingPolicyLinks.map((policy) => (
-                        <Link
+                        <button
+                          type="button"
                           key={policy.href}
-                          href={policy.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          onClick={() => setSelectedPolicy(policy)}
                           className="text-xs font-semibold text-[#087F5B] underline underline-offset-2"
                         >
                           {policy.title}
-                        </Link>
+                        </button>
                       ))}
                     </div>
                     <Checkbox
@@ -1691,6 +1687,7 @@ export default function MultiStepForm() {
         />
         <div className="absolute inset-0 bg-black/20" />
       </div>
+      <PolicyModal policy={selectedPolicy} onClose={() => setSelectedPolicy(null)} />
     </div>
   );
 }

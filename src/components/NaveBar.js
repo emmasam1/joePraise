@@ -207,7 +207,7 @@ const NaveBar = ({ showCart = true }) => {
         placement="right"
         onClose={() => setOpen(false)}
         open={open}
-        width={280}
+        size={280}
       >
         <div className="flex flex-col gap-6 pt-4">
           {isAuthenticated && (

@@ -18,7 +18,7 @@ const WeeklyRevenueCard = () => {
       </div>
 
       <div className="h-62.5 w-full">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
           <BarChart data={barData} barGap={-24} margin={{ left: -30 }}>
             <CartesianGrid vertical={false} stroke="#F1F5F9" />
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} dy={10} />

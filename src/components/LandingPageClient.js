@@ -257,7 +257,13 @@ const LandingPage = ({
 
         <div className="max-w-5xl mx-auto mt-10 bg-white p-2.5 rounded-2xl shadow-[0_15px_50px_rgba(0,0,0,0.1)] flex flex-col md:flex-row items-center gap-2 border border-gray-100">
           <div className="flex-1 w-full flex items-center px-4">
-            <Image src="/images/pin_dark.png" alt="Pin" width={20} height={20} />
+            <Image
+              src="/images/pin_dark.png"
+              alt="Location"
+              width={20}
+              height={20}
+              className="h-5 w-5 shrink-0 object-contain"
+            />
             <Input
               placeholder="Location"
               variant="borderless"
@@ -270,7 +276,13 @@ const LandingPage = ({
           <div className="w-px h-8 bg-gray-200 hidden md:block" />
 
           <div className="flex-[1.2] w-full flex items-center px-4">
-            <Image src="/images/bag.png" alt="Pin" width={20} height={20} />
+            <Image
+              src="/images/bag.png"
+              alt="Category"
+              width={20}
+              height={20}
+              className="h-5 w-5 shrink-0 object-contain"
+            />
             <Select
               showSearch
               suffixIcon={null}
@@ -279,7 +291,7 @@ const LandingPage = ({
               value={searchCategorySlug}
               onChange={(val) => setSearchCategorySlug(val)}
               className="w-full h-12 text-base font-medium custom-select"
-              dropdownStyle={{ minWidth: "350px" }}
+              styles={{ popup: { root: { minWidth: "350px" } } }}
               loading={publicCategoriesLoading}
               options={categoryOptions}
               allowClear

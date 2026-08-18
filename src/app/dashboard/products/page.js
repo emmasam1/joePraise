@@ -23,14 +23,40 @@ const SESSION_DURATION_OPTIONS = [
   "full day",
 ];
 
+const DAY_KEYS = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+];
+
+const getSessionDurationMinutes = (duration) => {
+  const durations = {
+    "30 minutes": 30,
+    "45 minutes": 45,
+    "1 hour": 60,
+    "1.5 hours": 90,
+    "2 hours": 120,
+    "3 hours": 180,
+    "half day": 240,
+    "full day": 480,
+  };
+
+  return durations[duration];
+};
+
 const ProductManagementPage = () => {
-  const { createService, getMyServices, services, loading, fetchListingCategories } = useListingStore();
+  const { createService, updateService, getMyServices, services, loading, fetchListingCategories } = useListingStore();
 
   const [activeTab, setActiveTab] = useState("All");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeletingModalOpen, setIsDeletingModalOpen] = useState(false);
   const [isSelected, setIsSelected] = useState(null);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
+  const [editingListing, setEditingListing] = useState(null);
 
   // NEW: full-page overlay loader shown only while submitting the form.
   const [formSubmitting, setFormSubmitting] = useState(false);
@@ -45,6 +71,7 @@ const ProductManagementPage = () => {
     name: "",
     category: undefined,
     description: "",
+    tags: "",
     sku: "",
     stock: 0,
     weight: "",
@@ -85,6 +112,7 @@ const ProductManagementPage = () => {
   // Separated states for preview urls vs raw binary files for multipart payload transmission
   const [uploadedImages, setUploadedImages] = useState([]);
   const [rawImageFiles, setRawImageFiles] = useState([]);
+  const [removeImageIds, setRemoveImageIds] = useState([]);
 
   // NEW: digital product file uploads (files themselves, not images).
   const [digitalRawFiles, setDigitalRawFiles] = useState([]);
@@ -92,19 +120,17 @@ const ProductManagementPage = () => {
   // Fetch initial services listing on mount
   useEffect(() => {
     getMyServices();
-  }, []);
+  }, [getMyServices]);
 
-  // NEW: lazy-load listing categories only the first time the Add form opens.
-  useEffect(() => {
-    if (isAddingProduct && !categoriesFetched) {
-      setCategoriesLoading(true);
-      fetchListingCategories().then((result) => {
-        setCategories(result);
-        setCategoriesFetched(true);
-        setCategoriesLoading(false);
-      });
-    }
-  }, [isAddingProduct, categoriesFetched, fetchListingCategories]);
+  const ensureCategoriesLoaded = async () => {
+    if (categoriesFetched || categoriesLoading) return;
+
+    setCategoriesLoading(true);
+    const result = await fetchListingCategories();
+    setCategories(result);
+    setCategoriesFetched(true);
+    setCategoriesLoading(false);
+  };
 
   // NEW: flatten parent + subCategories into one option list, sub-categories
   // shown with a dash prefix for visual nesting.
@@ -145,6 +171,22 @@ const ProductManagementPage = () => {
   };
 
   const removeImage = (indexToRemove) => {
+    const removedUrl = uploadedImages[indexToRemove];
+    const originalImage = editingListing?.images?.find((image) => {
+      const imageUrl = typeof image === "object" ? image.url : image;
+      return imageUrl === removedUrl;
+    });
+    const imageId =
+      typeof originalImage === "object"
+        ? originalImage.publicId ||
+          originalImage.public_id ||
+          originalImage.cloudinaryId
+        : null;
+
+    if (imageId) {
+      setRemoveImageIds((previous) => [...new Set([...previous, imageId])]);
+    }
+
     setUploadedImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
     setRawImageFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   };
@@ -169,6 +211,90 @@ const ProductManagementPage = () => {
     } else {
       setSchedulingEnabled(true);
     }
+  };
+
+  const handleEditListing = (record) => {
+    const physical = record.physicalProduct || {};
+    const digital = record.digitalProduct || {};
+    const service = record.service || record.serviceDetails || {};
+    const normalizedType =
+      record.type === "physical_product"
+        ? "physical"
+        : record.type === "digital_product"
+          ? "digital"
+          : "service";
+
+    const storedDays = service.availableDays || record.availableDays;
+    let availableDays = [0, 1, 2, 3, 4];
+
+    if (Array.isArray(storedDays)) {
+      availableDays = storedDays.map((day) =>
+        typeof day === "string" ? DAY_KEYS.indexOf(day.toLowerCase()) : day,
+      ).filter((day) => day >= 0);
+    } else if (typeof storedDays === "string") {
+      try {
+        const parsedDays = JSON.parse(storedDays);
+        if (Array.isArray(parsedDays)) {
+          availableDays = parsedDays.map((day) =>
+            typeof day === "string" ? DAY_KEYS.indexOf(day.toLowerCase()) : day,
+          ).filter((day) => day >= 0);
+        }
+      } catch {
+        availableDays = [0, 1, 2, 3, 4];
+      }
+    }
+
+    ensureCategoriesLoaded();
+    setEditingListing(record);
+    setProductType(normalizedType);
+    setPriceType(record.pricingType || "fixed");
+    setFormData({
+      name: record.title || record.name || "",
+      category: record.category?._id || record.category || undefined,
+      description: record.description || "",
+      tags: Array.isArray(record.tags) ? record.tags.join(", ") : record.tags || "",
+      sku: physical.sku || record.sku || "",
+      stock: physical.stock ?? record.stock ?? 0,
+      weight: physical.weightKg ?? record.weightKg ?? "",
+      dimensions: physical.dimensions || record.dimensions || "",
+      price: record.price ?? "",
+      minPrice: record.minPrice ?? "",
+      maxPrice: record.maxPrice ?? "",
+      sessionDuration: service.sessionDuration || record.sessionDuration,
+      serviceFormat: service.serviceFormat || record.serviceFormat,
+      openingTime: service.openingTime || record.openingTime || "",
+      closingTime: service.closingTime || record.closingTime || "",
+      earliestNotice: (service.earliestBookingNotice || record.earliestBookingNotice || "").replaceAll(" ", "-"),
+      latestWindow: (service.latestBookingWindow || record.latestBookingWindow || "").replaceAll(" ", "-"),
+      bufferSession: (service.bufferBetweenSessions || record.bufferBetweenSessions || "")
+        .replace("minutes", "mins")
+        .replaceAll(" ", "-"),
+      maxBookingsPerDay: service.maxBookingsPerDay || record.maxBookingsPerDay || 1,
+      cancellationPolicy: service.cancellationPolicy || record.cancellationPolicy || "",
+      digitalAccessDuration: digital.accessDuration || record.accessDuration || "lifetime",
+      digitalDownloadLimit:
+        String(digital.downloadLimit ?? record.downloadLimit ?? "") === "1"
+          ? "once"
+          : "unlimited",
+    });
+    const storedLocation = service.locationType || record.locationType;
+    setServiceLocationType(
+      storedLocation === "online" ? "online_virtual" : storedLocation || "seller_location",
+    );
+    setSchedulingEnabled(Boolean(service.bookingEnabled ?? record.bookingEnabled));
+    setSelectedDays(availableDays);
+    setIsPublished(record.listingStatus === "published");
+    setIsPaused(Boolean(record.isPaused || record.listingStatus === "paused"));
+    setIsFeatured(Boolean(record.isFeatured ?? record.featured));
+    setUploadedImages(
+      (record.images || []).map((image) =>
+        typeof image === "object" ? image.url : image,
+      ).filter(Boolean),
+    );
+    setRawImageFiles([]);
+    setRemoveImageIds([]);
+    setDigitalRawFiles([]);
+    setIsAddingProduct(true);
   };
 
   // Submit Handler Framework
@@ -236,11 +362,97 @@ const ProductManagementPage = () => {
     setFormSubmitting(true);
 
     try {
-      await createService(payload);
+      if (editingListing) {
+        const tags = formData.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean);
+        const updatePayload = {
+          title: formData.name,
+          name: formData.name,
+          description: formData.description,
+          category: formData.category || "",
+          tags: JSON.stringify(tags),
+          pricingType: priceType,
+          priceType,
+          pricingMode: priceType,
+          currency: "NGN",
+          isActive: isPublished && !isPaused,
+          isPaused,
+          paused: isPaused,
+          isFeatured,
+          featured: isFeatured,
+          removeImageIds: JSON.stringify(removeImageIds),
+        };
+
+        if (priceType === "fixed") {
+          updatePayload.price = formData.price || 0;
+        } else if (priceType === "range") {
+          updatePayload.minPrice = formData.minPrice || 0;
+          updatePayload.maxPrice = formData.maxPrice || 0;
+        }
+
+        if (productType === "physical") {
+          Object.assign(updatePayload, {
+            images: rawImageFiles,
+            sku: formData.sku,
+            productCode: formData.sku,
+            weightKg: formData.weight,
+            weight: formData.weight,
+            dimensions: formData.dimensions,
+            size: formData.dimensions,
+            fulfillmentType: "shipping",
+            locationType: "shipping",
+            stock: formData.stock,
+            trackInventory: true,
+          });
+        } else if (productType === "service") {
+          const normalizedLocation =
+            serviceLocationType === "online_virtual"
+              ? "online"
+              : serviceLocationType;
+
+          Object.assign(updatePayload, {
+            images: rawImageFiles,
+            sessionDuration: formData.sessionDuration,
+            sessionDurationMinutes: getSessionDurationMinutes(formData.sessionDuration),
+            serviceFormat: formData.serviceFormat,
+            locationType: normalizedLocation,
+            bookingEnabled: schedulingEnabled,
+            availableDays: JSON.stringify(selectedDays.map((day) => DAY_KEYS[day])),
+            openingTime: formData.openingTime,
+            closingTime: formData.closingTime,
+            earliestBookingNotice: formData.earliestNotice.replaceAll("-", " "),
+            latestBookingWindow: formData.latestWindow.replaceAll("-", " "),
+            bufferBetweenSessions: formData.bufferSession.replace("mins", "minutes").replaceAll("-", " "),
+            maxBookingsPerDay: formData.maxBookingsPerDay,
+            cancellationPolicy: formData.cancellationPolicy,
+          });
+        } else if (productType === "digital") {
+          Object.assign(updatePayload, {
+            digitalFiles: digitalRawFiles,
+            accessDuration: formData.digitalAccessDuration,
+            accessDurationDays: formData.digitalAccessDuration === "lifetime" ? "null" : undefined,
+            downloadLimit:
+              formData.digitalDownloadLimit === "unlimited" ? "unlimited" : "1",
+          });
+        }
+
+        await updateService(
+          editingListing._id?.$oid || editingListing._id,
+          updatePayload,
+        );
+      } else {
+        await createService(payload);
+      }
       setIsAddingProduct(false);
-      getMyServices(); 
+      setEditingListing(null);
+      await getMyServices();
     } catch (err) {
-      console.error("Listing creation failed:", err);
+      console.error(
+        editingListing ? "Listing update failed:" : "Listing creation failed:",
+        err,
+      );
     } finally {
       setFormSubmitting(false);
     }
@@ -405,7 +617,17 @@ const ProductManagementPage = () => {
               </span>
             ),
           },
-          { key: "edit", label: <span className="text-[10px] font-bold py-1 block">Edit</span> },
+          {
+            key: "edit",
+            label: (
+              <span
+                onClick={() => handleEditListing(record)}
+                className="text-[10px] font-bold py-1 block cursor-pointer"
+              >
+                Edit
+              </span>
+            ),
+          },
           {
             key: "delete",
             label: (
@@ -453,7 +675,7 @@ const ProductManagementPage = () => {
           <div className="fixed inset-0 z-[999] bg-white/70 backdrop-blur-sm flex flex-col items-center justify-center">
             <Spin indicator={<LoadingOutlined style={{ fontSize: 36 }} spin />} />
             <p className="text-sm font-semibold text-[#060853] mt-4">
-              Creating your listing...
+              {editingListing ? "Updating your listing..." : "Creating your listing..."}
             </p>
           </div>
         )}
@@ -461,12 +683,17 @@ const ProductManagementPage = () => {
         <div className="space-y-6 p-6 bg-white mt-5">
           <div className="flex justify-between items-center border-b pb-4">
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Add Product / Service</h1>
+              <h1 className="text-xl font-bold text-gray-900">
+                {editingListing ? "Edit Product / Service" : "Add Product / Service"}
+              </h1>
               <p className="text-xs text-gray-500">Provide features of your product or services view section</p>
             </div>
             <Button 
               className="p-4.5! border-[#060853]! rounded-lg border text-[#060853]! font-medium"
-              onClick={() => setIsAddingProduct(false)}
+              onClick={() => {
+                setIsAddingProduct(false);
+                setEditingListing(null);
+              }}
               disabled={formSubmitting}
             >
               &larr; Back to List
@@ -570,6 +797,17 @@ const ProductManagementPage = () => {
                 placeholder="Describe what makes this cake or service special..." 
                 className="rounded-lg" 
               />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1">Tags</label>
+              <Input
+                value={formData.tags}
+                onChange={(event) => handleInputChange("tags", event.target.value)}
+                placeholder="e.g. electronics, phone, accessories"
+                className="h-10 rounded-lg"
+              />
+              <p className="mt-1 text-[10px] text-gray-400">Separate tags with commas.</p>
             </div>
 
             {productType === "digital" && (
@@ -1037,7 +1275,7 @@ const ProductManagementPage = () => {
               onClick={() => handleSubmitListing(false)} 
               className="bg-[#060853]! text-white! rounded-lg h-10 px-8 font-bold border-none"
             >
-              Save & Publish
+              {editingListing ? "Update Listing" : "Save & Publish"}
             </Button>
           </div>
         </div>
@@ -1055,7 +1293,11 @@ const ProductManagementPage = () => {
         <div className="flex gap-4">
           <Button 
             className="p-4.5! border-[#060853]! rounded-lg border text-[#060853]!"
-            onClick={() => setIsAddingProduct(true)}
+            onClick={() => {
+              ensureCategoriesLoaded();
+              setEditingListing(null);
+              setIsAddingProduct(true);
+            }}
           >
             <img src="/images/plus.png" alt="export" className="h-7" />
             Add New

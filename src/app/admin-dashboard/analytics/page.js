@@ -140,7 +140,7 @@ const customerActivityData = [
         </div>
         
         <div className="h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
             <AreaChart data={orderTrendData}>
               <defs>
                 <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
@@ -201,7 +201,7 @@ const customerActivityData = [
           </div>
 
           <div className="h-[200px] w-full flex-grow">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
               <AreaChart data={customerActivityData}>
                 <Area type="monotone" dataKey="new" stroke="#1E1B4B" strokeWidth={2} fill="transparent" />
                 <Area type="monotone" dataKey="repeat" stroke="#10B981" strokeWidth={2} fillOpacity={0.05} fill="#10B981" />

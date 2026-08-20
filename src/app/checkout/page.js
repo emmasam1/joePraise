@@ -1825,7 +1825,7 @@ const CheckoutPage = () => {
               className="flex justify-between items-center cursor-pointer py-4 border-b border-gray-100"
             >
               <div className="flex gap-3">
-                <img src="/images/mdi-light_credit-card_transparent.png" className="w-5 h-5 mt-1" alt="" />
+                <img src="/images/mdi-light_credit-card.png" className="w-5 h-5 mt-1" alt="" />
                 <div>
                   <h4 className="font-semibold text-black">Wallet</h4>
                   <p className="text-sm text-gray-500">

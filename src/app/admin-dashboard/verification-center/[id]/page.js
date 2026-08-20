@@ -70,7 +70,7 @@ const Page = ({ params }) => {
           <h2 className="text-xl font-bold text-black mb-8">Contact Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             <div className="flex items-center gap-4">
-              <img src="/images/perls-marvin.png" className="w-14 h-14 rounded-full object-cover bg-gray-100" alt="Profile" />
+              <img src="/images/user-remix.png" className="w-14 h-14 rounded-full object-cover bg-gray-100" alt="Profile" />
               <div>
                 <p className="font-bold text-gray-900 text-[16px]">{businessData.name}</p>
                 <p className="text-sm text-gray-400">{businessData.company}</p>

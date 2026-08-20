@@ -23,7 +23,7 @@ const LoginOption = () => {
               : "bg-[#060853] text-[#060853]"
           }`}
         >
-          <img src="/images/pen_icon.png" alt="Edit" className="h-4 w-4" />{" "}
+          <img src="/images/Pen_icon.png" alt="Edit" className="h-4 w-4" />{" "}
           {isEditingInfo ? "Finish" : "Edit"}
         </button>
       </div>

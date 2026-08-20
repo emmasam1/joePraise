@@ -992,7 +992,10 @@ const CartPage = () => {
         map.set(businessId, {
           businessId,
           businessName: item.business?.businessName || "Unknown Business",
-          logo: item.business?.logo?.url || null,
+          logo:
+            (typeof item.business?.logo === "string"
+              ? item.business.logo
+              : item.business?.logo?.url) || null,
           items: [],
         });
       }
@@ -1145,7 +1148,7 @@ const CartPage = () => {
 
       {isEmpty ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
-          <img src="/images/no-image.png" alt="Empty cart" className="w-24 h-24 opacity-40 mb-4" />
+          <img src="/images/no_order.png" alt="Empty cart" className="w-24 h-24 opacity-40 mb-4" />
           <p className="text-lg font-semibold text-gray-500">Your cart is empty</p>
           <p className="text-sm text-gray-400 mt-1 mb-6">
             Browse businesses and add items to get started.
@@ -1182,7 +1185,7 @@ const CartPage = () => {
                       />
 
                       <img
-                        src={group.logo || "/images/no-image.png"}
+                        src={group.logo || "/images/business.png"}
                         className="w-16 h-16 rounded-full object-cover bg-white"
                         alt=""
                       />
@@ -1205,7 +1208,10 @@ const CartPage = () => {
                   <div className="p-6 md:p-8 space-y-8">
                     {group.items.map((item) => {
                       const listing = item.listing || item.service;
-                      const imageUrl = listing?.images?.[0]?.url || "/images/no-image.png";
+                      const firstImage = listing?.images?.[0];
+                      const imageUrl =
+                        (typeof firstImage === "string" ? firstImage : firstImage?.url) ||
+                        "/images/product.png";
                       const isMutating = mutatingItemId === item._id;
                       const isEditingInstructions = editingInstructionsId === item._id;
 

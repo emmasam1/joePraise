@@ -126,7 +126,11 @@ function OrderSuccessContent() {
               <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-b border-gray-100">
                 <div className="flex items-center gap-3">
                   <img
-                    src={order.business?.logo?.url || "/images/no-image.png"}
+                    src={
+                      (typeof order.business?.logo === "string"
+                        ? order.business.logo
+                        : order.business?.logo?.url) || "/images/business.png"
+                    }
                     alt=""
                     className="w-10 h-10 rounded-full object-cover"
                   />

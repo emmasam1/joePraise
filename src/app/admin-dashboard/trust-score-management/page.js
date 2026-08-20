@@ -20,7 +20,7 @@ const Page = () => {
       name: "Swift Logistics",
       category: "SHIPPING & DELIVERY",
       isTopPerformer: true,
-      logo: "/images/swift-logo.png",
+      logo: "/images/business.png",
       trustScore: 96.1,
       metrics: {
         reviews: "4.8 / 5.0",
@@ -37,7 +37,7 @@ const Page = () => {
       name: "Global Trade Hub",
       category: "WHOLESALE",
       isTopPerformer: false,
-      logo: "/images/global-logo.png",
+      logo: "/images/business.png",
       trustScore: 90.1,
       metrics: {
         reviews: "4.5 / 5.0",
@@ -54,7 +54,7 @@ const Page = () => {
       name: "FreshBite Catering",
       category: "FOOD & BEVERAGE",
       isTopPerformer: false,
-      logo: "/images/freshbite-logo.png",
+      logo: "/images/business.png",
       trustScore: 86.2,
       metrics: {
         reviews: "4.9 / 5.0",
@@ -71,7 +71,7 @@ const Page = () => {
       name: "EcoStore Solutions",
       category: "RETAIL",
       isTopPerformer: false,
-      logo: "/images/ecostore-logo.png",
+      logo: "/images/business.png",
       trustScore: 84,
       metrics: {
         reviews: "4.2 / 5.0",

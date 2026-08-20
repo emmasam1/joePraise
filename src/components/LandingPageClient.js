@@ -137,7 +137,10 @@ const LandingPage = ({
   );
 
   const BusinessCard = ({ business }) => {
-    const imageUrl = business.banner || business.logo || "/images/image1.png";
+    const imageUrl =
+      (typeof business.banner === "string" ? business.banner : business.banner?.url) ||
+      (typeof business.logo === "string" ? business.logo : business.logo?.url) ||
+      "/images/image1.png";
     const categoryLabel = business.category?.[0]?.name || "";
     const description = business.description || "";
     const truncatedDescription =
@@ -168,7 +171,7 @@ const LandingPage = ({
           <div className="flex items-center gap-3 mb-2">
             {business.logo && (
               <Image
-                src={business.logo}
+                src={typeof business.logo === "string" ? business.logo : business.logo.url}
                 alt="logo"
                 width={32}
                 height={32}

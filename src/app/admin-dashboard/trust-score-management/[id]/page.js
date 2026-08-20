@@ -23,7 +23,7 @@ const BusinessDetailsPage = () => {
     name: "TechSupport Pro",
     type: "IT SERVICES",
     trustScore: "82.8",
-    logo: "/images/tech-support-logo.png"
+    logo: "/images/business.png"
   };
 
   // Mock data for reviews

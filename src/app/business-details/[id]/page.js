@@ -163,7 +163,10 @@ export default async function DirectoryDetails({ params }) {
           <div>
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
               <img
-                src={business.logo || "/images/no-image.png"}
+                src={
+                  (typeof business.logo === "string" ? business.logo : business.logo?.url) ||
+                  "/images/business.png"
+                }
                 alt={business.businessName}
                 className="h-24 w-24 rounded-full object-cover ring-1 ring-zinc-200"
               />
@@ -421,7 +424,7 @@ export default async function DirectoryDetails({ params }) {
                 <article key={review._id}>
                   <div className="flex items-center gap-3">
                     <img
-                      src={review.user?.avatar?.url || "/images/no-image.png"}
+                      src={review.user?.avatar?.url || "/images/user-remix.png"}
                       alt={review.user?.name || "Customer"}
                       className="h-10 w-10 rounded-full object-cover"
                     />

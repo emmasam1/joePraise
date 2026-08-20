@@ -550,7 +550,11 @@ const ProductManagementPage = () => {
       render: (text, record) => (
         <div className="flex items-center gap-2">
           <img
-            src={record.images?.[0]?.url || "/images/no-image.png"}
+            src={
+              (typeof record.images?.[0] === "string"
+                ? record.images[0]
+                : record.images?.[0]?.url) || "/images/product.png"
+            }
             alt=""
             className="w-8 h-8 rounded object-cover"
           />
@@ -685,7 +689,11 @@ const ProductManagementPage = () => {
 
             <div className="mt-5">
               <img
-                src={selectedListing.images?.[0]?.url || "/images/no-image.png"}
+                src={
+                  (typeof selectedListing.images?.[0] === "string"
+                    ? selectedListing.images[0]
+                    : selectedListing.images?.[0]?.url) || "/images/product.png"
+                }
                 className="w-full h-[320px] rounded-xl object-cover"
                 alt=""
               />
@@ -743,7 +751,7 @@ const ProductManagementPage = () => {
                   {reviews.map((review) => (
                     <div key={review._id} className="flex gap-3">
                       <img
-                        src={review.user?.avatar?.url || "/images/avatar.png"}
+                        src={review.user?.avatar?.url || "/images/user-remix.png"}
                         className="w-10 h-10 rounded-full object-cover"
                         alt=""
                       />

@@ -319,7 +319,11 @@ function DirectoryContent() {
               >
                 <div className="w-full md:w-56 h-44 rounded-xl overflow-hidden relative bg-gray-100 shrink-0">
                   <img
-                    src={item.banner || item.logo || "/images/no-image.png"}
+                    src={
+                      (typeof item.banner === "string" ? item.banner : item.banner?.url) ||
+                      (typeof item.logo === "string" ? item.logo : item.logo?.url) ||
+                      "/images/business.png"
+                    }
                     alt={item.businessName}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />

@@ -463,19 +463,19 @@ const ProductManagementPage = () => {
       id: "physical",
       title: "Physical Product",
       description: "Tangible items shipped or picked up by the customer",
-      icon: "/images/briefcase.png", 
+      icon: "/images/business.png",
     },
     {
       id: "digital",
       title: "Digital product",
       description: "Files, courses, templates, and downloadable content",
-      icon: "/images/plus-box.png",
+      icon: "/images/plus.png",
     },
     {
       id: "service",
       title: "Service",
       description: "Hair styling, cleaning, consultancy, and bookable services",
-      icon: "/images/clock.png",
+      icon: "/images/gridicons_time.png",
     },
   ];
 
@@ -1399,7 +1399,11 @@ const ProductManagementPage = () => {
         <div className="h-72 w-full relative overflow-hidden rounded-lg bg-gray-100">
           {isSelected?.images?.[0]?.url ? (
             <Image 
-              src={isSelected.images[0].url}
+              src={
+                (typeof isSelected.images?.[0] === "string"
+                  ? isSelected.images[0]
+                  : isSelected.images?.[0]?.url) || "/images/product.png"
+              }
               alt={isSelected?.title || "Product Image"} 
               fill 
               className="object-cover" 

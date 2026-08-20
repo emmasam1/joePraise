@@ -287,7 +287,12 @@ if (dashboardLoading) return <CompanyLoader />
             {pendingBusinesses.map((biz) => (
               <div key={biz._id} className="flex items-center justify-between py-3.5">
                 <div className="flex items-center gap-3">
-                  <Avatar size={44} src={biz.logo?.url} icon={<UserOutlined />} className="border border-gray-100" />
+                  <Avatar
+                    size={44}
+                    src={typeof biz.logo === "string" ? biz.logo : biz.logo?.url}
+                    icon={<UserOutlined />}
+                    className="border border-gray-100"
+                  />
                   <div>
                     <h4 className="text-sm font-bold text-gray-900">{biz.businessName}</h4>
                     <p className="text-xs text-gray-400 truncate max-w-[240px] sm:max-w-xs">{biz.category.name}</p>

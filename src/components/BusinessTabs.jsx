@@ -408,7 +408,11 @@ export default function BusinessTabs({ businessId, services = [], physicalProduc
               <article key={item._id} className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
                 <div className="flex gap-4">
                   <img
-                    src={item.images?.[0]?.url || "/images/no-image.png"}
+                    src={
+                      (typeof item.images?.[0] === "string"
+                        ? item.images[0]
+                        : item.images?.[0]?.url) || "/images/product.png"
+                    }
                     alt={item.title}
                     className="h-28 w-36 rounded object-cover"
                     loading="lazy"
@@ -498,7 +502,11 @@ export default function BusinessTabs({ businessId, services = [], physicalProduc
         {selectedService && (
           <div className="px-2 pb-2 pt-5 sm:px-2">
             <img
-              src={selectedService.images?.[0]?.url || "/images/no-image.png"}
+              src={
+                (typeof selectedService.images?.[0] === "string"
+                  ? selectedService.images[0]
+                  : selectedService.images?.[0]?.url) || "/images/product.png"
+              }
               alt={selectedService.title}
               className="h-[200px] w-full object-cover sm:h-[300px]"
             />

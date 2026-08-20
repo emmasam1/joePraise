@@ -26,7 +26,7 @@ const UpdateEmail = () => {
             onClick={() => setIsEditing(!isEditing)}
             className="flex items-center gap-1 px-3 py-1 bg-[#E0E7FF] text-[#060853] text-[13px] cursor-pointer font-bold rounded-md hover:bg-[#ccd5ff] transition-colors"
           >
-            <img src="/images/pen_icon.png" alt="Edit" className="h-4 w-4" />{" "}
+            <img src="/images/Pen_icon.png" alt="Edit" className="h-4 w-4" />{" "}
             {isEditing ? "Cancel" : "Edit"}
           </button>
         </div>

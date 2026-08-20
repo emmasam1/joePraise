@@ -122,15 +122,17 @@ export default function OrderDetails({ orderId }) {
                 {(order.items || []).map((item) => (
                   <tr key={item._id} className="border-b border-[#f1f1f5] last:border-0">
                     <td className="flex items-center gap-2 px-3 py-3">
-                      {item.listing?.images?.[0] && (
-                        <Image
-                          src={item.listing.images[0]}
-                          alt={item.title}
-                          width={32}
-                          height={32}
-                          className="h-8 w-8 rounded-md object-cover"
-                        />
-                      )}
+                      <Image
+                        src={
+                          typeof item.listing?.images?.[0] === "string"
+                            ? item.listing.images[0]
+                            : item.listing?.images?.[0]?.url || "/images/product.png"
+                        }
+                        alt={item.title}
+                        width={32}
+                        height={32}
+                        className="h-8 w-8 rounded-md object-cover"
+                      />
                       {item.title}
                     </td>
                     <td className="px-3 py-3">{formatAmount(item.price)}</td>

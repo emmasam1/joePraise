@@ -3,9 +3,7 @@
 import { Modal } from "antd";
 
 export default function PolicyModal({ policy, onClose }) {
-  const embeddedHref = policy
-    ? `${policy.href}${policy.href.includes("?") ? "&" : "?"}embedded=1`
-    : "";
+  const embeddedHref = policy ? `/policy-modal${policy.href}` : "";
 
   return (
     <Modal

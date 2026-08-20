@@ -10,6 +10,7 @@ const CustomModal = ({
   children,
   showClose = true,
   size = "max-w-2xl",
+  scrollable = true,
   // Ensure the default value is a full Tailwind class
   bgColor = "bg-white" 
 }) => {
@@ -49,7 +50,9 @@ const CustomModal = ({
             </div>
 
             {/* CONTENT */}
-            <div className="p-6 overflow-y-auto">{children}</div>
+            <div className={`p-6 ${scrollable ? "overflow-y-auto" : "overflow-hidden"}`}>
+              {children}
+            </div>
           </motion.div>
         </div>
       )}

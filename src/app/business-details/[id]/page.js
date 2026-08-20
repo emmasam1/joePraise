@@ -33,9 +33,9 @@ async function getBusinessProfile(id) {
 }
 
 
-async function getBusinessReviews(id) {
+async function getTargetReviews(targetModel, id) {
   try {
-    const response = await fetch(`${API_BASE}/reviews/Business/${id}?limit=4`, {
+    const response = await fetch(`${API_BASE}/reviews/${targetModel}/${id}?limit=100`, {
       cache: "no-store",
     });
 
@@ -46,12 +46,59 @@ async function getBusinessReviews(id) {
   }
 }
 
+function getListingIds(listings) {
+  return [
+    ...(listings.services || []),
+    ...(listings.physicalProducts || []),
+    ...(listings.digitalProducts || []),
+  ]
+    .map((listing) => listing?._id)
+    .filter(Boolean);
+}
+
+async function getBusinessReviewSummary(businessId, listings) {
+  const reviewResponses = await Promise.all([
+    getTargetReviews("Business", businessId),
+    ...getListingIds(listings).map((listingId) =>
+      getTargetReviews("Listing", listingId),
+    ),
+  ]);
+  const reviews = reviewResponses
+    .flatMap((response) => response.reviews || [])
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const ratingBreakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+
+  reviews.forEach((review) => {
+    const rating = Math.round(Number(review.rating));
+    if (rating >= 1 && rating <= 5) ratingBreakdown[rating] += 1;
+  });
+
+  const totalReviews = reviews.length;
+  const rating = totalReviews
+    ? Number(
+        (
+          reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) /
+          totalReviews
+        ).toFixed(1),
+      )
+    : 0;
+
+  return { reviews, ratingBreakdown, totalReviews, rating };
+}
+
 const DAY_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 function formatDayHours(dayEntry) {
   if (!dayEntry) return "Not set";
   if (dayEntry.closed) return "Closed";
   if (!dayEntry.shifts || dayEntry.shifts.length === 0) return "Hours not set";
+  if (
+    dayEntry.shifts.length === 1 &&
+    dayEntry.shifts[0].open === "00:00" &&
+    ["23:59", "24:00", "00:00"].includes(dayEntry.shifts[0].close)
+  ) {
+    return "Open 24 hours";
+  }
   return dayEntry.shifts.map((s) => `${s.open || "?"} - ${s.close || "?"}`).join(", ");
 }
 
@@ -75,15 +122,22 @@ function Stars({ rating }) {
 export default async function DirectoryDetails({ params }) {
   const { id } = await params;
 
-  const [profileData, reviewsData] = await Promise.all([
-    getBusinessProfile(id),
-    getBusinessReviews(id),
-  ]);
-
-  const business = profileData.business;
+  const profileData = await getBusinessProfile(id);
   const listings = profileData.listings || { services: [], physicalProducts: [], digitalProducts: [] };
-  const ratingBreakdown = profileData.ratingBreakdown || { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-  const reviews = reviewsData.reviews || [];
+  const reviewSummary = await getBusinessReviewSummary(id, listings);
+  const business = {
+    ...profileData.business,
+    rating: reviewSummary.totalReviews
+      ? reviewSummary.rating
+      : profileData.business.rating || 0,
+    numReviews: reviewSummary.totalReviews
+      ? reviewSummary.totalReviews
+      : profileData.business.numReviews || 0,
+  };
+  const ratingBreakdown = reviewSummary.totalReviews
+    ? reviewSummary.ratingBreakdown
+    : profileData.ratingBreakdown || { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+  const reviews = reviewSummary.reviews.slice(0, 4);
 
   const totalRatings = Object.values(ratingBreakdown).reduce((total, count) => total + count, 0);
   const openToday = isOpenToday(business.operatingHours);

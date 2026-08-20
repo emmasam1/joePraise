@@ -1221,25 +1221,25 @@ export default function OrdersPage() {
             <Spin />
           </div>
         ) : (
-          <div className="space-y-5 text-xs">
+          <div className="space-y-5 text-xs text-black">
             {selectedOrder.businesses?.length > 1 && (
               <div className="bg-blue-50 text-blue-700 text-[11px] font-medium rounded-sm p-2">
-                This order includes items from other businesses too — you're only seeing and
+                This order includes items from other businesses too — you&apos;re only seeing and
                 managing your own items below.
               </div>
             )}
 
             <div className="bg-white border border-gray-100 rounded-sm p-4 space-y-2">
               <p>
-                <span className="font-bold text-gray-900">Customer:</span>{" "}
+                <span className="font-bold text-black">Customer:</span>{" "}
                 {selectedOrder.customer?.name}
               </p>
               <p>
-                <span className="font-bold text-gray-900">Email:</span>{" "}
+                <span className="font-bold text-black">Email:</span>{" "}
                 {selectedOrder.customer?.email}
               </p>
               <p>
-                <span className="font-bold text-gray-900">Status:</span>{" "}
+                <span className="font-bold text-black">Status:</span>{" "}
                 <span className={STATUS_COLOR[selectedOrderStatus]}>
                   {STATUS_LABEL[selectedOrderStatus] || selectedOrderStatus}
                 </span>
@@ -1247,7 +1247,7 @@ export default function OrdersPage() {
             </div>
 
             <div>
-              <h3 className="font-bold text-gray-900 mb-2 text-sm">Order Items</h3>
+              <h3 className="font-bold text-black mb-2 text-sm">Order Items</h3>
               <div className="space-y-3">
                 {selectedOrder.items?.map((item) => {
                   const options = nextStatusOptions(item);
@@ -1256,15 +1256,15 @@ export default function OrdersPage() {
                   return (
                     <div key={item._id} className="border border-gray-50 rounded-sm p-3">
                       <div className="flex justify-between items-start mb-1">
-                        <span className="text-gray-700 font-medium">
+                        <span className="text-black font-medium">
                           {item.title} {item.quantity > 1 ? `x${item.quantity}` : ""}
                         </span>
-                        <span className="font-bold text-gray-900">${item.total}</span>
+                        <span className="font-bold text-black">${item.total}</span>
                       </div>
 
-                      <p className="text-[10px] text-gray-400 mb-2">
+                      <p className="text-[10px] text-black mb-2">
                         Status:{" "}
-                        <span className="font-bold text-gray-600">
+                        <span className="font-bold text-black">
                           {ITEM_STATUS_LABEL[item.itemStatus] || item.itemStatus}
                         </span>
                       </p>
@@ -1303,8 +1303,8 @@ export default function OrdersPage() {
                 })}
 
                 <div className="flex justify-end items-center gap-4 pt-2">
-                  <span className="text-gray-500 font-medium">Your Total:</span>
-                  <span className="text-base font-bold text-gray-900">
+                  <span className="text-black font-medium">Your Total:</span>
+                  <span className="text-base font-bold text-black">
                     $
                     {selectedOrder.items?.reduce((sum, item) => sum + (item.total || 0), 0) ?? 0}
                   </span>
@@ -1313,7 +1313,7 @@ export default function OrdersPage() {
             </div>
 
             <p>
-              <span className="font-bold text-gray-900">Payment Status:</span>{" "}
+              <span className="font-bold text-black">Payment Status:</span>{" "}
               <span className="capitalize">{selectedOrder.paymentStatus}</span>
             </p>
 
@@ -1347,7 +1347,7 @@ export default function OrdersPage() {
         title="Reject Order"
         size="max-w-md"
       >
-        <p className="text-sm text-gray-600 mb-3">
+        <p className="text-sm text-black mb-3">
           This will cancel your items on this order and refund the customer for your portion.
           Please tell us why.
         </p>

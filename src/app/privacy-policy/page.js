@@ -23,7 +23,7 @@ const sections = [
   { id: "children", title: "18. Children’s Privacy", paragraphs: ["The Platform is not intended for children under 18, and we do not knowingly collect their Personal Data. Suspected child data should be reported for appropriate action."] },
   { id: "responsibilities", title: "19. Business & Customer Responsibilities", paragraphs: ["Users must provide accurate information, protect account access, respect the privacy of others, and process any Personal Data obtained through the Platform lawfully and securely."] },
   { id: "changes", title: "20. Policy Changes", paragraphs: ["This Privacy Policy may be updated periodically. Revised versions may be published with a new effective date, and additional notice may be provided where required."] },
-  { id: "contact", title: "21. Contact Information", paragraphs: ["Joe Praise Smart Hub is operated by Joe Praise Technologies Limited.", "Registered Office: 3rd Floor, 86-90 Paul Street, London, England, EC2A 4NE"], contacts: [{ label: "Support", email: "support@joepraisetechnologies.co.uk" }, { label: "Onboarding", email: "onboarding@joepraisetechnologies.co.uk" }, { label: "Legal & Compliance", email: "legal@joepraisetechnologies.co.uk" }] },
+  { id: "contact", title: "21. Contact Information", paragraphs: ["Joe Praise Smart Hub is operated by Joe Praise Technologies Limited.", "Registered Office: 3rd Floor, 86-90 Paul Street, London, England, EC2A 4NE"], contacts: [{ label: "Support", email: "support@joepraisesmarthub.co.uk" }, { label: "Onboarding", email: "onboarding@joepraisesmarthub.co.uk" }, { label: "Legal & Compliance", email: "legal@joepraisesmarthub.co.uk" }] },
 ];
 
 export default function PrivacyPolicyPage() {

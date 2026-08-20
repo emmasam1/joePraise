@@ -276,21 +276,15 @@ const VerificationContent = () => {
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(180);
-  const [canResend, setCanResend] = useState(false);
+  const canResend = timeLeft <= 0;
 
   useEffect(() => {
-    if (timeLeft <= 0) {
-      setCanResend(true);
-      return;
-    }
-    setCanResend(false);
-
     const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
+      setTimeLeft((prev) => Math.max(prev - 1, 0));
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timeLeft]);
+  }, []);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -308,12 +302,11 @@ const VerificationContent = () => {
         await api.post("/auth/forgot-password", { email });
         message.success("Password reset OTP resent to email!");
       } else {
-        await api.post("/auth/forgot-password", { email });
+        await api.post("/auth/resend-verification", { email });
         message.success("Verification code resent successfully!");
       }
 
       setTimeLeft(180);
-      setCanResend(false);
     } catch (error) {
       console.log(error);
       message.error(error.response?.data?.message || "Failed to resend code.");

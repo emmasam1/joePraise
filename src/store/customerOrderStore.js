@@ -1,5 +1,6 @@
 
 import { create } from "zustand";
+import { message } from "antd";
 import api from "@/api/axios";
 
 export const useCustomerOrderStore = create((set) => ({
@@ -24,6 +25,7 @@ export const useCustomerOrderStore = create((set) => ({
   selectedOrder: null,
   orderLoading: false,
   orderError: null,
+  reviewLoading: false,
 
   getOverview: async () => {
     try {
@@ -95,6 +97,54 @@ export const useCustomerOrderStore = create((set) => ({
           error.message ||
           "Failed to load this order",
       });
+    }
+  },
+
+  submitOrderReview: async ({
+    orderId,
+    orderItemId,
+    listingId,
+    rating,
+    title,
+    comment,
+  }) => {
+    try {
+      set({ reviewLoading: true });
+
+      const { data } = await api.post("/reviews", {
+        reviewTargetModel: "Listing",
+        reviewTarget: listingId,
+        orderId,
+        orderItemId,
+        rating,
+        title,
+        comment,
+      });
+
+      if (data.success) {
+        set((state) => ({
+          selectedOrder: state.selectedOrder
+            ? {
+                ...state.selectedOrder,
+                items: (state.selectedOrder.items || []).map((item) =>
+                  item._id === orderItemId
+                    ? { ...item, isReviewed: true, review: data.review }
+                    : item,
+                ),
+              }
+            : state.selectedOrder,
+        }));
+        message.success(data.message || "Review submitted successfully");
+      }
+
+      return data;
+    } catch (error) {
+      message.error(
+        error?.response?.data?.message || "Failed to submit your review",
+      );
+      throw error;
+    } finally {
+      set({ reviewLoading: false });
     }
   },
 }));

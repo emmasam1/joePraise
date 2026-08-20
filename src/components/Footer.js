@@ -32,8 +32,8 @@ const Footer = () => {
   };
 
   const footerLinks = {
-    "Joe praise": [
-      "Why Joe Praise",
+    "Joe Praise SmartHub": [
+      "Why Joe Praise SmartHub",
       "Enterprise",
       "Customer Story",
       "Security",
@@ -47,7 +47,14 @@ const Footer = () => {
       "Partner",
       "Directories",
     ],
-    Company: ["About us", "Contact us", "Products", "Login", "Sign Up", "FAQ"],
+    Company: ["Who we are", "Support", "Login", "Sign Up"],
+  };
+
+  const footerRoutes = {
+    "Who we are": "/who-we-are",
+    Support: "/support",
+    Login: "/login",
+    "Sign Up": "/business-registration",
   };
 
   const socialIcons = [
@@ -64,9 +71,9 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
           {/* Brand and About Section */}
           <div className="lg:col-span-2">
-            <h2 className="text-2xl font-bold mb-6">Joe Praise</h2>
+            <h2 className="text-2xl font-bold mb-6">Joe Praise SmartHub</h2>
             <p className="text-gray-300 text-sm leading-relaxed mb-8 max-w-sm">
-              Joe Praise Technology is a Website lorem ipsum dolor sit amet,
+              Joe Praise SmartHub is a Website lorem ipsum dolor sit amet,
               consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
               labore et dolore magna aliqua. Ut enim ad minim veniam, quis
               nostrud
@@ -106,7 +113,11 @@ const Footer = () => {
                     key={link}
                     className="text-gray-300 text-sm hover:text-[#00D094] cursor-pointer transition-colors"
                   >
-                    {link}
+                    {footerRoutes[link] ? (
+                      <Link href={footerRoutes[link]}>{link}</Link>
+                    ) : (
+                      link
+                    )}
                   </li>
                 ))}
               </ul>
@@ -128,7 +139,7 @@ const Footer = () => {
               />
 
               <p className="text-gray-300 text-sm max-w-[250px]">
-                832, Thompson Drive, San Fransisco CA 94107, United Kingdom
+                3rd Floor, 86-90 Paul Street, London, England, EC2A 4NE
               </p>
             </div>
             <div className="flex items-center gap-4">
@@ -149,7 +160,7 @@ const Footer = () => {
                 height={20}
                 className="mt-1"
               />
-              <p className="text-gray-300 text-sm">support@joepraise.id</p>
+              <p className="text-gray-300 text-sm">support@joepraisetechnologies.co.uk</p>
             </div>
           </div>
         </div>
@@ -158,7 +169,7 @@ const Footer = () => {
 
         <div className="flex flex-col gap-5 border-t border-white/10 pt-8 text-[#A8B3C7] text-xs md:flex-row md:justify-between md:items-center">
           <div className="space-y-4">
-            <p>Joe Praise Technologies Website - © 2026 All Rights Reserved</p>
+            <p>Joe Praise SmartHub Technologies Website - © 2026 All Rights Reserved</p>
             <nav aria-label="Legal" className="flex flex-wrap gap-x-6 gap-y-3">
               {publicPolicyLinks.map((policy) => (
                 <Link key={policy.href} className="transition-colors hover:text-[#00D094]" href={policy.href}>

@@ -16,17 +16,13 @@ import {
   message,
   Spin,
   Checkbox,
+  Switch,
 } from "antd";
 import { FiCheck } from "react-icons/fi";
 import "leaflet/dist/leaflet.css";
 import dynamic from "next/dynamic";
 import { FiX } from "react-icons/fi";
-import {
-  PlusOutlined,
-  DeleteOutlined,
-  CheckCircleFilled,
-  LoadingOutlined,
-} from "@ant-design/icons";
+import { CheckCircleFilled, LoadingOutlined } from "@ant-design/icons";
 import { useBusinessStore } from "@/store/businessStore";
 import { useAuthStore } from "@/store/authStore";
 import { useRouter } from "next/navigation";
@@ -56,11 +52,11 @@ const TileLayer = dynamic(
   { ssr: false }
 );
 
-function MapController({ center }) {
+function MapController({ center, zoom }) {
   const map = useMap();
   useEffect(() => {
-    if (center) map.flyTo(center, 13);
-  }, [center, map]);
+    if (center) map.flyTo(center, zoom);
+  }, [center, map, zoom]);
   return null;
 }
 
@@ -249,8 +245,9 @@ export default function MultiStepForm() {
     const city = cities.find((c) => c.name === formData.businessCity);
     return city
       ? [parseFloat(city.latitude), parseFloat(city.longitude)]
-      : [9.0578, 7.4951];
+      : [54.5, -3.4];
   }, [formData.businessCity, cities]);
+  const selectedMapZoom = formData.businessCity ? 13 : 5;
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({
@@ -259,7 +256,7 @@ export default function MultiStepForm() {
     }));
   };
 
-  const [coords, setCoords] = useState([9.0578, 7.4951]);
+  const [coords, setCoords] = useState([54.5, -3.4]);
 
   const handleFileChange = (field, file) => {
     setFormData((prev) => ({
@@ -509,15 +506,25 @@ export default function MultiStepForm() {
 
       const operatingHours =
         hoursType === "always"
-          ? []
+          ? allDays.map((day) => ({
+              day,
+              closed: false,
+              shifts: [{ open: "00:00", close: "23:59" }],
+            }))
           : selectedDays.map((item) => {
-              const open = item.open?.format("h:mm A") || "";
-              const close = item.close?.format("h:mm A") || "";
+              if (item.closed) {
+                return {
+                  day: item.day,
+                  closed: true,
+                  shifts: [],
+                };
+              }
+
+              const open = item.open.format("HH:mm");
+              const close = item.close.format("HH:mm");
 
               return {
                 day: item.day,
-                open,
-                close,
                 shifts: [{ open, close }],
                 closed: false,
               };
@@ -550,43 +557,15 @@ export default function MultiStepForm() {
     "Sunday",
   ];
 
-  const [selectedDays, setSelectedDays] = useState([
-    {
-      day: "Monday",
-      id: "monday-initial",
+  const [selectedDays, setSelectedDays] = useState(() =>
+    allDays.map((day) => ({
+      day,
+      id: day.toLowerCase(),
       open: null,
       close: null,
-    },
-  ]);
-
-  const [dragIndex, setDragIndex] = useState(null);
-
-  const addDay = () => {
-    const usedDays = selectedDays.map((d) => d.day);
-    const nextDay = allDays.find((d) => !usedDays.includes(d));
-
-    if (!nextDay) return;
-
-    setSelectedDays((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        day: nextDay,
-        open: null,
-        close: null,
-      },
-    ]);
-  };
-
-  const removeDay = (id) => {
-    setSelectedDays((prev) => prev.filter((d) => d.id !== id));
-  };
-
-  const updateDay = (id, newDay) => {
-    setSelectedDays((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, day: newDay } : d))
-    );
-  };
+      closed: true,
+    })),
+  );
 
   const updateDayTime = (id, field, value) => {
     setSelectedDays((prev) =>
@@ -594,10 +573,32 @@ export default function MultiStepForm() {
     );
   };
 
+  const updateDayClosed = (id, closed) => {
+    setSelectedDays((prev) =>
+      prev.map((day) =>
+        day.id === id
+          ? {
+              ...day,
+              closed,
+              open: closed ? null : day.open,
+              close: closed ? null : day.close,
+            }
+          : day,
+      ),
+    );
+  };
+
   const validateSelectedHours = () => {
     if (hoursType !== "selected") return true;
 
-    for (const item of selectedDays) {
+    const openDays = selectedDays.filter((item) => !item.closed);
+
+    if (openDays.length === 0) {
+      message.error("Select at least one open business day.");
+      return false;
+    }
+
+    for (const item of openDays) {
       if (!item.open || !item.close) {
         message.error(`Select opening and closing times for ${item.day}.`);
         return false;
@@ -611,23 +612,6 @@ export default function MultiStepForm() {
     }
 
     return true;
-  };
-
-  const handleDragStart = (index) => {
-    setDragIndex(index);
-  };
-
-  const handleDrop = (index) => {
-    if (dragIndex === null) return;
-
-    const updated = [...selectedDays];
-    const draggedItem = updated[dragIndex];
-
-    updated.splice(dragIndex, 1);
-    updated.splice(index, 0, draggedItem);
-
-    setSelectedDays(updated);
-    setDragIndex(null);
   };
 
   const handlePreview = (file, setPreview) => {
@@ -1106,14 +1090,17 @@ export default function MultiStepForm() {
                 <div className="w-full h-40 rounded-lg overflow-hidden border border-gray-200 relative z-0">
                   <MapContainer
                     center={selectedCityCoords}
-                    zoom={13}
+                    zoom={selectedMapZoom}
                     style={{ height: "100%", width: "100%" }}
                     whenReady={(map) => {
                       console.log("Map is ready");
                     }}
                   >
                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                    <MapController center={selectedCityCoords} />
+                    <MapController
+                      center={selectedCityCoords}
+                      zoom={selectedMapZoom}
+                    />
                   </MapContainer>
                 </div>
               </Col>
@@ -1211,7 +1198,9 @@ export default function MultiStepForm() {
                     <Radio checked={hoursType === "always"}>
                       <div>
                         <span className="font-bold text-sm">Always Open</span>
-                        <p className="text-gray-400 text-xs">e.g parks</p>
+                        <p className="text-gray-400 text-xs">
+                          Open 24 hours, 7 days a week
+                        </p>
                       </div>
                     </Radio>
                   </div>
@@ -1243,39 +1232,18 @@ export default function MultiStepForm() {
               {/* HOURS TABLE */}
               {hoursType === "selected" && (
                 <div className="bg-white rounded-lg">
-                  {selectedDays.map((item, index) => (
+                  {selectedDays.map((item) => (
                     <Row
                       key={item.id}
                       align="middle"
                       gutter={12}
-                      draggable
-                      onDragStart={() => handleDragStart(index)}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={() => handleDrop(index)}
-                      className={`py-2 border-b border-gray-200 last:border-0 cursor-move ${
-                        dragIndex === index ? "opacity-50" : ""
-                      }`}
+                      className="py-2 border-b border-gray-200 last:border-0"
                     >
-                      {/* DAY SELECT */}
+                      {/* DAY */}
                       <Col xs={24} md={6}>
-                        <Select
-                          value={item.day}
-                          size="small"
-                          className="bg-gray-50! h-9! mt-1! text-xs! rounded-md! w-full"
-                          onChange={(value) => updateDay(item.id, value)}
-                          options={allDays.map((d) => {
-                            const isUsed = selectedDays.some(
-                              (sd) => sd.day === d
-                            );
-                            const isCurrent = item.day === d;
-
-                            return {
-                              value: d,
-                              label: d,
-                              disabled: isUsed && !isCurrent,
-                            };
-                          })}
-                        />
+                        <span className="text-xs font-semibold text-gray-700">
+                          {item.day}
+                        </span>
                       </Col>
 
                       {/* TIME */}
@@ -1283,10 +1251,10 @@ export default function MultiStepForm() {
                         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                           <Form.Item className="mb-0">
                             <TimePicker
-                              use12Hours
-                              format="h:mm a"
+                              format="HH:mm"
                               value={item.open}
-                              placeholder="Work starts"
+                              placeholder="Opening time"
+                              disabled={item.closed}
                               className="!h-9 !w-full !text-xs"
                               onChange={(value) =>
                                 updateDayTime(item.id, "open", value)
@@ -1296,10 +1264,10 @@ export default function MultiStepForm() {
 
                           <Form.Item className="mb-0">
                             <TimePicker
-                              use12Hours
-                              format="h:mm a"
+                              format="HH:mm"
                               value={item.close}
-                              placeholder="Work ends"
+                              placeholder="Closing time"
+                              disabled={item.closed}
                               className="!h-9 !w-full !text-xs"
                               onChange={(value) =>
                                 updateDayTime(item.id, "close", value)
@@ -1310,32 +1278,22 @@ export default function MultiStepForm() {
                         </div>
                       </Col>
 
-                      {/* ACTIONS */}
+                      {/* OPEN / CLOSED */}
                       <Col
                         xs={24}
                         md={4}
                         className="flex items-center justify-end gap-2"
                       >
-                        {/* ADD */}
-                        {index === selectedDays.length - 1 && (
-                          <Button
-                            type="text"
-                            icon={<PlusOutlined />}
-                            onClick={addDay}
-                            className="!bg-blue-50 !h-9 w-full"
-                          />
-                        )}
-
-                        {/* DELETE */}
-                        {selectedDays.length > 1 && (
-                          <Button
-                            danger
-                            type="text"
-                            icon={<DeleteOutlined />}
-                            onClick={() => removeDay(item.id)}
-                            className="!h-9 w-full"
-                          />
-                        )}
+                        <span className="text-[10px] font-semibold text-gray-500">
+                          {item.closed ? "Closed" : "Open"}
+                        </span>
+                        <Switch
+                          size="small"
+                          checked={!item.closed}
+                          onChange={(checked) =>
+                            updateDayClosed(item.id, !checked)
+                          }
+                        />
                       </Col>
                     </Row>
                   ))}

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Check, X, XCircle } from "lucide-react";
+import { Button, Input, Rate, Select, message } from "antd";
+import CustomModal from "@/components/CustomModal";
 import { useCustomerOrderStore } from "@/store/customerOrderStore";
 import { businessDisplayName, cancellationCopy, estimatedCompletion, formatDateTime, isBusinessRejection } from "./orderHelpers";
 
@@ -27,8 +29,20 @@ const statusBadgeLabel = {
 const STEP_RANK = { pending: 0, accepted: 1, in_progress: 2, partially_completed: 2, completed: 3, cancelled: -1 };
 
 export default function OrderTracking({ orderId }) {
-  const { selectedOrder, orderLoading, orderError, getOrderById } = useCustomerOrderStore();
+  const {
+    selectedOrder,
+    orderLoading,
+    orderError,
+    reviewLoading,
+    getOrderById,
+    submitOrderReview,
+  } = useCustomerOrderStore();
   const [dismissedModal, setDismissedModal] = useState(false);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [reviewTitle, setReviewTitle] = useState("");
+  const [comment, setComment] = useState("");
+  const [selectedReviewItemId, setSelectedReviewItemId] = useState("");
 
   useEffect(() => {
     getOrderById(orderId);
@@ -47,6 +61,54 @@ export default function OrderTracking({ orderId }) {
   const order = selectedOrder;
   const rank = STEP_RANK[order.orderStatus] ?? 0;
   const showRejectedModal = order.orderStatus === "cancelled" && !dismissedModal;
+  const reviewableItems = (order.items || []).filter(
+    (item) => !item.isReviewed && !item.reviewed && !item.review,
+  );
+  const canReview =
+    order.orderStatus === "completed" && reviewableItems.length > 0;
+
+  const handleSubmitReview = async () => {
+    if (!rating) {
+      message.error("Please select a rating");
+      return;
+    }
+
+    if (!reviewTitle.trim()) {
+      message.error("Please add a review title");
+      return;
+    }
+    if (!comment.trim()) {
+      message.error("Please add a comment about your experience");
+      return;
+    }
+
+    const selectedItem = reviewableItems.find(
+      (item) => item._id === selectedReviewItemId,
+    );
+    const listingId = selectedItem?.listing?._id || selectedItem?.listing;
+    if (!selectedItem || !listingId) {
+      message.error("Please select an item to review");
+      return;
+    }
+
+    try {
+      await submitOrderReview({
+        orderId: order._id || orderId,
+        orderItemId: selectedItem._id,
+        listingId,
+        rating,
+        title: reviewTitle.trim(),
+        comment: comment.trim(),
+      });
+      setReviewModalOpen(false);
+      setRating(0);
+      setReviewTitle("");
+      setComment("");
+      setSelectedReviewItemId("");
+    } catch {
+      // The store displays the API error and keeps the modal open for retry.
+    }
+  };
 
   const steps = [
     { key: "placed", label: "Order Placed", at: order.createdAt, rank: 0 },
@@ -145,14 +207,100 @@ export default function OrderTracking({ orderId }) {
             <p className="text-[#454545]">
               Last Update - <span className="font-semibold text-black">{formatDateTime(order.updatedAt)}</span>
             </p>
-            <Link href="/support" className="mt-2 inline-block text-[#12bd89] underline">
-              Need help? Contact Support
-            </Link>
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
+              <Link href="/support" className="text-[#12bd89] underline">
+                Need help? Contact Support
+              </Link>
+              {canReview && (
+                <Button
+                  type="primary"
+                  onClick={() => {
+                    setSelectedReviewItemId(reviewableItems[0]?._id || "");
+                    setReviewModalOpen(true);
+                  }}
+                  className="h-10! bg-[#060853]! px-6! font-semibold"
+                >
+                  Leave a Review
+                </Button>
+              )}
+            </div>
           </div>
         </section>
       </div>
 
       {showRejectedModal && <RejectedModal order={order} onClose={() => setDismissedModal(true)} />}
+      <CustomModal
+        isOpen={reviewModalOpen}
+        onClose={() => !reviewLoading && setReviewModalOpen(false)}
+        showClose={!reviewLoading}
+        size="max-w-xl"
+        title=""
+        scrollable={false}
+      >
+        <div className="px-3 pb-2 text-center sm:px-8">
+          <h2 className="text-2xl font-bold text-[#15BE87]">Review</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-5 text-[#7c8495]">
+            Your feedback is valuable in helping us understand your needs and
+            our services accordingly.
+          </p>
+
+          <h3 className="mt-4 text-base font-bold text-black">Rating</h3>
+          <Rate
+            value={rating}
+            onChange={setRating}
+            className="mt-2 text-2xl! text-[#ffad0d]!"
+          />
+
+          <div className="mx-auto mt-5 max-w-md text-left">
+            {reviewableItems.length > 1 && (
+              <div className="mb-4">
+                <label className="mb-2 block text-sm font-bold text-[#252525]">
+                  Item to review
+                </label>
+                <Select
+                  value={selectedReviewItemId}
+                  onChange={setSelectedReviewItemId}
+                  className="w-full"
+                  options={reviewableItems.map((item) => ({
+                    value: item._id,
+                    label: item.title || item.listing?.title || "Order item",
+                  }))}
+                />
+              </div>
+            )}
+            <label className="mb-2 block text-sm font-bold text-[#252525]">
+              Review title
+            </label>
+            <Input
+              value={reviewTitle}
+              onChange={(event) => setReviewTitle(event.target.value)}
+              placeholder="e.g. Very good product"
+              maxLength={120}
+              className="mb-4 h-10 rounded-lg! border-[#060853]!"
+            />
+            <label className="mb-2 block text-base font-bold text-[#252525]">
+              How was your experience?
+            </label>
+            <Input.TextArea
+              value={comment}
+              onChange={(event) => setComment(event.target.value)}
+              placeholder="Add a comment"
+              rows={4}
+              maxLength={1000}
+              className="resize-none! rounded-xl! border-[#060853]! p-4! text-base!"
+            />
+          </div>
+
+          <Button
+            type="primary"
+            loading={reviewLoading}
+            onClick={handleSubmitReview}
+            className="mt-6 h-10! bg-[#060853]! px-10! font-semibold"
+          >
+            Submit Review
+          </Button>
+        </div>
+      </CustomModal>
     </div>
   );
 }

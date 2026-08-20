@@ -206,8 +206,14 @@ export const useBusinessStore = create((set, get) => ({
       }
       return res.data;
     } catch (error) {
-      message.error("Failed to load categories");
-      throw error;
+      if (error?.code !== "ERR_CANCELED") {
+        console.warn(
+          "Categories are temporarily unavailable:",
+          error?.response?.data?.message || error?.message || "Request failed",
+        );
+      }
+      set({ publicCategories: [] });
+      return { success: false, categories: [] };
     } finally {
       set({ publicCategoriesLoading: false });
     }

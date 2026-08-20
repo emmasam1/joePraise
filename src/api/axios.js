@@ -50,12 +50,25 @@ api.interceptors.response.use(
   },
 
   async (error) => {
-    console.error("❌ API Error Response:", error?.response?.data);
+    if (axios.isCancel(error) || error?.code === "ERR_CANCELED") {
+      return Promise.reject(error);
+    }
+
+    if (error?.response) {
+      console.error("❌ API Error Response:", error.response.data);
+    } else {
+      console.warn("⚠️ API request could not reach the server:", {
+        message: error?.message || "Network request failed",
+        code: error?.code,
+        url: error?.config?.url,
+      });
+    }
 
     const originalRequest = error.config;
 
     if (
       error.response?.status === 401 &&
+      originalRequest &&
       !originalRequest._retry
     ) {
       originalRequest._retry = true;

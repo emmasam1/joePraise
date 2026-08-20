@@ -52,8 +52,8 @@ function DirectoryContent() {
   } = useBusinessStore();
 
   useEffect(() => {
-    fetchPublicCategories();
-  }, []);
+    fetchPublicCategories().catch(() => {});
+  }, [fetchPublicCategories]);
 
   useEffect(() => {
     setPage(1);

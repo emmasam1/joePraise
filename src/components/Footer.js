@@ -152,15 +152,25 @@ const Footer = () => {
               />
               <p className="text-gray-300 text-sm">+123 345123 556</p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-start gap-4">
               <Image
                 src={"/images/address.png"}
-                alt="Location"
+                alt="Email"
                 width={20}
                 height={20}
                 className="mt-1"
               />
-              <p className="text-gray-300 text-sm">support@joepraisetechnologies.co.uk</p>
+              <div className="flex flex-col gap-1 text-sm text-gray-300">
+                <a className="hover:text-white" href="mailto:support@joepraisesmarthub.co.uk">
+                  support@joepraisesmarthub.co.uk
+                </a>
+                <a className="hover:text-white" href="mailto:onboarding@joepraisesmarthub.co.uk">
+                  onboarding@joepraisesmarthub.co.uk
+                </a>
+                <a className="hover:text-white" href="mailto:legal@joepraisesmarthub.co.uk">
+                  legal@joepraisesmarthub.co.uk
+                </a>
+              </div>
             </div>
           </div>
         </div>

@@ -37,7 +37,7 @@ const UpdateEmail = () => {
           onFinish={onFinish}
           disabled={!isEditing}
           requiredMark={false}
-          className="w-2/4 "
+          className="w-full lg:w-1/2"
         >
           {/* Current Password */}
           <Form.Item

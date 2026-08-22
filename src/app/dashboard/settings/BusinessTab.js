@@ -58,7 +58,7 @@ const BusinessTab = () => {
             taxId: "105674",
           }}
         >
-          <div className="grid grid-cols-1 gap-4 w-2/4">
+          <div className="grid w-full grid-cols-1 gap-4 lg:w-1/2">
             <Form.Item
               name="website"
               label={<span className="font-bold text-gray-700">Country</span>}
@@ -135,7 +135,7 @@ const BusinessTab = () => {
           </button>
         </div>
 
-        <Form layout="vertical" className="w-2/4">
+        <Form layout="vertical" className="w-full lg:w-1/2">
           {/* SELECTION TYPE */}
           <div className="mb-3">
             <div

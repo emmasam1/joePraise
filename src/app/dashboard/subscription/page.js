@@ -143,7 +143,7 @@ const SubscriptionManagement = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="flex flex-col">
           <div className="flex items-center">
             <img src="/images/billing.png" className="w-5" alt="billing" />
@@ -168,7 +168,7 @@ const SubscriptionManagement = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6 mt-14">
+      <div className="mt-10 grid grid-cols-1 gap-6 lg:mt-14 lg:grid-cols-2">
         <div className="flex flex-col">
           <div className="flex items-center">
             <img src="/images/billing.png" className="w-5" alt="billing" />

@@ -2,7 +2,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useTransition } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   SearchOutlined,
@@ -16,14 +16,45 @@ import {
   LoadingOutlined,
   ArrowLeftOutlined,
 } from "@ant-design/icons";
-import { Pagination, Spin } from "antd";
+import { Pagination, Select, Spin } from "antd";
 import Link from "next/link";
 import { useBusinessStore } from "@/store/businessStore";
 import CompanyLoader from "@/components/Loader";
+import { Country } from "country-state-city";
+
+const COUNTRIES = Country.getAllCountries();
+const COUNTRY_OPTIONS = COUNTRIES.map((country) => ({
+  value: country.isoCode,
+  label: `${country.flag} ${country.name}`,
+  searchLabel: country.name,
+}));
+
+function getCountryName(value) {
+  const normalizedValue = String(value || "").trim().toLowerCase();
+  return (
+    COUNTRIES.find(
+      (country) =>
+        country.isoCode.toLowerCase() === normalizedValue ||
+        country.name.toLowerCase() === normalizedValue,
+    )?.name || value
+  );
+}
+
+function getCountrySearchValue(value) {
+  const normalizedValue = String(value || "").trim().toLowerCase();
+  return (
+    COUNTRIES.find(
+      (country) =>
+        country.isoCode.toLowerCase() === normalizedValue ||
+        country.name.toLowerCase() === normalizedValue,
+    )?.isoCode || String(value || "").trim()
+  );
+}
 
 function DirectoryContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const [isNavigationPending, startNavigationTransition] = useTransition();
 
   const categorySlug = searchParams.get("category");
   const queryText = searchParams.get("q");
@@ -31,7 +62,9 @@ function DirectoryContent() {
 
   const [categoryOpen, setCategoryOpen] = useState(true);
   const [subCategoryOpen, setSubCategoryOpen] = useState(true);
-  const [locationInput, setLocationInput] = useState(queryLocation);
+  const [locationInput, setLocationInput] = useState(getCountrySearchValue(queryLocation));
+  const [searchInput, setSearchInput] = useState(queryText || "");
+  const [filterLoading, setFilterLoading] = useState(false);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
@@ -56,15 +89,10 @@ function DirectoryContent() {
   }, [fetchPublicCategories]);
 
   useEffect(() => {
-    setPage(1);
-    setSelectedSubCategory(null);
-  }, [categorySlug, queryText]);
-
-  useEffect(() => {
     if (categorySlug) {
       fetchBusinessesByCategory(categorySlug, {
         subCategory: selectedSubCategory || undefined,
-        location: locationInput || undefined,
+        location: getCountrySearchValue(locationInput) || undefined,
         minPrice: minPrice || undefined,
         maxPrice: maxPrice || undefined,
         page,
@@ -73,7 +101,7 @@ function DirectoryContent() {
     } else {
       searchBusinessesPublic({
         q: queryText || undefined,
-        location: locationInput || undefined,
+        location: getCountrySearchValue(locationInput) || undefined,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -87,25 +115,35 @@ function DirectoryContent() {
   const total = categorySlug ? categoryPagination.total : businesses.length;
   const heading = categoryInfo?.name || (queryText ? `Results for "${queryText}"` : "All Businesses");
 
-  const handleApplyFilters = () => {
+  const handleApplyFilters = async () => {
     setPage(1);
     if (categorySlug) {
-      fetchBusinessesByCategory(categorySlug, {
-        subCategory: selectedSubCategory || undefined,
-        location: locationInput || undefined,
-        minPrice: minPrice || undefined,
-        maxPrice: maxPrice || undefined,
-        page: 1,
-        limit: 10,
-      });
+      setFilterLoading(true);
+      try {
+        await fetchBusinessesByCategory(categorySlug, {
+          subCategory: selectedSubCategory || undefined,
+          location: getCountrySearchValue(locationInput) || undefined,
+          minPrice: minPrice || undefined,
+          maxPrice: maxPrice || undefined,
+          page: 1,
+          limit: 10,
+        });
+      } finally {
+        setFilterLoading(false);
+      }
     } else {
-      router.push(
-        `/business-details?${queryText ? `q=${encodeURIComponent(queryText)}&` : ""}location=${encodeURIComponent(locationInput)}`,
-      );
+      const params = new URLSearchParams();
+      if (searchInput.trim()) params.set("q", searchInput.trim());
+      if (locationInput) params.set("location", getCountrySearchValue(locationInput));
+      startNavigationTransition(() => {
+        router.push(`/business-details?${params.toString()}`);
+      });
     }
   };
 
   const handleCategoryCheckbox = (slug) => {
+    setPage(1);
+    setSelectedSubCategory(null);
     router.push(`/business-details?category=${encodeURIComponent(slug)}`);
   };
 
@@ -126,17 +164,25 @@ function DirectoryContent() {
           </h1>
 
           <div className="inline-flex flex-col md:flex-row bg-white rounded-xl shadow-sm border border-gray-100 p-2 max-w-3xl w-full items-center gap-2">
-            <div className="flex items-center gap-2 px-3 border-r border-gray-100 w-full md:w-1/4 py-2">
+            <div className="flex items-center gap-2 px-3 md:border-r border-gray-100 w-full md:w-1/3 py-2">
               <EnvironmentOutlined className="text-gray-400" />
-              <input
-                type="text"
-                placeholder="Location"
+              <Select
+                showSearch
+                allowClear
+                aria-label="Country"
+                placeholder="Country"
                 value={locationInput}
-                onChange={(e) => setLocationInput(e.target.value)}
-                className="text-xs font-bold text-gray-700 outline-none w-full"
+                onChange={(value) => setLocationInput(value || "")}
+                options={COUNTRY_OPTIONS}
+                optionFilterProp="searchLabel"
+                filterOption={(input, option) =>
+                  option.searchLabel.toLowerCase().includes(input.toLowerCase())
+                }
+                variant="borderless"
+                className="country-search-select w-full text-xs font-bold"
               />
             </div>
-            <div className="flex items-center gap-2 px-3 border-r border-gray-100 w-full md:w-1/4 py-2">
+            <div className="flex items-center gap-2 px-3 md:border-r border-gray-100 w-full md:w-1/4 py-2">
               <AppstoreOutlined className="text-gray-400" />
               <span className="text-xs font-bold text-gray-700 w-full truncate">
                 {categoryInfo?.name || "All Categories"}
@@ -147,20 +193,28 @@ function DirectoryContent() {
               <input
                 type="text"
                 placeholder="Search items..."
-                defaultValue={queryText || ""}
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    router.push(`/business-details?q=${encodeURIComponent(e.target.value)}`);
-                  }
+                  if (e.key === "Enter") handleApplyFilters();
                 }}
                 className="text-xs font-medium text-gray-700 outline-none w-full"
               />
             </div>
             <button
               onClick={handleApplyFilters}
+              disabled={isLoading || filterLoading || isNavigationPending}
               className="bg-[#060853] text-white px-6 py-2.5 rounded-lg text-xs font-bold flex items-center gap-2 w-full md:w-auto justify-center shadow-sm whitespace-nowrap"
             >
-              Search <SearchOutlined />
+              {isLoading || filterLoading || isNavigationPending ? (
+                <>
+                  Searching <LoadingOutlined spin />
+                </>
+              ) : (
+                <>
+                  Search <SearchOutlined />
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -200,12 +254,20 @@ function DirectoryContent() {
               Location
             </label>
             <div className="relative">
-              <input
-                type="text"
-                placeholder="City or Region"
+              <Select
+                showSearch
+                allowClear
+                aria-label="Filter by country"
+                placeholder="Country"
                 value={locationInput}
-                onChange={(e) => setLocationInput(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-100 text-[10px] font-medium p-2.5 pl-8 rounded-lg outline-none text-gray-700"
+                onChange={(value) => setLocationInput(value || "")}
+                options={COUNTRY_OPTIONS}
+                optionFilterProp="searchLabel"
+                filterOption={(input, option) =>
+                  option.searchLabel.toLowerCase().includes(input.toLowerCase())
+                }
+                variant="borderless"
+                className="country-search-select w-full text-[10px] font-medium"
               />
               <SearchOutlined className="absolute left-3 top-3.5 text-gray-400 text-[10px]" />
             </div>
@@ -213,9 +275,10 @@ function DirectoryContent() {
 
           <button
             onClick={handleApplyFilters}
+            disabled={isLoading || filterLoading || isNavigationPending}
             className="w-full bg-[#060853] text-white text-[10px] font-black py-2.5 rounded-lg"
           >
-            Apply Filters
+            {isLoading || filterLoading || isNavigationPending ? "Searching..." : "Apply Filters"}
           </button>
 
           <div>
@@ -358,7 +421,7 @@ function DirectoryContent() {
                     <div className="flex items-center gap-6 text-xs text-gray-400 font-bold mb-3 flex-wrap">
                       <span className="flex items-center gap-1">
                         <EnvironmentOutlined className="text-[10px]" />
-                        {item.businessCity || "—"}, {item.businessCountry || ""}
+                        {item.businessCity || "—"}, {getCountryName(item.businessCountry) || ""}
                       </span>
                       {item.trustScore ? (
                         <>

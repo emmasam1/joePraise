@@ -57,7 +57,7 @@ const Complaint = () => {
   return (
     <div className="mt-8 animate-in fade-in duration-500">
       {/* Top Stats Header */}
-      <div className="grid grid-cols-4 gap-8 mb-12 text-center">
+      <div className="mb-12 grid grid-cols-2 gap-4 text-center sm:grid-cols-4 sm:gap-8">
         {stats.map((stat, idx) => (
           <div key={idx} className="flex flex-col gap-1">
             <div className="flex items-baseline justify-center gap-1">

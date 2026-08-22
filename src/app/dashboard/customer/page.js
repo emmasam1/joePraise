@@ -424,7 +424,7 @@ const Page = () => {
 
               <div className="mt-8">
                 <h3 className="text-sm font-bold text-[#060853] mb-4">Contact Info</h3>
-                <div className="grid grid-cols-2 gap-y-4 border-t border-[#EFF1F0] pt-4">
+                <div className="grid grid-cols-1 gap-y-4 border-t border-[#EFF1F0] pt-4 sm:grid-cols-2">
                   <div>
                     <div className="flex items-center gap-2 text-sm">
                       <img src="/images/mi_email.png" className="w-5 mt-1" />

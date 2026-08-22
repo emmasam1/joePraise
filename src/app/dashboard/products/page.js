@@ -681,7 +681,7 @@ const ProductManagementPage = () => {
         )}
 
         <div className="space-y-6 p-6 bg-white mt-5">
-          <div className="flex justify-between items-center border-b pb-4">
+          <div className="flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-xl font-bold text-gray-900">
                 {editingListing ? "Edit Product / Service" : "Add Product / Service"}
@@ -749,7 +749,7 @@ const ProductManagementPage = () => {
 
           <div className="space-y-5">
             <h2 className="text-sm font-bold text-gray-800 border-b border-gray-200 pb-2">Basic Information</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">Name *</label>
                 <Input 
@@ -887,7 +887,7 @@ const ProductManagementPage = () => {
 
             {productType === "physical" && (
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
                   <div>
                     <label className="block text-[13px] font-extrabold text-black mb-1.5 tracking-tight">SKU / product code</label>
                     <Input 
@@ -908,7 +908,7 @@ const ProductManagementPage = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
                   <div>
                     <label className="block text-[13px] font-extrabold text-black mb-1.5 tracking-tight">Weight (kg)</label>
                     <Input 
@@ -936,7 +936,7 @@ const ProductManagementPage = () => {
 
             {productType === "service" && (
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
                   <div>
                     <label className="block text-[13px] font-extrabold text-black mb-1.5 tracking-tight">Session duration</label>
                     <Select
@@ -966,7 +966,7 @@ const ProductManagementPage = () => {
                 {/* Location buttons — service only, per business decision */}
                 <div className="pt-2">
                   <label className="block text-xs font-bold text-gray-700 mb-2">Where is this service performed?</label>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <button
                       type="button"
                       onClick={() => setServiceLocationType("seller_location")}
@@ -1010,11 +1010,11 @@ const ProductManagementPage = () => {
 
           <div className="space-y-4">
             <h2 className="text-sm font-bold text-gray-800">Pricing</h2>
-            <div className="flex gap-4 mb-2">
+            <div className="mb-2 flex max-w-full flex-wrap gap-4">
               <Radio.Group 
                 value={priceType} 
                 onChange={(e) => setPriceType(e.target.value)} 
-                className="flex gap-4"
+                className="flex flex-wrap gap-4"
               >
                 <Radio value="fixed">Fixed Price</Radio>
                 <Radio value="range">Price Range</Radio>
@@ -1030,13 +1030,13 @@ const ProductManagementPage = () => {
                   value={formData.price}
                   onChange={(e) => handleInputChange("price", e.target.value)}
                   placeholder="0.00" 
-                  className="h-10 w-64 rounded-lg" 
+                  className="h-10 w-full rounded-lg sm:w-64"
                 />
               </div>
             )}
 
             {priceType === "range" && (
-              <div className="flex gap-4 items-end">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">From (Min Price)</label>
                   <Input 
@@ -1044,10 +1044,10 @@ const ProductManagementPage = () => {
                     value={formData.minPrice}
                     onChange={(e) => handleInputChange("minPrice", e.target.value)}
                     placeholder="0.00" 
-                    className="h-10 w-48 rounded-lg" 
+                    className="h-10 w-full rounded-lg sm:w-48"
                   />
                 </div>
-                <span className="text-gray-400 font-semibold mb-2">to</span>
+                <span className="hidden text-gray-400 font-semibold mb-2 sm:block">to</span>
                 <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1">To (Max Price)</label>
                   <Input 
@@ -1055,7 +1055,7 @@ const ProductManagementPage = () => {
                     value={formData.maxPrice}
                     onChange={(e) => handleInputChange("maxPrice", e.target.value)}
                     placeholder="0.00" 
-                    className="h-10 w-48 rounded-lg" 
+                    className="h-10 w-full rounded-lg sm:w-48"
                   />
                 </div>
               </div>
@@ -1080,7 +1080,7 @@ const ProductManagementPage = () => {
                 </Button>
               </Upload>
               
-              <div className="grid grid-cols-8 gap-2">
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
                 {[...Array(8)].map((_, i) => {
                   const imageSrc = uploadedImages[i];
                   return (
@@ -1148,7 +1148,7 @@ const ProductManagementPage = () => {
                 <div className="border-t border-gray-100 pt-4 space-y-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-2">Available days</label>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {daysList.map((day, idx) => (
                         <button
                           key={idx}
@@ -1163,7 +1163,7 @@ const ProductManagementPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <label className="block text-xs font-bold text-gray-700 mb-1">Opening time</label>
                       <Select 

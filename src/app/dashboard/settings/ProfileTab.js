@@ -63,7 +63,7 @@ const ProfileTab = () => {
           >
             <Upload.Dragger
               id="logo-uploader"
-              className="bg-gray-50/50 border-2 border-dashed border-emerald-200! rounded-2xl! w-2/4! overflow-hidden"
+              className="w-full! overflow-hidden rounded-2xl! border-2 border-dashed border-emerald-200! bg-gray-50/50 sm:w-1/2!"
               showUploadList={false}
               customRequest={({ file, onSuccess }) => {
                 handleUpload({ file });
@@ -131,7 +131,7 @@ const ProfileTab = () => {
               "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed euismod, nunc sit amet varius faucibus, justo erat ultricies nisl, vitae facilisis nulla lacus non justo. Integer nec libero vel odio tempor consequat.",
           }}
         >
-          <div className="grid grid-cols-1 gap-4 w-2/4">
+          <div className="grid w-full grid-cols-1 gap-4 lg:w-1/2">
             <Form.Item
               name="name"
               label={<span className="font-bold text-gray-700">Name</span>}

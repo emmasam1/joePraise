@@ -101,9 +101,9 @@ const WalletPage = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
         {/* LEFT COLUMN */}
-        <div className="col-span-12 lg:col-span-7 space-y-6">
+        <div className="min-w-0 xl:col-span-7 space-y-6">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 bg-[#E2EDFC] p-4 rounded-sm">
             {statsCard.map((card) => (
@@ -133,12 +133,12 @@ const WalletPage = () => {
               />
             </div>
             {/* FOOTER / PAGINATION */}
-            <div className="flex items-center justify-between px-6 py-4 mt-5">
+            <div className="mt-5 flex flex-col gap-3 px-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
               <span className="text-[11px] text-black">
                 Show 1 to 4 of 20 results
               </span>
 
-              <div className="flex items-center gap-1">
+              <div className="flex max-w-full items-center gap-1 overflow-x-auto">
                 <button className="p-2 text-gray-400 hover:text-black">
                   <img
                     src="/images/arrow_left.png"
@@ -179,7 +179,7 @@ const WalletPage = () => {
         </div>
 
         {/* RIGHT COLUMN */}
-        <div className="col-span-12 lg:col-span-5 space-y-6">
+        <div className="min-w-0 xl:col-span-5 space-y-6">
           {/* VIRTUAL CARD */}
           <div className="bg-white rounded-t-lg">
             <div className="bg-[#060853]  p-8 rounded-3xl text-white relative overflow-hidden">

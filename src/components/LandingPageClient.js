@@ -1,6 +1,6 @@
 
 "use client";
-import React, { useState } from "react";
+import React, { useState, useTransition } from "react";
 import { Input, Button, Select } from "antd";
 import { useRouter } from "next/navigation";
 import {
@@ -12,6 +12,24 @@ import {
 } from "@ant-design/icons";
 import { Heart, MessageCircle, Share2, Globe } from "lucide-react";
 import Image from "next/image";
+import { Country } from "country-state-city";
+
+const COUNTRIES = Country.getAllCountries();
+const COUNTRY_OPTIONS = COUNTRIES.map((country) => ({
+  value: country.isoCode,
+  label: `${country.flag} ${country.name}`,
+  searchLabel: country.name,
+}));
+
+function countrySearchValue(value) {
+  const normalizedValue = String(value || "").trim().toLowerCase();
+  const country = COUNTRIES.find(
+    (item) =>
+      item.name.toLowerCase() === normalizedValue ||
+      item.isoCode.toLowerCase() === normalizedValue,
+  );
+  return country?.isoCode || String(value || "").trim();
+}
 
 const LandingPage = ({
   publicCategories = [],
@@ -19,6 +37,7 @@ const LandingPage = ({
   popularListings = [],
 }) => {
   const router = useRouter();
+  const [isSearchPending, startSearchTransition] = useTransition();
   const [activeCity, setActiveCity] = useState("Los Angeles");
   const [searchLocation, setSearchLocation] = useState("");
   const [searchCategorySlug, setSearchCategorySlug] = useState(undefined);
@@ -36,8 +55,10 @@ const LandingPage = ({
     const params = new URLSearchParams();
     if (searchCategorySlug) params.set("category", searchCategorySlug);
     if (searchText) params.set("q", searchText);
-    if (searchLocation) params.set("location", searchLocation);
-    router.push(`/business-details?${params.toString()}`);
+    if (searchLocation) params.set("location", countrySearchValue(searchLocation));
+    startSearchTransition(() => {
+      router.push(`/business-details?${params.toString()}`);
+    });
   };
 
   const handleBusinessClick = (businessId) => {
@@ -168,18 +189,20 @@ const LandingPage = ({
         </div>
 
         <div className="p-4 flex-1">
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex min-w-0 items-center gap-3 mb-2">
             {business.logo && (
-              <Image
-                src={typeof business.logo === "string" ? business.logo : business.logo.url}
-                alt="logo"
-                width={32}
-                height={32}
-                className="rounded-full object-cover"
-                unoptimized
-              />
+              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gray-100 ring-1 ring-gray-200">
+                <Image
+                  src={typeof business.logo === "string" ? business.logo : business.logo.url}
+                  alt={`${business.businessName} logo`}
+                  fill
+                  sizes="40px"
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
             )}
-            <h3 className="text-lg font-bold text-[#2A2A2A]">{business.businessName}</h3>
+            <h3 className="min-w-0 truncate text-lg font-bold text-[#2A2A2A]">{business.businessName}</h3>
           </div>
 
           <div className="flex items-center gap-2 mb-2">
@@ -251,10 +274,10 @@ const LandingPage = ({
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="py-20 px-4 text-center bg-gradient-to-b from-white to-gray-50">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-[#2A2A2A] mb-6">
+      <section className="px-4 py-12 text-center bg-gradient-to-b from-white to-gray-50 sm:py-16 lg:py-20">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#2A2A2A] mb-6">
           Search over <span className="text-[#00D094]">30,000+</span> businesses
-          in <br />
+          in <br className="hidden sm:block" />
           the world through joe-praise
         </h1>
 
@@ -267,12 +290,19 @@ const LandingPage = ({
               height={20}
               className="h-5 w-5 shrink-0 object-contain"
             />
-            <Input
-              placeholder="Location"
-              variant="borderless"
+            <Select
+              showSearch
+              allowClear
+              placeholder="Country"
               value={searchLocation}
-              onChange={(e) => setSearchLocation(e.target.value)}
-              className="w-full h-12 text-base font-medium"
+              onChange={(value) => setSearchLocation(value || "")}
+              options={COUNTRY_OPTIONS}
+              optionFilterProp="searchLabel"
+              filterOption={(input, option) =>
+                option.searchLabel.toLowerCase().includes(input.toLowerCase())
+              }
+              variant="borderless"
+              className="country-search-select h-12 w-full text-base font-medium"
             />
           </div>
 
@@ -318,7 +348,8 @@ const LandingPage = ({
           <Button
             type="primary"
             onClick={handleSearch}
-            className="bg-[#060853]! hover:bg-[#060853]! text-white! h-14! px-12 rounded-xl font-bold text-base flex items-center gap-3 border-none shadow-none"
+            loading={isSearchPending}
+            className="w-full bg-[#060853]! hover:bg-[#060853]! text-white! h-14! px-8 sm:px-12 rounded-xl font-bold text-base flex items-center justify-center gap-3 border-none shadow-none md:w-auto"
           >
             Search <Image src="/images/search_white.png" alt="Search" width={16} height={16} />
           </Button>
@@ -367,7 +398,7 @@ const LandingPage = ({
       </section>
 
       {/* New Listings Grid */}
-      <section className="py-16 px-10 max-w-7xl mx-auto">
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
         <div className="text-center mb-12">
           <span className="text-[#00D094] font-bold text-lg uppercase tracking-wider">
             OUR LATEST LISTING
@@ -393,7 +424,7 @@ const LandingPage = ({
       </section>
 
       {/* Popular Listings Grid */}
-      <section className="py-16 px-10 max-w-7xl mx-auto">
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
         <div className="text-center mb-12">
           <span className="text-[#00D094] font-bold text-lg uppercase tracking-wider">
             POPULAR LISTING
@@ -428,13 +459,13 @@ const LandingPage = ({
           </div>
 
           <div className="flex-1 w-full max-w-xl bg-[#1D293D80]!">
-            <div className="relative flex items-center h-18 bg-[#1D293D80]! border border-white/10 rounded-2xl overflow-hidden px-2">
+            <div className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-[#1D293D80]! p-2 sm:h-18 sm:flex-row sm:items-center">
               <Input
                 placeholder="Enter your email address..."
                 variant="borderless"
                 className="flex-1 bg-[#1D293D80]! text-white! text-lg placeholder:text-white! focus:ring-0 px-6 h-full"
               />
-              <Button className="h-14! bg-[#15BE87]! hover:bg-[#15BE87]! border-none! text-white! font-bold uppercase text-xs tracking-[1px] rounded-lg! px-8 transition-all flex items-center justify-center">
+              <Button className="h-14! w-full bg-[#15BE87]! hover:bg-[#15BE87]! border-none! text-white! font-bold uppercase text-xs tracking-[1px] rounded-lg! px-8 transition-all flex items-center justify-center sm:w-auto">
                 SUBSCRIBE
               </Button>
             </div>

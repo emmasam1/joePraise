@@ -303,7 +303,7 @@ function DateRangeFilter({ value, onApply }) {
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex h-12 min-w-[315px] items-center justify-between rounded-lg border border-[#060853] bg-white px-4 text-sm text-[#27272d]"
+        className="flex h-12 w-full items-center justify-between rounded-lg border border-[#060853] bg-white px-4 text-sm text-[#27272d] sm:min-w-[315px]"
       >
         <span className="flex items-center gap-3">
           <CalendarDays size={20} />
@@ -313,7 +313,7 @@ function DateRangeFilter({ value, onApply }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-14 z-20 w-[300px] rounded-lg border border-gray-200 bg-white p-4 shadow-lg">
+        <div className="absolute right-0 top-14 z-20 w-full min-w-[280px] rounded-lg border border-gray-200 bg-white p-4 shadow-lg sm:w-[300px]">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-[#27272d]">Filter by date</p>
             <button type="button" aria-label="Close" onClick={() => setOpen(false)}>

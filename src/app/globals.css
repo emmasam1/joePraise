@@ -23,6 +23,40 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+.ant-table-wrapper,
+.ant-table-container,
+.ant-table-content {
+  max-width: 100%;
+}
+
+.ant-table-content {
+  overflow-x: auto !important;
+}
+
+.ant-modal {
+  max-width: calc(100vw - 24px) !important;
+}
+
+@media (max-width: 640px) {
+  .ant-modal-content {
+    padding: 16px !important;
+  }
+
+  .ant-table-thead > tr > th,
+  .ant-table-tbody > tr > td {
+    white-space: nowrap;
+  }
 }
 
 /* ============================================================
@@ -84,6 +118,18 @@ body {
   border-radius: 8px !important;
   border-color: rgba(6, 8, 83, 0.3) !important;
   height: 42px !important;
+}
+
+.country-search-select .ant-select-selector {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.country-search-select.ant-select-focused .ant-select-selector,
+.country-search-select:hover .ant-select-selector {
+  border: 0 !important;
+  box-shadow: none !important;
 }
 
 /* Custom Scrollbar for the Modal Content */

@@ -747,7 +747,7 @@ const ProductManagementPage = () => {
               {reviews.length === 0 ? (
                 <p className="text-xs text-gray-400 text-center mt-8">No reviews yet.</p>
               ) : (
-                <div className="grid grid-cols-2 gap-6 mt-8">
+                <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
                   {reviews.map((review) => (
                     <div key={review._id} className="flex gap-3">
                       <img
@@ -780,7 +780,7 @@ const ProductManagementPage = () => {
             {confirmModal?.type} Product
           </h1>
           <p className="text-[#4A4A4A] text-sm text-center">
-            Are you sure you want to {confirmModal?.type} "{confirmModal?.record?.title}"?
+            Are you sure you want to {confirmModal?.type} &quot;{confirmModal?.record?.title}&quot;?
           </p>
 
           <div className="flex gap-5 items-center">

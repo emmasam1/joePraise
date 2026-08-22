@@ -16,6 +16,7 @@ import {
   Zap,
 } from "lucide-react";
 import Link from "next/link";
+import { Country } from "country-state-city";
 
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL
@@ -134,6 +135,8 @@ export default async function DirectoryDetails({ params }) {
       ? reviewSummary.totalReviews
       : profileData.business.numReviews || 0,
   };
+  const businessCountryName =
+    Country.getCountryByCode(business.businessCountry)?.name || business.businessCountry;
   const ratingBreakdown = reviewSummary.totalReviews
     ? reviewSummary.ratingBreakdown
     : profileData.ratingBreakdown || { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
@@ -292,7 +295,7 @@ export default async function DirectoryDetails({ params }) {
                 <p className="text-sm font-semibold">Service Location</p>
                 <h2 className="mt-1 text-lg font-bold">{business.address}</h2>
                 <p className="text-sm text-zinc-600">
-                  {business.businessCity}, {business.businessState}, {business.businessCountry} -{" "}
+                  {business.businessCity}, {business.businessState}, {businessCountryName} -{" "}
                   {business.postalCode}
                 </p>
               </div>

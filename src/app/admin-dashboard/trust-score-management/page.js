@@ -139,7 +139,7 @@ const Page = () => {
             </div>
 
             {/* Center: Metrics Grid (Bottom Section) */}
-            <div className="grid grid-cols-3 md:grid-cols-5 gap-8 w-full mt-4 pt-3 border-t border-gray-100">
+            <div className="mt-4 grid w-full grid-cols-2 gap-4 border-t border-gray-100 pt-3 sm:grid-cols-3 md:grid-cols-5 md:gap-8">
               <MetricItem icon={<StarFilled className="text-gray-300" />} label="REVIEWS" value={business.metrics.reviews} />
               <MetricItem icon={<UserOutlined className="text-gray-300" />} label="USERS" value={business.metrics.users} />
               <MetricItem icon={<CheckCircleOutlined className="text-gray-300" />} label="COMPLETION" value={business.metrics.completion} />

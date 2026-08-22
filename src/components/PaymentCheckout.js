@@ -64,7 +64,7 @@ const PaymentCheckout = ({ plan, onBack }) => {
             <input type="text" placeholder="Receiver's name" className="w-full border p-3 rounded-md bg-gray-50 text-sm outline-none focus:border-black" />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
              <div className="col-span-2">
                 <label className="block text-xs font-bold mb-2">Address</label>
                 <input type="text" placeholder="Enter your address Manually" className="w-full border p-3 rounded-md bg-gray-50 text-sm outline-none focus:border-black" />

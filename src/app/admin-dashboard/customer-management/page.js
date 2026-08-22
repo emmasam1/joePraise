@@ -587,7 +587,7 @@ const page = () => {
                   <Spin />
                 </div>
               ) : selectedCustomer ? (
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
                   <InfoRow label="Full Name" value={selectedCustomer.name} />
                   <InfoRow label="Email" value={selectedCustomer.email} />
                   <InfoRow label="Phone" value={selectedCustomer.phoneNumber} />

@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { Input, Badge, Avatar, Modal } from "antd";
 import {
   AppstoreOutlined,
@@ -10,6 +10,8 @@ import {
   BarChartOutlined,
   SettingOutlined,
   LogoutOutlined,
+  MenuOutlined,
+  CloseOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -18,6 +20,7 @@ import { useAdminDashboardStore } from "@/store/adminDashboardStore";
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const router = useRouter();
   
@@ -132,12 +135,33 @@ export default function DashboardLayout({ children }) {
   ];
 
   return (
-    <div className="flex h-screen w-full bg-[#F8FAFC] overflow-hidden font-sans p-4">
+    <div className="flex min-h-screen w-full overflow-x-hidden bg-[#F8FAFC] p-2 font-sans sm:p-4 lg:h-screen lg:overflow-hidden">
       {/* --- SIDEBAR --- */}
-      <aside className="w-64 bg-white border border-gray-100 flex flex-col h-full shrink-0 rounded-lg relative">
+      {sidebarOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          onClick={() => setSidebarOpen(false)}
+          className="fixed inset-0 z-40 bg-black/35 lg:hidden"
+        />
+      )}
+      <aside
+        onClick={(event) => {
+          if (event.target.closest("a")) setSidebarOpen(false);
+        }}
+        className={`fixed inset-y-2 left-2 z-50 flex w-64 shrink-0 flex-col rounded-lg border border-gray-100 bg-white transition-transform duration-200 sm:inset-y-4 sm:left-4 lg:static lg:h-full lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-[110%]"}`}
+      >
         <div className="p-6">
           <div className="flex justify-center items-center">
             <img src="/images/logo_sm.png" alt="Logo" className="h-10" />
+            <button
+              type="button"
+              aria-label="Close menu"
+              onClick={() => setSidebarOpen(false)}
+              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 lg:hidden"
+            >
+              <CloseOutlined />
+            </button>
           </div>
         </div>
 
@@ -219,8 +243,16 @@ export default function DashboardLayout({ children }) {
 
       {/* --- MAIN CONTENT AREA --- */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-20 bg-white border border-gray-100 ml-5 flex items-center justify-between px-8 shrink-0 rounded-lg">
-          <div className="w-full max-w-md">
+        <header className="flex h-16 shrink-0 items-center justify-between rounded-lg border border-gray-100 bg-white px-3 sm:h-20 sm:px-5 lg:ml-5 lg:px-8">
+          <div className="flex min-w-0 items-center gap-3 sm:w-full sm:max-w-md">
+            <button
+              type="button"
+              aria-label="Open menu"
+              onClick={() => setSidebarOpen(true)}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 lg:hidden"
+            >
+              <MenuOutlined />
+            </button>
             <Input
               prefix={
                 <img
@@ -230,11 +262,11 @@ export default function DashboardLayout({ children }) {
                 />
               }
               placeholder="Search"
-              className="rounded-full bg-gray-50 border-none h-10 w-50"
+              className="hidden rounded-full bg-gray-50 border-none h-10 w-50 sm:flex"
             />
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 sm:gap-6">
             <Badge count={12} size="small" color="#060853">
               <img
                 src="/images/message.png"
@@ -252,7 +284,7 @@ export default function DashboardLayout({ children }) {
 
             <div className="flex items-center gap-3 p-1.5 pr-4 rounded-full border border-gray-50 bg-white shadow-sm">
               <Avatar src={dashboard?.admin?.avatar?.url || "https://i.pravatar.cc/150?u=michelle"} size={36} />
-              <div className="flex flex-col text-right">
+              <div className="hidden flex-col text-right sm:flex">
                 <span className="text-[11px] font-bold text-gray-900 leading-tight">
                  {dashboard?.admin?.name}
                 </span>
@@ -264,7 +296,7 @@ export default function DashboardLayout({ children }) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto ml-5">{children}</main>
+        <main className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto pt-3 lg:ml-5 lg:pt-0">{children}</main>
       </div>
     </div>
   );

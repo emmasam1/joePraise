@@ -12,7 +12,7 @@ import {
 } from "@ant-design/icons";
 import { Heart, MessageCircle, Share2, Globe } from "lucide-react";
 import Image from "next/image";
-import { Country } from "country-state-city";
+import { Country, City } from "country-state-city";
 
 const COUNTRIES = Country.getAllCountries();
 const COUNTRY_OPTIONS = COUNTRIES.map((country) => ({
@@ -40,12 +40,19 @@ const LandingPage = ({
   const [isSearchPending, startSearchTransition] = useTransition();
   const [activeCity, setActiveCity] = useState("Los Angeles");
   const [searchLocation, setSearchLocation] = useState("");
+  const [searchCity, setSearchCity] = useState("");
   const [searchCategorySlug, setSearchCategorySlug] = useState(undefined);
   const [searchText, setSearchText] = useState("");
 
   const publicCategoriesLoading = false;
   const newListingsLoading = false;
   const popularListingsLoading = false;
+  const cityOptions = searchLocation
+    ? City.getCitiesOfCountry(countrySearchValue(searchLocation)).map((city) => ({
+        value: city.name,
+        label: city.name,
+      }))
+    : [];
 
   const handleCategoryClick = (slug) => {
     router.push(`/business-details?category=${encodeURIComponent(slug)}`);
@@ -56,6 +63,7 @@ const LandingPage = ({
     if (searchCategorySlug) params.set("category", searchCategorySlug);
     if (searchText) params.set("q", searchText);
     if (searchLocation) params.set("location", countrySearchValue(searchLocation));
+    if (searchCity.trim()) params.set("city", searchCity.trim());
     startSearchTransition(() => {
       router.push(`/business-details?${params.toString()}`);
     });
@@ -295,13 +303,33 @@ const LandingPage = ({
               allowClear
               placeholder="Country"
               value={searchLocation}
-              onChange={(value) => setSearchLocation(value || "")}
+              onChange={(value) => {
+                setSearchLocation(value || "");
+                setSearchCity("");
+              }}
               options={COUNTRY_OPTIONS}
               optionFilterProp="searchLabel"
               filterOption={(input, option) =>
                 option.searchLabel.toLowerCase().includes(input.toLowerCase())
               }
               variant="borderless"
+              className="country-search-select h-12 w-full text-base font-medium"
+            />
+          </div>
+
+          <div className="w-px h-8 bg-gray-200 hidden md:block" />
+
+          <div className="flex-1 w-full flex items-center px-4">
+            <Select
+              showSearch
+              allowClear
+              placeholder="City"
+              value={searchCity}
+              onChange={(value) => setSearchCity(value || "")}
+              options={cityOptions}
+              optionFilterProp="label"
+              variant="borderless"
+              onPressEnter={handleSearch}
               className="country-search-select h-12 w-full text-base font-medium"
             />
           </div>

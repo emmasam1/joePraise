@@ -20,7 +20,7 @@ import { Pagination, Select, Spin } from "antd";
 import Link from "next/link";
 import { useBusinessStore } from "@/store/businessStore";
 import CompanyLoader from "@/components/Loader";
-import { Country } from "country-state-city";
+import { Country, City } from "country-state-city";
 
 const COUNTRIES = Country.getAllCountries();
 const COUNTRY_OPTIONS = COUNTRIES.map((country) => ({
@@ -59,16 +59,24 @@ function DirectoryContent() {
   const categorySlug = searchParams.get("category");
   const queryText = searchParams.get("q");
   const queryLocation = searchParams.get("location") || "";
+  const queryCity = searchParams.get("city") || "";
 
   const [categoryOpen, setCategoryOpen] = useState(true);
   const [subCategoryOpen, setSubCategoryOpen] = useState(true);
   const [locationInput, setLocationInput] = useState(getCountrySearchValue(queryLocation));
+  const [cityInput, setCityInput] = useState(queryCity);
   const [searchInput, setSearchInput] = useState(queryText || "");
   const [filterLoading, setFilterLoading] = useState(false);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [selectedSubCategory, setSelectedSubCategory] = useState(null);
   const [page, setPage] = useState(1);
+  const cityOptions = locationInput
+    ? City.getCitiesOfCountry(getCountrySearchValue(locationInput)).map((city) => ({
+        value: city.name,
+        label: city.name,
+      }))
+    : [];
 
   const {
     publicCategories,
@@ -93,6 +101,7 @@ function DirectoryContent() {
       fetchBusinessesByCategory(categorySlug, {
         subCategory: selectedSubCategory || undefined,
         location: getCountrySearchValue(locationInput) || undefined,
+        city: cityInput.trim() || undefined,
         minPrice: minPrice || undefined,
         maxPrice: maxPrice || undefined,
         page,
@@ -102,10 +111,11 @@ function DirectoryContent() {
       searchBusinessesPublic({
         q: queryText || undefined,
         location: getCountrySearchValue(locationInput) || undefined,
+        city: cityInput.trim() || undefined,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categorySlug, queryText, selectedSubCategory, page]);
+  }, [categorySlug, queryText, queryLocation, queryCity, locationInput, cityInput, selectedSubCategory, page]);
 
   const activeCategoryDoc = (publicCategories || []).find((c) => c.slug === categorySlug);
   const subCategories = activeCategoryDoc?.subCategories || [];
@@ -123,6 +133,7 @@ function DirectoryContent() {
         await fetchBusinessesByCategory(categorySlug, {
           subCategory: selectedSubCategory || undefined,
           location: getCountrySearchValue(locationInput) || undefined,
+          city: cityInput.trim() || undefined,
           minPrice: minPrice || undefined,
           maxPrice: maxPrice || undefined,
           page: 1,
@@ -135,6 +146,7 @@ function DirectoryContent() {
       const params = new URLSearchParams();
       if (searchInput.trim()) params.set("q", searchInput.trim());
       if (locationInput) params.set("location", getCountrySearchValue(locationInput));
+      if (cityInput.trim()) params.set("city", cityInput.trim());
       startNavigationTransition(() => {
         router.push(`/business-details?${params.toString()}`);
       });
@@ -172,7 +184,10 @@ function DirectoryContent() {
                 aria-label="Country"
                 placeholder="Country"
                 value={locationInput}
-                onChange={(value) => setLocationInput(value || "")}
+                onChange={(value) => {
+                  setLocationInput(value || "");
+                  setCityInput("");
+                }}
                 options={COUNTRY_OPTIONS}
                 optionFilterProp="searchLabel"
                 filterOption={(input, option) =>
@@ -180,6 +195,21 @@ function DirectoryContent() {
                 }
                 variant="borderless"
                 className="country-search-select w-full text-xs font-bold"
+              />
+            </div>
+            <div className="flex items-center gap-2 px-3 md:border-r border-gray-100 w-full md:w-1/4 py-2">
+              <EnvironmentOutlined className="text-gray-400" />
+              <Select
+                showSearch
+                allowClear
+                aria-label="City"
+                placeholder="City"
+                value={cityInput || undefined}
+                onChange={(value) => setCityInput(value || "")}
+                options={cityOptions}
+                optionFilterProp="label"
+                variant="borderless"
+                className="country-search-select w-full text-xs font-medium"
               />
             </div>
             <div className="flex items-center gap-2 px-3 md:border-r border-gray-100 w-full md:w-1/4 py-2">
@@ -271,6 +301,18 @@ function DirectoryContent() {
               />
               <SearchOutlined className="absolute left-3 top-3.5 text-gray-400 text-[10px]" />
             </div>
+            <Select
+              showSearch
+              allowClear
+              aria-label="Filter by city"
+              placeholder="City"
+              value={cityInput || undefined}
+              onChange={(value) => setCityInput(value || "")}
+              options={cityOptions}
+              optionFilterProp="label"
+              variant="borderless"
+              className="country-search-select mt-2 w-full bg-gray-50 text-[10px] font-medium"
+            />
           </div>
 
           <button

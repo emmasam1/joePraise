@@ -15,6 +15,7 @@ import {
   UpOutlined,
   MenuOutlined,
   CloseOutlined,
+  HomeOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -70,6 +71,11 @@ export default function DashboardLayout({ children }) {
 
   const generalItems = [
     {
+      label: "Back to Home",
+      icon: <HomeOutlined />,
+      href: "/",
+    },
+    {
       label: "Settings",
       icon: <SettingOutlined />,
       href: "/dashboard/settings",
@@ -111,9 +117,11 @@ export default function DashboardLayout({ children }) {
         }}
         className={`fixed inset-y-2 left-2 z-50 flex w-64 shrink-0 flex-col rounded-lg border border-gray-100 bg-white transition-transform duration-200 sm:inset-y-4 sm:left-4 lg:static lg:h-full lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-[110%]"}`}
       >
-        <div className="p-6">
+          <div className="p-6">
           <div className="flex justify-center items-center">
-            <img src="/images/logo_sm.png" alt="Logo" className="h-10" />
+            <Link href="/" aria-label="Go to home">
+              <img src="/images/logo_sm.png" alt="Logo" className="h-10" />
+            </Link>
             <button
               type="button"
               aria-label="Close menu"

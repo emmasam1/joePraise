@@ -30,7 +30,7 @@ const SupportPage = () => {
             >
               <LeftOutlined /> Back to Support
             </button>
-            <FAQs />
+            <FAQs onContactSupport={() => setActiveTab("Support Ticket System")} />
           </div>
         );
       case "Tutorials":

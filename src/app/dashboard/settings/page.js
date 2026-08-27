@@ -6,8 +6,11 @@ import BusinessTab from "./BusinessTab";
 import AccountTab from "./AccountTab";
 import NotificationSetting from "./NotificationSetting";
 import SecurityPage from "./SecurityPage";
+import BusinessActions from "@/components/BuisnessAction";
+import { useAuthStore } from "@/store/authStore";
 
 export default function SettingsPage() {
+  const user = useAuthStore((state) => state.user);
   const [activeTab, setActiveTab] = useState("Profile");
   const [accountHeader, setAccountHeader] = useState("Account Settings");
 
@@ -26,10 +29,22 @@ export default function SettingsPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <h1 className="text-lg font-bold text-[#060853]">Business Settings</h1>
         <div className="flex gap-3">
-          <Button className="p-4! border border-[#060853]! text-[#060853]! rounded-lg">
+          <BusinessActions
+            businessId={user?.business?._id || user?.business?.id}
+            businessName={user?.business?.businessName || user?.businessName || "your business"}
+            className="mt-0"
+            showMessage={false}
+            compact
+            canonicalUrl={
+              user?.business?._id || user?.business?.id
+                ? `/business-details/${user.business._id || user.business.id}`
+                : "/business-details"
+            }
+          />
+          <Button className="h-10! border border-[#060853]! px-4! text-[#060853]! rounded-lg">
             Save Changes
           </Button>
-          <Button className="p-4.5! bg-[#060853]! rounded-lg border-none! text-white!">
+          <Button className="h-10! bg-[#060853]! px-4! rounded-lg border-none! text-white!">
             <img src="/images/upload.png" alt="export" className="h-7" />
             Export Report
           </Button>

@@ -19,6 +19,10 @@ export default function BusinessActions({
   businessId,
   customerEmail = "",
   businessName = "Aurora Design Studio",
+  canonicalUrl,
+  className = "",
+  showMessage = true,
+  compact = false,
 }) {
   const [isMessageOpen, setIsMessageOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -28,7 +32,11 @@ export default function BusinessActions({
   
 
   const businessUrl =
-    typeof window !== "undefined" ? window.location.href : "";
+    typeof window !== "undefined"
+      ? canonicalUrl
+        ? `${window.location.origin}${canonicalUrl}`
+        : window.location.href
+      : canonicalUrl || "";
 
   //  const businessUrl =
   //   typeof window !== "undefined"
@@ -94,22 +102,24 @@ export default function BusinessActions({
 
   return (
     <>
-      <div className="mt-6 flex flex-wrap gap-3">
+      <div className={`flex flex-wrap gap-3 ${className}`}>
         <button
           onClick={() => setIsShareOpen(true)}
-          className="inline-flex items-center gap-2 rounded bg-[#10105e] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#0b084d]"
+          className={`inline-flex ${compact ? "h-10" : "h-12"} items-center gap-2 rounded bg-[#10105e] px-4 text-sm font-medium text-white transition hover:bg-[#0b084d]`}
         >
           <Share2 size={17} />
           Share Business
         </button>
 
-        <button
-          onClick={() => setIsMessageOpen(true)}
-          className="inline-flex items-center gap-2 rounded border border-[#10105e] px-4 py-3 text-sm font-medium text-[#10105e] transition hover:bg-[#10105e] hover:text-white"
-        >
-          <MessageCircle size={17} />
-          Message
-        </button>
+        {showMessage && (
+          <button
+            onClick={() => setIsMessageOpen(true)}
+            className="inline-flex items-center gap-2 rounded border border-[#10105e] px-4 py-3 text-sm font-medium text-[#10105e] transition hover:bg-[#10105e] hover:text-white"
+          >
+            <MessageCircle size={17} />
+            Message
+          </button>
+        )}
       </div>
 
       {/* Share Business Modal */}

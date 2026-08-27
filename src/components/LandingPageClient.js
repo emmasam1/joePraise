@@ -301,8 +301,8 @@ const LandingPage = ({
             <Select
               showSearch
               allowClear
-              placeholder="Country"
-              value={searchLocation}
+              placeholder="Search country"
+              value={searchLocation || undefined}
               onChange={(value) => {
                 setSearchLocation(value || "");
                 setSearchCity("");
@@ -323,8 +323,8 @@ const LandingPage = ({
             <Select
               showSearch
               allowClear
-              placeholder="City"
-              value={searchCity}
+              placeholder="Search city"
+              value={searchCity || undefined}
               onChange={(value) => setSearchCity(value || "")}
               options={cityOptions}
               optionFilterProp="label"

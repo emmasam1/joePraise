@@ -4,7 +4,7 @@ import { Collapse } from "antd";
 
 const { Panel } = Collapse;
 
-const FaqPage = () => {
+const FaqPage = ({ onContactSupport }) => {
   const faqData = [
     {
       key: "1",
@@ -35,7 +35,7 @@ const FaqPage = () => {
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Frequently Asked Questions</h1>
         <p className="text-gray-500 text-sm leading-relaxed">
           Quick answers to questions you may have about JoePraiseSmart<br/> Hub. 
-          Can't find what you're looking for?{" "}
+          Can&apos;t find what you&apos;re looking for?{" "}
           <button 
             onClick={onContactSupport}
             className="text-[#10B981] font-bold hover:underline"

@@ -182,8 +182,8 @@ function DirectoryContent() {
                 showSearch
                 allowClear
                 aria-label="Country"
-                placeholder="Country"
-                value={locationInput}
+                placeholder="Search country"
+                value={locationInput || undefined}
                 onChange={(value) => {
                   setLocationInput(value || "");
                   setCityInput("");
@@ -203,7 +203,7 @@ function DirectoryContent() {
                 showSearch
                 allowClear
                 aria-label="City"
-                placeholder="City"
+                placeholder="Search city"
                 value={cityInput || undefined}
                 onChange={(value) => setCityInput(value || "")}
                 options={cityOptions}
@@ -288,8 +288,8 @@ function DirectoryContent() {
                 showSearch
                 allowClear
                 aria-label="Filter by country"
-                placeholder="Country"
-                value={locationInput}
+                placeholder="Search country"
+                value={locationInput || undefined}
                 onChange={(value) => setLocationInput(value || "")}
                 options={COUNTRY_OPTIONS}
                 optionFilterProp="searchLabel"
@@ -305,7 +305,7 @@ function DirectoryContent() {
               showSearch
               allowClear
               aria-label="Filter by city"
-              placeholder="City"
+              placeholder="Search city"
               value={cityInput || undefined}
               onChange={(value) => setCityInput(value || "")}
               options={cityOptions}

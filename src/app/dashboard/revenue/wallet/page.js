@@ -423,6 +423,14 @@ const WalletPage = () => {
   const [payoutAmount, setPayoutAmount] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
+  // PIN modal can be in "verify" (existing PIN) or "setup" (no PIN yet / forgot PIN) mode
+  const [pinMode, setPinMode] = useState("verify"); // "verify" | "setup"
+  const [pinValue, setPinValue] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpValue, setOtpValue] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [confirmNewPin, setConfirmNewPin] = useState("");
+
   const [form] = Form.useForm();
 
   const {
@@ -431,10 +439,13 @@ const WalletPage = () => {
     transactions,
     pagination,
     payoutLoading,
+    pinOtpLoading,
     getBalance,
     getEarningsSummary,
     getTransactions,
     requestPayout,
+    requestPinOtp,
+    confirmPinSetup,
   } = useWalletStore();
 
   useEffect(() => {
@@ -459,7 +470,15 @@ const WalletPage = () => {
     setIsOpen(true);
   };
 
-  const handleWithdrawal = () => {
+  const resetPinModalState = () => {
+    setPinValue("");
+    setOtpSent(false);
+    setOtpValue("");
+    setNewPin("");
+    setConfirmNewPin("");
+  };
+
+  const handleWithdrawal = async () => {
     const amount = Number(payoutAmount);
 
     if (!amount || amount <= 0) {
@@ -473,20 +492,106 @@ const WalletPage = () => {
     }
 
     setIsOpen(false);
-    setIsPinOpen(true);
+    resetPinModalState();
+
+    if (balance?.hasPin) {
+      setPinMode("verify");
+      setIsPinOpen(true);
+    } else {
+      // No PIN set yet — send the setup code straight away
+      setPinMode("setup");
+      setIsPinOpen(true);
+      const result = await requestPinOtp();
+      if (result.success) {
+        setOtpSent(true);
+        message.info(result.message || "Verification code sent to your email.");
+      } else {
+        message.error(result.message || "Failed to send verification code.");
+      }
+    }
   };
 
-  const handleSubmitPin = async () => {
+  const handleResendOtp = async () => {
+    const result = await requestPinOtp();
+    if (result.success) {
+      setOtpSent(true);
+      message.info(result.message || "Verification code sent to your email.");
+    } else {
+      message.error(result.message || "Failed to send verification code.");
+    }
+  };
+
+  const handleForgotPin = async () => {
+    setPinMode("setup");
+    setOtpSent(false);
+    setPinValue("");
+    const result = await requestPinOtp();
+    if (result.success) {
+      setOtpSent(true);
+      message.info(result.message || "Verification code sent to your email.");
+    } else {
+      message.error(result.message || "Failed to send verification code.");
+    }
+  };
+
+  const handleVerifyAndPay = async () => {
+    if (!pinValue) {
+      message.error("Enter your withdrawal PIN.");
+      return;
+    }
+
     const amount = Number(payoutAmount);
-    const result = await requestPayout(amount);
+    const result = await requestPayout(amount, pinValue);
 
     if (result.success) {
       message.success(result.message || "Payout request submitted.");
       setIsPinOpen(false);
       setPayoutAmount("");
       setCurrentPage(1);
+      resetPinModalState();
+    } else if (result.pinRequired) {
+      // wallet has no PIN (edge case / race condition) — fall back to setup
+      handleForgotPin();
     } else {
-      message.error(result.message || "Failed to submit payout request.");
+      message.error(result.message || "Incorrect PIN.");
+      setPinValue("");
+    }
+  };
+
+  const handleConfirmSetupAndPay = async () => {
+    if (!/^\d{4,6}$/.test(otpValue || "")) {
+      message.error("Enter the 6-digit code sent to your email.");
+      return;
+    }
+    if (!/^\d{4,6}$/.test(newPin || "")) {
+      message.error("PIN must be 4 to 6 digits.");
+      return;
+    }
+    if (newPin !== confirmNewPin) {
+      message.error("PINs do not match.");
+      return;
+    }
+
+    const setupResult = await confirmPinSetup(otpValue, newPin);
+
+    if (!setupResult.success) {
+      message.error(setupResult.message || "Failed to set withdrawal PIN.");
+      return;
+    }
+
+    message.success("Withdrawal PIN set successfully.");
+
+    const amount = Number(payoutAmount);
+    const payoutResult = await requestPayout(amount, newPin);
+
+    if (payoutResult.success) {
+      message.success(payoutResult.message || "Payout request submitted.");
+      setIsPinOpen(false);
+      setPayoutAmount("");
+      setCurrentPage(1);
+      resetPinModalState();
+    } else {
+      message.error(payoutResult.message || "Failed to submit payout request.");
     }
   };
 
@@ -862,13 +967,112 @@ const WalletPage = () => {
             />
           </Form.Item>
 
-          <Button
-            onClick={handleSubmitPin}
-            loading={payoutLoading}
-            className="bg-[#060853]! w-full! border-none! text-white! h-10!"
-          >
-            Sumit
-          </Button>
+          {pinMode === "verify" && (
+            <>
+              <Form.Item
+                name="Withdrawal PIN"
+                label={<span className="font-bold text-gray-700">Withdrawal PIN</span>}
+              >
+                <Input.Password
+                  placeholder="Enter your 4-6 digit PIN"
+                  maxLength={6}
+                  value={pinValue}
+                  onChange={(e) => setPinValue(e.target.value.replace(/[^0-9]/g, ""))}
+                  className="h-12 bg-gray-50 border-gray-100 rounded-xl"
+                />
+              </Form.Item>
+
+              <button
+                type="button"
+                onClick={handleForgotPin}
+                className="text-xs text-[#060853] font-bold mb-4 underline"
+              >
+                Forgot PIN?
+              </button>
+
+              <Button
+                onClick={handleVerifyAndPay}
+                loading={payoutLoading}
+                className="bg-[#060853]! w-full! border-none! text-white! h-10!"
+              >
+                Submit
+              </Button>
+            </>
+          )}
+
+          {pinMode === "setup" && !otpSent && (
+            <>
+              <p className="text-xs text-gray-500 mb-4">
+                You don&apos;t have a withdrawal PIN set up yet. We&apos;re sending a
+                verification code to your email — enter it below along with a new PIN to
+                continue.
+              </p>
+              <Button
+                onClick={handleResendOtp}
+                loading={pinOtpLoading}
+                className="bg-[#060853]! w-full! border-none! text-white! h-10!"
+              >
+                Send Verification Code
+              </Button>
+            </>
+          )}
+
+          {pinMode === "setup" && otpSent && (
+            <>
+              <Form.Item
+                name="Verification Code"
+                label={<span className="font-bold text-gray-700">Verification Code</span>}
+              >
+                <Input
+                  placeholder="Enter 6-digit code"
+                  maxLength={6}
+                  value={otpValue}
+                  onChange={(e) => setOtpValue(e.target.value.replace(/[^0-9]/g, ""))}
+                  className="h-12 bg-gray-50 border-gray-100 rounded-xl"
+                />
+              </Form.Item>
+              <Form.Item
+                name="New PIN"
+                label={<span className="font-bold text-gray-700">New Withdrawal PIN</span>}
+              >
+                <Input.Password
+                  placeholder="4-6 digits"
+                  maxLength={6}
+                  value={newPin}
+                  onChange={(e) => setNewPin(e.target.value.replace(/[^0-9]/g, ""))}
+                  className="h-12 bg-gray-50 border-gray-100 rounded-xl"
+                />
+              </Form.Item>
+              <Form.Item
+                name="Confirm New PIN"
+                label={<span className="font-bold text-gray-700">Confirm New PIN</span>}
+              >
+                <Input.Password
+                  placeholder="Re-enter PIN"
+                  maxLength={6}
+                  value={confirmNewPin}
+                  onChange={(e) => setConfirmNewPin(e.target.value.replace(/[^0-9]/g, ""))}
+                  className="h-12 bg-gray-50 border-gray-100 rounded-xl"
+                />
+              </Form.Item>
+
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                className="text-xs text-[#060853] font-bold mb-4 underline"
+              >
+                Resend code
+              </button>
+
+              <Button
+                onClick={handleConfirmSetupAndPay}
+                loading={payoutLoading || pinOtpLoading}
+                className="bg-[#060853]! w-full! border-none! text-white! h-10!"
+              >
+                Confirm & Withdraw
+              </Button>
+            </>
+          )}
         </Form>
       </CustomModal>
     </div>
@@ -876,3 +1080,4 @@ const WalletPage = () => {
 };
 
 export default WalletPage;
+

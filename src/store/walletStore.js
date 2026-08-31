@@ -77,10 +77,10 @@ export const useWalletStore = create((set, get) => ({
     }
   },
 
-  requestPayout: async (amount) => {
+  requestPayout: async (amount, pin) => {
     try {
       set({ payoutLoading: true, payoutError: null });
-      const { data } = await api.post("/wallet/payout", { amount });
+      const { data } = await api.post("/wallet/payout", { amount, pin });
 
       set({ payoutLoading: false });
 
@@ -95,7 +95,43 @@ export const useWalletStore = create((set, get) => ({
     } catch (error) {
       const msg =
         error?.response?.data?.message || error.message || "Failed to submit payout request";
+      const pinRequired = error?.response?.data?.pinRequired === true;
       set({ payoutLoading: false, payoutError: msg });
+      return { success: false, message: msg, pinRequired };
+    }
+  },
+
+  // ---- withdrawal PIN setup / reset (same two calls cover both cases) ----
+  pinOtpLoading: false,
+  pinOtpError: null,
+
+  requestPinOtp: async () => {
+    try {
+      set({ pinOtpLoading: true, pinOtpError: null });
+      const { data } = await api.post("/wallet/pin/request-otp");
+      set({ pinOtpLoading: false });
+      return { success: true, message: data.message };
+    } catch (error) {
+      const msg =
+        error?.response?.data?.message || error.message || "Failed to send verification code";
+      set({ pinOtpLoading: false, pinOtpError: msg });
+      return { success: false, message: msg };
+    }
+  },
+
+  confirmPinSetup: async (otp, pin) => {
+    try {
+      set({ pinOtpLoading: true, pinOtpError: null });
+      const { data } = await api.post("/wallet/pin/confirm", { otp, pin });
+      set({ pinOtpLoading: false });
+
+      // hasPin flips to true on the balance object
+      await get().getBalance();
+
+      return { success: true, message: data.message };
+    } catch (error) {
+      const msg = error?.response?.data?.message || error.message || "Failed to set PIN";
+      set({ pinOtpLoading: false, pinOtpError: msg });
       return { success: false, message: msg };
     }
   },

@@ -70,7 +70,6 @@
 // export default MonthlyRevenueCard;
 
 
-
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Text } from 'recharts';
 
@@ -143,4 +142,5 @@ const MonthlyRevenueCard = ({ data, averageValue = 0 }) => {
 };
 
 export default MonthlyRevenueCard;
+
 
